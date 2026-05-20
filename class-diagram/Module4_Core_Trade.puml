@@ -1,0 +1,401 @@
+@startuml Module4_Core_Trade
+
+' ============================================================
+'  Banana Republic - Module 4: Core Game Engine & Trade
+'  Person 4
+'  Packages: core, trade
+'
+'  TANGGUNG JAWAB:
+'  - Orkestrasi utama permainan (Game class)
+'  - Manajemen giliran dan fase permainan (TurnManager, GamePhase)
+'  - GameState sebagai facade untuk plugin dan komponen lain
+'  - Kalkulasi Victory Point dan cek kondisi menang
+'  - Log kejadian permainan
+'  - Semua mekanisme perdagangan (domestic & maritime)
+'
+'  ANTARMUKA KE MODUL LAIN (coupling point):
+'  - Mengekspos: GameState (interface), Game, TurnManager, TradeManager
+'                VictoryPointCalculator
+'  - Bergantung pada INTERFACE saja (bukan implementasi):
+'    Player, Bank, ExperimentCard, MapGeneratorPlugin, PlayerStrategy
+'    Board, HexTile, CardDeck, Robber, TurnTimer
+'    LongestRoadCard, LargestArmyCard, ResourceProductionService
+'    GameSaveManager (Module 5)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class BackgroundColor White
+skinparam class BorderColor #333333
+skinparam class ArrowColor #333333
+skinparam class HeaderBackgroundColor #EBEBEB
+skinparam package BorderColor #555555
+skinparam package FontStyle bold
+skinparam note BackgroundColor #FFFFC0
+skinparam note BorderColor #999900
+
+' ============================================================
+'  EXTERNAL STUBS (dari modul lain, hanya referensi)
+' ============================================================
+package "external.board" #DDDDDD {
+  class Board
+  class HexTile
+}
+
+package "external.player" #DDDDDD {
+  interface Player {
+    + getName() : String
+    + getTotalResourceCount() : int
+    + isBot() : boolean
+    + hasSpecialCard(type : SpecialCardType) : boolean
+  }
+}
+
+package "external.resource" #DDDDDD {
+  interface Bank
+  class ResourceProductionService
+  enum ResourceType {
+    WOOD
+    BRICK
+    WHEAT
+    ORE
+    BANANA
+  }
+}
+
+package "external.card" #DDDDDD {
+  interface ExperimentCard {
+    + getCardType() : CardType
+  }
+  class CardDeck
+}
+
+package "external.card.special" #DDDDDD {
+  class LongestRoadCard
+  class LargestArmyCard
+}
+
+package "external.robber" #DDDDDD {
+  class Robber
+}
+
+package "external.dice" #DDDDDD {
+  class Dice
+  class DiceResult
+}
+
+package "external.timer" #DDDDDD {
+  class TurnTimer
+}
+
+package "external.plugin" #DDDDDD {
+  interface MapGeneratorPlugin
+  class PluginLoader
+}
+
+package "external.save" #DDDDDD {
+  class GameSaveManager
+  class GameSaveData
+}
+
+' ============================================================
+'  PACKAGE: core
+' ============================================================
+package "core" #EAF4FB {
+
+  class Game {
+    - board : Board
+    - players : List~Player~
+    - currentPlayerIndex : int
+    - bank : Bank
+    - cardDeck : CardDeck
+    - robber : Robber
+    - dice : Dice
+    - turnManager : TurnManager
+    - longestRoadCard : LongestRoadCard
+    - largestArmyCard : LargestArmyCard
+    - gameLog : GameLog
+    - phase : GamePhase
+    - pluginLoader : PluginLoader
+    - saveManager : GameSaveManager
+    --
+    + startGame() : void
+    + initializeBoard() : void
+    + determineTurnOrder() : void
+    + setupRound(order : TurnOrder) : void
+    + distributeInitialResources() : void
+    + rollDice() : DiceResult
+    + handleDiceResult(result : DiceResult) : void
+    + handleRobberActivation() : void
+    + endTurn() : void
+    + declareVictory() : boolean
+    + saveGame(path : String) : void
+    + loadGame(path : String) : void
+    + getCurrentPlayer() : Player
+    + getGameState() : GameState
+  }
+
+  enum GamePhase {
+    SETUP_FIRST_ROUND
+    SETUP_SECOND_ROUND
+    RESOURCE_GATHERING
+    TRADE_BUILD
+    GAME_OVER
+  }
+
+  class TurnManager {
+    - players : List<Player>
+    - currentIndex : int
+    - currentOrder : TurnOrder
+    - timer : TurnTimer
+    --
+    + nextTurn() : void
+    + previousTurn() : void
+    + getCurrentPlayer() : Player
+    + setOrder(order : TurnOrder) : void
+    + getOrder() : TurnOrder
+    + startTimer(onExpire : Runnable) : void
+    + stopTimer() : void
+    + resetTimer() : void
+    + getRemainingSeconds() : int
+    + determineTurnOrderByDice() : void
+  }
+
+  enum TurnOrder {
+    CLOCKWISE
+    COUNTER_CLOCKWISE
+  }
+
+  interface GameState {
+    + getAllPlayers() : List~Player~
+    + getBank() : Bank
+    + getBoard() : Board
+    + getCurrentPlayer() : Player
+    + getRobberPosition() : HexTile
+    + getCardDeck() : CardDeck
+    + getPhase() : GamePhase
+  }
+
+  class GameStateAdapter implements GameState {
+    - game : Game
+    --
+    + getAllPlayers() : List~Player~
+    + getBank() : Bank
+    + getBoard() : Board
+    + getCurrentPlayer() : Player
+    + getRobberPosition() : HexTile
+    + getCardDeck() : CardDeck
+    + getPhase() : GamePhase
+  }
+
+  class GameLog {
+    - entries : List~LogEntry~
+    --
+    + addEntry(message : String) : void
+    + addEntry(message : String, player : Player) : void
+    + getEntries() : List~LogEntry~
+    + getLastN(n : int) : List~LogEntry~
+    + clear() : void
+  }
+
+  class LogEntry {
+    - message : String
+    - timestamp : long
+    - playerName : String
+    --
+    + getMessage() : String
+    + getTimestamp() : long
+    + getPlayerName() : String
+  }
+
+  class VictoryPointCalculator {
+    + calculate(player : Player) : int
+    + calculatePublicPoints(player : Player) : int
+    + calculateSecretPoints(player : Player) : int
+    + checkWinCondition(player : Player) : boolean
+    + buildBreakdown(player : Player) : VictoryPointBreakdown
+  }
+
+  class VictoryPointBreakdown {
+    - settlementPoints : int
+    - cityPoints : int
+    - specialCardPoints : int
+    - secretCardPoints : int
+    - total : int
+    --
+    + getTotal() : int
+    + getSettlementPoints() : int
+    + getCityPoints() : int
+    + getSpecialCardPoints() : int
+    + getSecretCardPoints() : int
+  }
+}
+
+' ============================================================
+'  PACKAGE: trade
+' ============================================================
+package "trade" #EAF4FB {
+
+  class TradeOffer {
+    - offerer : Player
+    - target : Player
+    - giveResources : Map~ResourceType, Integer~
+    - receiveResources : Map~ResourceType, Integer~
+    - status : TradeStatus
+    --
+    + getOfferer() : Player
+    + getTarget() : Player
+    + getGiveResources() : Map~ResourceType, Integer~
+    + getReceiveResources() : Map~ResourceType, Integer~
+    + getStatus() : TradeStatus
+    + setStatus(status : TradeStatus) : void
+    + isValid() : boolean
+    + isSameResourceSwap() : boolean
+  }
+
+  enum TradeStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+    COUNTER_OFFERED
+    CANCELLED
+  }
+
+  class TradeNegotiation {
+    - offerHistory : List~TradeOffer~
+    - currentOffer : TradeOffer
+    --
+    + getCurrentOffer() : TradeOffer
+    + getHistory() : List~TradeOffer~
+    + submitOffer(offer : TradeOffer) : void
+    + counterOffer(offer : TradeOffer) : void
+    + accept() : void
+    + reject() : void
+    + isFinished() : boolean
+    + isAccepted() : boolean
+  }
+
+  class MaritimeTrade {
+    + getBestRatio(player : Player, resource : ResourceType, board : Board) : int
+    + execute(player : Player, give : ResourceType, giveAmount : int, receive : ResourceType, bank : Bank) : void
+    + isValid(player : Player, give : ResourceType, receive : ResourceType, bank : Bank) : boolean
+  }
+
+  class TradeManager {
+    - tradeValidator : TradeValidator
+    --
+    + initiateDomesticTrade(offer : TradeOffer) : TradeNegotiation
+    + executeDomesticTrade(negotiation : TradeNegotiation) : void
+    + executeMaritimeTrade(player : Player, give : ResourceType, receive : ResourceType, bank : Bank, board : Board) : void
+    + getEligibleTargets(offer : TradeOffer, players : List~Player~) : List~Player~
+  }
+
+  class TradeValidator {
+    + validateDomesticOffer(offer : TradeOffer) : ValidationResult
+    + validateMaritimeTrade(player : Player, give : ResourceType, giveAmount : int, receive : ResourceType, bank : Bank) : ValidationResult
+  }
+
+  class ValidationResult {
+    - valid : boolean
+    - reason : String
+    --
+    + isValid() : boolean
+    + getReason() : String
+    + {static} ok() : ValidationResult
+    + {static} fail(reason : String) : ValidationResult
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS (internal)
+' ============================================================
+
+' --- core internal ---
+Game "1" *-- "1" TurnManager              : managed by >
+Game ..> GamePhase
+Game ..> DiceResult
+
+TurnManager "1" *-- "1" TurnTimer         : runs >
+TurnManager ..> TurnOrder
+TurnManager --> Player                    : tracks current >
+
+GameStateAdapter --> Game                 : wraps >
+GameStateAdapter ..|> GameState
+
+VictoryPointCalculator ..> Player
+VictoryPointCalculator ..> VictoryPointBreakdown
+GameLog "1" *-- "*" LogEntry
+
+' --- core -> external ---
+Game "1" *-- "1" Board                    : contains >
+Game "1" *-- "2..4" Player                : has players >
+Game "1" *-- "1" Bank                     : has >
+Game "1" *-- "1" CardDeck                 : has >
+Game "1" *-- "1" Robber                   : has >
+Game "1" *-- "1" Dice                     : has >
+Game "1" *-- "1" LongestRoadCard          : holds >
+Game "1" *-- "1" LargestArmyCard          : holds >
+Game "1" *-- "1" GameLog                  : has >
+Game "1" *-- "1" PluginLoader             : uses >
+Game "1" *-- "1" GameSaveManager          : uses >
+Game ..> ResourceProductionService        : uses
+
+' --- trade internal ---
+TradeOffer --> Player
+TradeOffer ..> ResourceType
+TradeOffer ..> TradeStatus
+TradeNegotiation "1" *-- "*" TradeOffer   : history >
+TradeManager --> TradeNegotiation         : creates >
+TradeManager --> MaritimeTrade            : delegates >
+TradeManager --> TradeValidator           : uses >
+TradeValidator ..> ValidationResult
+MaritimeTrade ..> Bank
+MaritimeTrade ..> Board
+
+' --- GameState is the facade for other modules ---
+GameState ..> Player
+GameState ..> Bank
+GameState ..> Board
+GameState ..> HexTile
+GameState ..> CardDeck
+
+' ============================================================
+'  NOTES
+' ============================================================
+note top of GameState
+  Plugin-Facing Interface
+  Digunakan oleh ExperimentCard.applyEffect(),
+  PlayerStrategy.takeTurn(), dan
+  MapGeneratorPlugin.generateBoard()
+  agar plugin tidak coupling ke Game langsung.
+  Ini adalah Dependency Inversion utama sistem.
+end note
+
+note right of Game
+  Orkestrasi Utama
+  Game hanya bergantung pada INTERFACE,
+  bukan implementasi konkret.
+  Semua komponen di-inject via konstruktor
+  atau factory (SOLID: DIP).
+end note
+
+note right of TradeManager
+  Aturan Perdagangan Domestik:
+  - Hanya pemain aktif yang bisa menginisiasi
+  - Pemain non-aktif TIDAK boleh trade sesama mereka
+  - Counter-offer diperbolehkan (negosiasi bolak-balik)
+  - Tidak boleh memberikan kartu secara cuma-cuma
+  - Tidak boleh tukar sumber daya sejenis
+end note
+
+note bottom of MaritimeTrade
+  Tarif Maritime:
+  4:1 -> selalu tersedia (tarif dasar)
+  3:1 -> Pelabuhan Umum
+  2:1 -> Pelabuhan Khusus (per jenis sumber daya)
+  getBestRatio() mencari tarif terbaik dari
+  semua pelabuhan yang dimiliki pemain.
+end note
+
+@enduml

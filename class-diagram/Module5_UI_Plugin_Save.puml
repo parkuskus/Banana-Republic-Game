@@ -1,0 +1,462 @@
+@startuml Module5_UI_Plugin_Save
+
+' ============================================================
+'  Banana Republic - Module 5: UI, Plugin Loader & Save/Load
+'  Person 5
+'  Packages: ui (semua controller), plugin (PluginLoader saja), save
+'
+'  TANGGUNG JAWAB:
+'  - Seluruh JavaFX UI Controller (menu, lobby, game, dialog)
+'  - Rendering papan heksagonal (BoardRenderer)
+'  - Plugin Loader via URLClassLoader + Reflection
+'    (kartu baru, map generator, bot strategy)
+'  - Sistem Save/Load permainan ke/dari JSON
+'
+'  ANTARMUKA KE MODUL LAIN (coupling point):
+'  - Bergantung pada: Game, GameState, GamePhase (Module 4)
+'                    TradeManager, TradeNegotiation (Module 4)
+'                    VictoryPointCalculator (Module 4)
+'                    Player (Module 2)
+'                    Board, Intersection, Path, HexTile (Module 1)
+'                    ExperimentCard (Module 3)
+'                    Robber (Module 3)
+'                    MapGeneratorPlugin, PlayerStrategy (Module 1 & 2)
+'                    ResourceType, Bank (Module 2)
+'                    BuildingType (Module 2)
+'                    DiceResult (Module 1)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class BackgroundColor White
+skinparam class BorderColor #333333
+skinparam class ArrowColor #333333
+skinparam class HeaderBackgroundColor #EBEBEB
+skinparam package BorderColor #555555
+skinparam package FontStyle bold
+skinparam note BackgroundColor #FFFFC0
+skinparam note BorderColor #999900
+
+' ============================================================
+'  EXTERNAL STUBS (dari modul lain, hanya referensi)
+' ============================================================
+package "external.core" #DDDDDD {
+  class Game
+  class VictoryPointCalculator
+  interface GameState
+  enum GamePhase {
+    SETUP_FIRST_ROUND
+    TRADE_BUILD
+    GAME_OVER
+  }
+}
+
+package "external.trade" #DDDDDD {
+  class TradeManager
+  class TradeNegotiation
+}
+
+package "external.player" #DDDDDD {
+  interface Player {
+    + getName() : String
+    + getColor() : PlayerColor
+    + isBot() : boolean
+  }
+  enum PlayerColor {
+    RED
+    BLUE
+    ORANGE
+    WHITE
+  }
+}
+
+package "external.resource" #DDDDDD {
+  enum ResourceType {
+    WOODBRICK
+    WHEAT
+    ORE
+    BANANA
+  }
+}
+
+package "external.board" #DDDDDD {
+  class Board
+  class HexTile
+  class Intersection
+  class Path
+}
+
+package "external.building" #DDDDDD {
+  enum BuildingType {
+    SETTLEMENT
+    CITY
+    ROAD
+  }
+}
+
+package "external.card" #DDDDDD {
+  interface ExperimentCard
+}
+
+package "external.card.special" #DDDDDD {
+  enum SpecialCardType {
+    LONGEST_ROAD
+    LARGEST_ARMY
+  }
+}
+
+package "external.robber" #DDDDDD {
+  class Robber
+}
+
+package "external.dice" #DDDDDD {
+  class DiceResult
+}
+
+package "external.plugin.interfaces" #DDDDDD {
+  interface MapGeneratorPlugin {
+    + generateBoard() : Board
+  }
+  interface PlayerStrategy {
+    + takeTurn(state : GameState) : List~Action~
+  }
+}
+
+' ============================================================
+'  PACKAGE: plugin (PluginLoader saja)
+' ============================================================
+package "plugin" #F2F3F4 {
+
+  class PluginLoader {
+    - loadedCardPlugins : List~ExperimentCard~
+    - loadedMapPlugin : MapGeneratorPlugin
+    - loadedBotStrategies : List~PlayerStrategy~
+    --
+    + loadExperimentCard(jarPath : String) : ExperimentCard
+    + loadMapGenerator(jarPath : String) : MapGeneratorPlugin
+    + loadBotStrategy(jarPath : String) : PlayerStrategy
+    + getLoadedCardPlugins() : List~ExperimentCard~
+    + getLoadedMapPlugin() : MapGeneratorPlugin
+    + getLoadedBotStrategies() : List~PlayerStrategy~
+    - loadClassFromJar(jarPath : String, targetInterface : Class) : Object
+    - validateInterface(clazz : Class, expected : Class) : boolean
+  }
+}
+
+' ============================================================
+'  PACKAGE: save
+' ============================================================
+package "save" #F2F3F4 {
+
+  class GameSaveManager {
+    + save(state : GameState, filePath : String) : void
+    + load(filePath : String) : GameSaveData
+    - serialize(data : GameSaveData) : String
+    - deserialize(json : String) : GameSaveData
+  }
+
+  class GameSaveData {
+    - version : String
+    - timestamp : long
+    - mapConfig : BoardSaveData
+    - players : List~PlayerSaveData~
+    - currentPlayerIndex : int
+    - bank : Map~String, Integer~
+    - deckSize : int
+    - discardedCards : List~String~
+    - robberTileId : int
+    - timerRemainingSeconds : int
+    - longestRoadHolderName : String
+    - largestArmyHolderName : String
+    --
+    + getVersion() : String
+    + getTimestamp() : long
+    + getMapConfig() : BoardSaveData
+    + getPlayers() : List~PlayerSaveData~
+    + getCurrentPlayerIndex() : int
+  }
+
+  class BoardSaveData {
+    - hexTiles : List~HexTileSaveData~
+    - harbors : List~HarborSaveData~
+    --
+    + getHexTiles() : List~HexTileSaveData~
+    + getHarbors() : List~HarborSaveData~
+  }
+
+  class HexTileSaveData {
+    - id : int
+    - terrainType : String
+    - tokenValue : int
+    - column : int
+    - row : int
+  }
+
+  class HarborSaveData {
+    - id : int
+    - harborType : String
+    - intersectionIds : List~Integer~
+  }
+
+  class PlayerSaveData {
+    - name : String
+    - color : String
+    - isBot : boolean
+    - resources : Map~String, Integer~
+    - settlementIntersectionIds : List~Integer~
+    - cityIntersectionIds : List~Integer~
+    - roadPathIds : List~Integer~
+    - handCardTypes : List~String~
+    - knightsPlayed : int
+    - hasLongestRoad : boolean
+    - hasLargestArmy : boolean
+    - longestRoadLength : int
+  }
+}
+
+' ============================================================
+'  PACKAGE: ui (JavaFX Controllers)
+' ============================================================
+package "ui" #FDFEFE {
+
+  class MainMenuController {
+    --
+    + onNewGame() : void
+    + onLoadGame() : void
+    + onExit() : void
+  }
+
+  class LobbyController {
+    - pluginLoader : PluginLoader
+    - selectedPlayers : List~PlayerConfig~
+    --
+    + onStartGame() : void
+    + onLoadMapPlugin() : void
+    + onLoadBotPlugin() : void
+    + setupPlayerSlots(count : int) : void
+    + validateSetup() : boolean
+  }
+
+  class PlayerConfig {
+    - name : String
+    - color : PlayerColor
+    - isBot : boolean
+    - botStrategyJar : String
+  }
+
+  class GameController {
+    - game : Game
+    - boardRenderer : BoardRenderer
+    - vpCalculator : VictoryPointCalculator
+    - tradeDialogController : TradeDialogController
+    --
+    + initialize(game : Game) : void
+    + onRollDice() : void
+    + onEndTurn() : void
+    + onOpenTrade() : void
+    + onOpenCards() : void
+    + onOpenSettings() : void
+    + updatePlayerPanel() : void
+    + updateLogbook() : void
+    + updateTimer(remaining : int) : void
+    + showDiceResult(result : DiceResult) : void
+    + promptBuildPlacement(type : BuildingType) : void
+    + checkVictory() : void
+  }
+
+  class BoardRenderer {
+    --
+    + renderBoard(board : Board) : void
+    + renderSettlement(intersection : Intersection) : void
+    + renderCity(intersection : Intersection) : void
+    + renderRoad(path : Path) : void
+    + renderRobber(tile : HexTile) : void
+    + highlightValidSettlementSlots(board : Board, player : Player) : void
+    + highlightValidRoadSlots(board : Board, player : Player) : void
+    + highlightValidCitySlots(board : Board, player : Player) : void
+    + clearHighlights() : void
+    + onHexClicked(tile : HexTile) : void
+    + onIntersectionClicked(intersection : Intersection) : void
+    + onPathClicked(path : Path) : void
+  }
+
+  class TradeDialogController {
+    - tradeManager : TradeManager
+    - activeNegotiation : TradeNegotiation
+    --
+    + setupDomesticTab(activePlayers : List~Player~) : void
+    + setupMaritimeTab(player : Player, board : Board) : void
+    + onSubmitOffer() : void
+    + onCounterOffer() : void
+    + onAccept() : void
+    + onReject() : void
+    + onCancel() : void
+  }
+
+  class CardDialogController {
+    - selectedCard : ExperimentCard
+    --
+    + displayCards(cards : List~ExperimentCard~) : void
+    + onPlaySelectedCard() : void
+    + onClose() : void
+    + refreshDisplay() : void
+  }
+
+  class DiscardDialogController {
+    - player : Player
+    - requiredDiscardCount : int
+    - selectedToDiscard : Map~ResourceType, Integer~
+    --
+    + setup(player : Player, discardCount : int) : void
+    + onConfirmDiscard() : void
+    + updateSelectedCount() : void
+    + isDiscardCountValid() : boolean
+  }
+
+  class StealDialogController {
+    - robber : Robber
+    - selectedVictim : Player
+    --
+    + setupVictims(victims : List~Player~) : void
+    + onConfirmSteal() : void
+    + onCancel() : void
+  }
+
+  class VictoryDialogController {
+    - player : Player
+    --
+    + setup(player : Player, vpCalc : VictoryPointCalculator) : void
+    + onRevealAndWin() : void
+    + onCancel() : void
+  }
+
+  class SettingsDialogController {
+    - pluginLoader : PluginLoader
+    --
+    + onSaveGame() : void
+    + onLoadCardPlugin() : void
+    + onApplyChanges() : void
+    + onCancel() : void
+  }
+
+  class TransitionScreenController {
+    - nextPlayer : Player
+    --
+    + setup(nextPlayer : Player) : void
+    + onPlayerReady() : void
+  }
+
+  class GameResultController {
+    - vpCalculator : VictoryPointCalculator
+    --
+    + showResults(players : List~Player~, winner : Player, duration : long) : void
+    + onViewFinalBoard() : void
+    + onMainMenu() : void
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS (internal)
+' ============================================================
+
+' --- plugin ---
+PluginLoader ..> ExperimentCard           : loads
+PluginLoader ..> MapGeneratorPlugin       : loads
+PluginLoader ..> PlayerStrategy           : loads
+
+' --- save ---
+GameSaveManager ..> GameState
+GameSaveManager ..> GameSaveData
+GameSaveData "1" *-- "1" BoardSaveData
+GameSaveData "1" *-- "*" PlayerSaveData
+BoardSaveData "1" *-- "*" HexTileSaveData
+BoardSaveData "1" *-- "*" HarborSaveData
+
+' --- ui ---
+GameController --> Game
+GameController --> BoardRenderer
+GameController --> VictoryPointCalculator
+GameController --> TradeDialogController
+GameController ..> DiceResult
+GameController ..> BuildingType
+
+LobbyController --> PluginLoader
+LobbyController "1" *-- "*" PlayerConfig
+LobbyController ..> PlayerColor
+
+BoardRenderer --> Board
+BoardRenderer ..> Intersection
+BoardRenderer ..> Path
+BoardRenderer ..> HexTile
+BoardRenderer ..> Player
+BoardRenderer ..> BuildingType
+
+TradeDialogController --> TradeManager
+TradeDialogController --> TradeNegotiation
+TradeDialogController ..> Player
+TradeDialogController ..> Board
+
+CardDialogController ..> ExperimentCard
+
+DiscardDialogController --> Player
+DiscardDialogController ..> ResourceType
+
+StealDialogController --> Robber
+StealDialogController ..> Player
+
+VictoryDialogController --> VictoryPointCalculator
+VictoryDialogController ..> Player
+
+SettingsDialogController --> PluginLoader
+SettingsDialogController --> GameSaveManager
+
+GameResultController --> VictoryPointCalculator
+GameResultController ..> Player
+
+TransitionScreenController ..> Player
+
+' ============================================================
+'  NOTES
+' ============================================================
+note top of PluginLoader
+  Java Reflection + URLClassLoader
+  Memuat .jar eksternal secara runtime.
+  Validasi interface wajib sebelum cast
+  untuk mencegah ClassCastException.
+  
+  Waktu Load:
+  - ExperimentCard: mid-game (Settings Dialog)
+  - MapGeneratorPlugin: pre-game (Lobby)
+  - PlayerStrategy/Bot: pre-game (Lobby)
+end note
+
+note top of GameSaveManager
+  Format Simpan: JSON (Gson/Jackson)
+  Data yang WAJIB disimpan:
+  1. Konfigurasi peta (terrain, token, harbor)
+  2. Posisi Nimon Ungu
+  3. Data pemain: posisi bangunan, kartu, resource
+  4. Poin Prestasi (termasuk kartu tersembunyi)
+  5. Giliran saat ini + status timer
+  6. Sisa bank & deck
+end note
+
+note right of BoardRenderer
+  Hexagonal Rendering (JavaFX)
+  Setiap HexTile dirender sebagai Polygon.
+  Intersection dan Path dirender sebagai
+  node interaktif di koordinat yang benar.
+  Gunakan referensi:
+  pragmaticcoding.ca/javafx/hexmap
+end note
+
+note right of GameController
+  Koordinator UI Utama
+  Menerima event dari BoardRenderer dan
+  semua dialog, meneruskan ke Game.
+  Update UI dilakukan via Platform.runLater()
+  agar non-blocking terhadap game thread.
+end note
+
+@enduml

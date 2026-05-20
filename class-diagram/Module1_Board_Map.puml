@@ -1,0 +1,308 @@
+@startuml Module1_Board_Map
+
+' ============================================================
+'  Banana Republic — Module 1: Board & Map Generation
+'  Person 1
+'  Packages: board, dice, plugin (MapGeneratorPlugin, StandardMapGenerator)
+'
+'  TANGGUNG JAWAB:
+'  - Struktur data papan heksagonal (tile, intersection, path, harbor)
+'  - Logika adjacency dan validasi papan
+'  - Dice rolling (manual & random)
+'  - Kontrak & implementasi default Map Generator Plugin
+'
+'  ANTARMUKA KE MODUL LAIN (coupling point):
+'  - Menerima: ResourceType (enum dari Module 2) — hanya sebagai tipe enum
+'  - Menerima: Player interface (dari Module 2) — hanya sebagai tipe referensi di Board query
+'  - Memberikan kepada semua modul: Board, HexTile, Intersection, Path, Harbor, DiceResult
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  BorderColor #333333
+  ArrowColor #333333
+  HeaderBackgroundColor #EBEBEB
+}
+skinparam package {
+  BorderColor #555555
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFFC0
+  BorderColor #999900
+}
+
+' ============================================================
+'  EXTERNAL STUBS (dari modul lain, hanya referensi)
+' ============================================================
+package "«external»\nresource" #DDDDDD {
+  enum ResourceType <<external>> {
+    WOOD
+    BRICK
+    WHEAT
+    ORE
+    BANANA
+  }
+}
+
+package "«external»\nplayer" #DDDDDD {
+  interface Player <<external>> {
+    + getName() : String
+  }
+}
+
+' ============================================================
+'  PACKAGE: board
+' ============================================================
+package "board" #EBF5EB {
+
+  class Board {
+    - hexTiles : List<HexTile>
+    - intersections : List<Intersection>
+    - paths : List<Path>
+    - harbors : List<Harbor>
+    --
+    + getHexTileById(id : int) : HexTile
+    + getIntersectionById(id : int) : Intersection
+    + getPathById(id : int) : Path
+    + getAdjacentIntersections(hex : HexTile) : List<Intersection>
+    + getAdjacentHexTiles(intersection : Intersection) : List<HexTile>
+    + getAdjacentPaths(intersection : Intersection) : List<Path>
+    + getAdjacentIntersections(path : Path) : List<Intersection>
+    + getTilesWithToken(number : int) : List<HexTile>
+    + isDistanceRuleValid(intersection : Intersection) : boolean
+    + getConnectedRoads(player : Player) : List<Path>
+    + getHarborAt(intersection : Intersection) : Optional<Harbor>
+    + getAllIntersections() : List<Intersection>
+    + getAllPaths() : List<Path>
+  }
+
+  class HexTile {
+    - id : int
+    - terrainType : TerrainType
+    - numberToken : NumberToken
+    - hasRobber : boolean
+    - column : int
+    - row : int
+    --
+    + getId() : int
+    + getTerrainType() : TerrainType
+    + getNumberToken() : NumberToken
+    + hasRobber() : boolean
+    + setRobber(present : boolean) : void
+    + getResourceType() : ResourceType
+    + canProduce() : boolean
+    + getColumn() : int
+    + getRow() : int
+  }
+
+  enum TerrainType {
+    FOREST
+    HILL
+    FIELD
+    MOUNTAIN
+    BANANA_PLANTATION
+    DESERT
+    + producesResource() : boolean
+    + getResourceType() : ResourceType
+  }
+
+  class NumberToken {
+    - value : int
+    - isRed : boolean
+    --
+    + getValue() : int
+    + isRed() : boolean
+    + isHighProbability() : boolean
+    + getDotCount() : int
+  }
+
+  class Intersection {
+    - id : int
+    - adjacentHexTiles : List<HexTile>
+    - adjacentPaths : List<Path>
+    - building : Building
+    --
+    + getId() : int
+    + isEmpty() : boolean
+    + hasBuilding() : boolean
+    + getBuilding() : Building
+    + placeBuilding(b : Building) : void
+    + removeBuilding() : Building
+    + getOwner() : Player
+    + getAdjacentHexTiles() : List<HexTile>
+    + getAdjacentPaths() : List<Path>
+    + getNeighboringIntersections() : List<Intersection>
+  }
+
+  class Path {
+    - id : int
+    - intersectionA : Intersection
+    - intersectionB : Intersection
+    - road : Road
+    --
+    + getId() : int
+    + isEmpty() : boolean
+    + hasRoad() : boolean
+    + getRoad() : Road
+    + placeRoad(r : Road) : void
+    + getOwner() : Player
+    + getIntersectionA() : Intersection
+    + getIntersectionB() : Intersection
+    + isCoastal() : boolean
+  }
+
+  class Harbor {
+    - id : int
+    - harborType : HarborType
+    - adjacentIntersections : List<Intersection>
+    --
+    + getId() : int
+    + getHarborType() : HarborType
+    + getAdjacentIntersections() : List<Intersection>
+    + getTradeRatio(resource : ResourceType) : int
+    + isApplicableFor(resource : ResourceType) : boolean
+  }
+
+  enum HarborType {
+    GENERIC_3TO1
+    BANANA_2TO1
+    WOOD_2TO1
+    BRICK_2TO1
+    WHEAT_2TO1
+    ORE_2TO1
+    + getDefaultRatio() : int
+    + getSpecificResource() : ResourceType
+  }
+
+  ' NOTE: Building dan Road adalah forward reference dari Module 2.
+  ' Di sini hanya sebagai placeholder tipe.
+  interface Building <<forward-ref>> {
+    + getOwner() : Player
+    + getVictoryPoints() : int
+    + getProductionAmount() : int
+  }
+
+  class Road <<forward-ref>> {
+    + getOwner() : Player
+  }
+}
+
+' ============================================================
+'  PACKAGE: dice
+' ============================================================
+package "dice" #EBF5EB {
+
+  class Dice {
+    - manualMode : boolean
+    - manualValue1 : int
+    - manualValue2 : int
+    - random : Random
+    --
+    + roll() : DiceResult
+    + setManualMode(enabled : boolean) : void
+    + setManualValues(die1 : int, die2 : int) : void
+    + isManualMode() : boolean
+  }
+
+  class DiceResult {
+    - die1 : int
+    - die2 : int
+    --
+    + getDie1() : int
+    + getDie2() : int
+    + getTotal() : int
+    + isSeven() : boolean
+  }
+}
+
+' ============================================================
+'  PACKAGE: plugin (Map Generator saja)
+' ============================================================
+package "plugin" #EBF5EB {
+
+  interface MapGeneratorPlugin {
+    + generateBoard() : Board
+    + getPluginName() : String
+  }
+
+  class StandardMapGenerator implements MapGeneratorPlugin {
+    - FIXED_HEX_LAYOUT : TerrainType[]
+    - FIXED_TOKEN_LAYOUT : int[]
+    - HARBOR_CONFIG : HarborType[]
+    --
+    + generateBoard() : Board
+    + getPluginName() : String
+    - placeTerrains(board : Board) : void
+    - placeTokens(board : Board) : void
+    - placeHarbors(board : Board) : void
+    - buildIntersections(board : Board) : void
+    - buildPaths(board : Board) : void
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS (internal)
+' ============================================================
+Board "1" *-- "19" HexTile
+Board "1" *-- "*"  Intersection
+Board "1" *-- "*"  Path
+Board "1" *-- "9"  Harbor
+
+HexTile --> TerrainType
+HexTile --> NumberToken
+HexTile ..> ResourceType
+
+Intersection "1" o-- "0..1" Building      : has >
+Intersection "1" --> "1..3" HexTile       : adjacent to >
+Intersection "1" --> "1..3" Path          : adjacent to >
+
+Path "1" o-- "0..1" Road                  : has >
+Path "1" --> "2" Intersection             : connects >
+
+Harbor --> HarborType
+Harbor "1" --> "1..2" Intersection        : serves >
+Harbor ..> ResourceType
+
+Dice ..> DiceResult
+
+MapGeneratorPlugin ..> Board
+StandardMapGenerator ..> TerrainType
+StandardMapGenerator ..> HarborType
+
+Board ..> Player                          : query owner >
+
+' ============================================================
+'  NOTES
+' ============================================================
+note top of MapGeneratorPlugin
+  <b>Plugin Contract (Map)</b>
+  Diimplementasikan oleh StandardMapGenerator (default)
+  atau plugin .jar eksternal (bonus).
+  Diload SEBELUM game dimulai (di lobby).
+end note
+
+note top of Dice
+  <b>Fitur Manual Mode (Wajib Testing)</b>
+  Ketika manualMode = true, roll()
+  mengembalikan nilai yang di-set manual (1–6 per dadu).
+  Digunakan untuk skenario test case deterministik.
+end note
+
+note right of HexTile
+  canProduce() = false jika:
+  - terrainType == DESERT, atau
+  - hasRobber == true
+end note
+
+note right of Intersection
+  <b>Distance Rule:</b>
+  Semua 3 Intersection tetangga
+  harus isEmpty() agar valid
+  untuk penempatan Settlement.
+end note
+
+@enduml

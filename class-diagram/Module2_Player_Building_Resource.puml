@@ -1,0 +1,348 @@
+@startuml Module2_Player_Building_Resource
+
+' ============================================================
+'  Banana Republic — Module 2: Player, Building & Resources
+'  Person 2
+'  Packages: player, building, resource
+'
+'  TANGGUNG JAWAB:
+'  - Representasi pemain (human & bot) beserta inventory
+'  - Struktur bangunan (Settlement, City, Road) & supply pemain
+'  - Bank sumber daya (finite, 19 kartu/jenis)
+'  - Layanan distribusi produksi sumber daya saat dadu dilempar
+'  - Interface Player sebagai kontrak utama antar modul
+'
+'  ANTARMUKA KE MODUL LAIN (coupling point):
+'  - Mengekspos: Player (interface), Bank (interface), ResourceType (enum)
+'  - Bergantung pada: GameState (Module 4 - hanya interface)
+'                    ExperimentCard (Module 3 - hanya interface)
+'                    HexTile, Intersection, Board (Module 1 - tipe referensi)
+'                    PlayerStrategy, Action (bagian dari Module 2 itu sendiri)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  BorderColor #333333
+  ArrowColor #333333
+  HeaderBackgroundColor #EBEBEB
+}
+skinparam package {
+  BorderColor #555555
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFFC0
+  BorderColor #999900
+}
+
+' ============================================================
+'  EXTERNAL STUBS (dari modul lain, hanya referensi)
+' ============================================================
+package "«external»\ncore" #DDDDDD {
+  interface GameState <<external>> {
+    + getAllPlayers() : List<Player>
+    + getBank() : Bank
+    + getBoard() : Board
+  }
+}
+
+package "«external»\ncard" #DDDDDD {
+  interface ExperimentCard <<external>> {
+    + getCardName() : String
+    + getCardType() : CardType
+  }
+}
+
+package "«external»\nboard" #DDDDDD {
+  class HexTile <<external>> {}
+  class Intersection <<external>> {}
+  class Board <<external>> {}
+}
+
+' ============================================================
+'  PACKAGE: resource
+' ============================================================
+package "resource" #F4ECF7 {
+
+  enum ResourceType {
+    WOOD
+    BRICK
+    WHEAT
+    ORE
+    BANANA
+    + getDisplayName() : String
+    + getEmoji() : String
+  }
+
+  interface Bank {
+    + hasResource(type : ResourceType, amount : int) : boolean
+    + takeResource(type : ResourceType, amount : int) : void
+    + returnResource(type : ResourceType, amount : int) : void
+    + getCount(type : ResourceType) : int
+    + canFulfillAll(requests : Map<ResourceType, Integer>) : boolean
+  }
+
+  class BankImpl implements Bank {
+    - resources : Map<ResourceType, Integer>
+    - MAX_PER_TYPE : int = 19
+    --
+    + hasResource(type : ResourceType, amount : int) : boolean
+    + takeResource(type : ResourceType, amount : int) : void
+    + returnResource(type : ResourceType, amount : int) : void
+    + getCount(type : ResourceType) : int
+    + canFulfillAll(requests : Map<ResourceType, Integer>) : boolean
+    - validateAmount(amount : int) : void
+  }
+
+  class ResourceProductionService {
+    + distribute(tile : HexTile, players : List<Player>, bank : Bank) : void
+    + distributeForRoll(roll : int, board : Board, players : List<Player>, bank : Bank) : void
+    + canDistribute(tile : HexTile, affected : List<Player>, bank : Bank) : boolean
+    + distributeInitialResources(player : Player, secondSettlement : Intersection, bank : Bank, board : Board) : void
+  }
+}
+
+' ============================================================
+'  PACKAGE: player
+' ============================================================
+package "player" #FEF9E7 {
+
+  interface Player {
+    + getName() : String
+    + getColor() : PlayerColor
+    + getResourceCount(type : ResourceType) : int
+    + getTotalResourceCount() : int
+    + addResource(type : ResourceType, amount : int) : void
+    + removeResource(type : ResourceType, amount : int) : void
+    + hasResource(type : ResourceType, amount : int) : boolean
+    + getHandCards() : List<ExperimentCard>
+    + addCard(card : ExperimentCard) : void
+    + removeCard(card : ExperimentCard) : void
+    + getKnightsPlayed() : int
+    + incrementKnightsPlayed() : void
+    + getLongestRoadLength() : int
+    + setLongestRoadLength(length : int) : void
+    + hasSpecialCard(type : SpecialCardType) : boolean
+    + setSpecialCard(type : SpecialCardType, owned : boolean) : void
+    + isBot() : boolean
+  }
+
+  class HumanPlayer implements Player {
+    - name : String
+    - color : PlayerColor
+    - resources : Map<ResourceType, Integer>
+    - handCards : List<ExperimentCard>
+    - knightsPlayed : int
+    - longestRoadLength : int
+    - specialCards : Map<SpecialCardType, Boolean>
+    --
+    + getName() : String
+    + getColor() : PlayerColor
+    + getResourceCount(type : ResourceType) : int
+    + getTotalResourceCount() : int
+    + addResource(type : ResourceType, amount : int) : void
+    + removeResource(type : ResourceType, amount : int) : void
+    + isBot() : boolean
+  }
+
+  class BotPlayer implements Player {
+    - name : String
+    - color : PlayerColor
+    - resources : Map<ResourceType, Integer>
+    - handCards : List<ExperimentCard>
+    - knightsPlayed : int
+    - longestRoadLength : int
+    - specialCards : Map<SpecialCardType, Boolean>
+    - strategy : PlayerStrategy
+    --
+    + executeTurn(state : GameState) : void
+    + isBot() : boolean
+  }
+
+  enum PlayerColor {
+    RED
+    BLUE
+    ORANGE
+    WHITE
+    + toHexCode() : String
+  }
+
+  enum SpecialCardType {
+    LONGEST_ROAD
+    LARGEST_ARMY
+  }
+
+  interface PlayerStrategy {
+    + takeTurn(state : GameState) : List<Action>
+    + chooseRobberTarget(state : GameState, candidates : List<Player>) : Player
+    + chooseRobberPlacement(state : GameState) : HexTile
+  }
+
+  class Action {
+    - actionType : ActionType
+    - parameters : Map<String, Object>
+    --
+    + getActionType() : ActionType
+    + getParameter(key : String) : Object
+    + setParameter(key : String, value : Object) : void
+  }
+
+  enum ActionType {
+    BUILD_ROAD
+    BUILD_SETTLEMENT
+    BUILD_CITY
+    BUY_DEV_CARD
+    PLAY_KNIGHT
+    PLAY_ROAD_BUILDING
+    PLAY_MONOPOLY
+    TRADE_DOMESTIC
+    TRADE_MARITIME
+    END_TURN
+  }
+}
+
+' ============================================================
+'  PACKAGE: building
+' ============================================================
+package "building" #F9EBEA {
+
+  abstract class Building {
+    - owner : Player
+    --
+    + getOwner() : Player
+    + {abstract} getVictoryPoints() : int
+    + {abstract} getProductionAmount() : int
+    + {abstract} getBuildingType() : BuildingType
+  }
+
+  class Settlement extends Building {
+    - VICTORY_POINTS : int = 1
+    - PRODUCTION_AMOUNT : int = 1
+    --
+    + getVictoryPoints() : int
+    + getProductionAmount() : int
+    + getBuildingType() : BuildingType
+  }
+
+  class City extends Building {
+    - VICTORY_POINTS : int = 2
+    - PRODUCTION_AMOUNT : int = 2
+    --
+    + getVictoryPoints() : int
+    + getProductionAmount() : int
+    + getBuildingType() : BuildingType
+  }
+
+  class Road {
+    - owner : Player
+    --
+    + getOwner() : Player
+  }
+
+  enum BuildingType {
+    SETTLEMENT
+    CITY
+    ROAD
+  }
+
+  class PlayerSupply {
+    - owner : Player
+    - settlements : int
+    - cities : int
+    - roads : int
+    - MAX_SETTLEMENTS : int = 5
+    - MAX_CITIES : int = 4
+    - MAX_ROADS : int = 15
+    --
+    + getSettlementsRemaining() : int
+    + getCitiesRemaining() : int
+    + getRoadsRemaining() : int
+    + takeSettlement() : Settlement
+    + takeCity() : City
+    + takeRoad() : Road
+    + returnSettlement(s : Settlement) : void
+    + canBuildSettlement() : boolean
+    + canBuildCity() : boolean
+    + canBuildRoad() : boolean
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS (internal)
+' ============================================================
+
+' resource
+BankImpl ..|> Bank
+ResourceProductionService ..> HexTile
+ResourceProductionService ..> Player
+ResourceProductionService ..> Bank
+ResourceProductionService ..> Board
+ResourceProductionService ..> Intersection
+ResourceProductionService ..> Building
+
+' player
+HumanPlayer ..> ResourceType
+HumanPlayer ..> ExperimentCard
+HumanPlayer ..> SpecialCardType
+BotPlayer --> PlayerStrategy              : uses >
+BotPlayer ..> ResourceType
+BotPlayer ..> ExperimentCard
+BotPlayer ..> SpecialCardType
+BotPlayer ..> GameState
+PlayerStrategy ..> GameState
+PlayerStrategy ..> Action
+PlayerStrategy ..> HexTile
+Action ..> ActionType
+
+' building
+Building --> Player                       : owned by >
+Settlement --|> Building
+City --|> Building
+Road --> Player                           : owned by >
+PlayerSupply --> Player                   : belongs to >
+PlayerSupply ..> Settlement
+PlayerSupply ..> City
+PlayerSupply ..> Road
+
+' cross: player <-> resource
+Player ..> ResourceType
+Player ..> ExperimentCard
+Player ..> SpecialCardType
+
+' ============================================================
+'  NOTES
+' ============================================================
+note right of Bank
+  <b>Sistem Finite Bank:</b>
+  Maks 19 kartu per jenis sumber daya.
+  Jika stok habis & >1 pemain terdampak:
+  tidak ada yang dapat sumber daya itu.
+  Jika hanya 1 pemain: dapat sisa yang ada.
+end note
+
+note right of PlayerSupply
+  <b>Supply per Pemain:</b>
+  Maks 5 Settlement, 4 City, 15 Road.
+  Saat City dibangun, Settlement dikembalikan
+  ke supply (bisa dipakai lagi).
+end note
+
+note right of PlayerStrategy
+  <b>Plugin Bot (Bonus)</b>
+  Interface ini diimplementasikan oleh
+  plugin .jar bot eksternal.
+  Diload SEBELUM game dimulai (lobby).
+  BotPlayer memanggil takeTurn() via Reflection.
+end note
+
+note top of Player
+  <b>Coupling Point Utama:</b>
+  Semua modul lain berinteraksi dengan
+  pemain melalui interface ini, bukan
+  HumanPlayer atau BotPlayer langsung.
+end note
+
+@enduml

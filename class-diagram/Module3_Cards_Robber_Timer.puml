@@ -1,0 +1,351 @@
+@startuml Module3_Cards_Robber_Timer
+
+' ============================================================
+'  Banana Republic — Module 3: Cards, Robber & Timer
+'  Person 3
+'  Packages: card, card.special, robber, timer
+'
+'  TANGGUNG JAWAB:
+'  - Hierarki kartu (ExperimentCard, KnightCard, ProgressCard, VictoryPointCard)
+'  - Deck management (CardDeck)
+'  - Kartu Spesial (LongestRoadCard, LargestArmyCard)
+'  - Mekanisme Nimon Ungu / Robber (efek dadu 7 & Kartu Penjaga)
+'  - Timer giliran 90 detik (multithreaded, non-blocking)
+'
+'  ANTARMUKA KE MODUL LAIN (coupling point):
+'  - Mengekspos: ExperimentCard (interface), CardDeck, TurnTimer, Robber
+'                LongestRoadCard, LargestArmyCard
+'  - Bergantung pada: GameState (Module 4 - interface saja)
+'                    Player (Module 2 - interface saja)
+'                    Bank (Module 2 - interface saja)
+'                    Board, HexTile (Module 1 - tipe referensi)
+'                    ResourceType (Module 2 - enum)
+' ============================================================
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam class {
+  BackgroundColor White
+  BorderColor #333333
+  ArrowColor #333333
+  HeaderBackgroundColor #EBEBEB
+}
+skinparam package {
+  BorderColor #555555
+  FontStyle bold
+}
+skinparam note {
+  BackgroundColor #FFFFC0
+  BorderColor #999900
+}
+
+' ============================================================
+'  EXTERNAL STUBS (dari modul lain, hanya referensi)
+' ============================================================
+package "«external»\ncore" #DDDDDD {
+  interface GameState <<external>> {
+    + getAllPlayers() : List<Player>
+    + getBank() : Bank
+    + getBoard() : Board
+    + getCurrentPlayer() : Player
+  }
+}
+
+package "«external»\nplayer" #DDDDDD {
+  interface Player <<external>> {
+    + getName() : String
+    + getTotalResourceCount() : int
+    + getKnightsPlayed() : int
+    + getLongestRoadLength() : int
+    + hasSpecialCard(type : SpecialCardType) : boolean
+  }
+}
+
+package "«external»\nresource" #DDDDDD {
+  interface Bank <<external>> {
+    + hasResource(type : ResourceType, amount : int) : boolean
+    + takeResource(type : ResourceType, amount : int) : void
+  }
+  enum ResourceType <<external>> {
+    WOOD
+    BRICK
+    WHEAT
+    ORE
+    BANANA
+  }
+}
+
+package "«external»\nboard" #DDDDDD {
+  class HexTile <<external>> {}
+  class Board <<external>> {}
+}
+
+' ============================================================
+'  PACKAGE: card
+' ============================================================
+package "card" #EAFAF1 {
+
+  interface ExperimentCard {
+    + getCardName() : String
+    + getDescription() : String
+    + applyEffect(state : GameState, player : Player) : void
+    + isPlayable() : boolean
+    + isSecret() : boolean
+    + getCardType() : CardType
+  }
+
+  enum CardType {
+    KNIGHT
+    ROAD_BUILDING
+    MONOPOLY
+    VICTORY_POINT
+  }
+
+  abstract class DevelopmentCard implements ExperimentCard {
+    - revealed : boolean
+    - newlyDrawn : boolean
+    --
+    + reveal() : void
+    + isRevealed() : boolean
+    + setNewlyDrawn(flag : boolean) : void
+    + isNewlyDrawn() : boolean
+    + isSecret() : boolean
+  }
+
+  class KnightCard extends DevelopmentCard {
+    + getCardName() : String
+    + getDescription() : String
+    + applyEffect(state : GameState, player : Player) : void
+    + isPlayable() : boolean
+    + isSecret() : boolean
+    + getCardType() : CardType
+  }
+
+  abstract class ProgressCard extends DevelopmentCard {
+    - consumed : boolean
+    --
+    + consume() : void
+    + isConsumed() : boolean
+    + isPlayable() : boolean
+  }
+
+  class RoadBuildingCard extends ProgressCard {
+    + getCardName() : String
+    + getDescription() : String
+    + applyEffect(state : GameState, player : Player) : void
+    + getCardType() : CardType
+  }
+
+  class MonopolyCard extends ProgressCard {
+    - targetResource : ResourceType
+    --
+    + getCardName() : String
+    + getDescription() : String
+    + applyEffect(state : GameState, player : Player) : void
+    + setTargetResource(type : ResourceType) : void
+    + getTargetResource() : ResourceType
+    + getCardType() : CardType
+  }
+
+  class VictoryPointCard extends DevelopmentCard {
+    - pointValue : int = 1
+    --
+    + getCardName() : String
+    + getDescription() : String
+    + applyEffect(state : GameState, player : Player) : void
+    + getPointValue() : int
+    + isPlayable() : boolean
+    + isSecret() : boolean
+    + getCardType() : CardType
+  }
+
+  class CardDeck {
+    - drawPile : Deque<ExperimentCard>
+    - discardPile : List<ExperimentCard>
+    --
+    + draw() : ExperimentCard
+    + addCard(card : ExperimentCard) : void
+    + addToBottom(card : ExperimentCard) : void
+    + shuffle() : void
+    + isEmpty() : boolean
+    + drawPileSize() : int
+    + getDiscardPile() : List<ExperimentCard>
+    + buildDefaultDeck() : void
+  }
+}
+
+' ============================================================
+'  PACKAGE: card.special
+' ============================================================
+package "card.special" #EAFAF1 {
+
+  abstract class SpecialCard {
+    - holder : Player
+    - BONUS_POINTS : int = 2
+    - active : boolean
+    --
+    + getHolder() : Player
+    + isActive() : boolean
+    + transfer(newHolder : Player) : void
+    + revoke() : void
+    + getBonusPoints() : int
+    + {abstract} getCardType() : SpecialCardType
+  }
+
+  enum SpecialCardType {
+    LONGEST_ROAD
+    LARGEST_ARMY
+  }
+
+  class LongestRoadCard extends SpecialCard {
+    - MINIMUM_LENGTH : int = 5
+    - currentQualifyingLength : int
+    --
+    + getCardType() : SpecialCardType
+    + evaluate(players : List<Player>, board : Board) : void
+    + calculateRoadLength(player : Player, board : Board) : int
+    - findLongestPath(start : Path, visited : Set<Path>, player : Player, board : Board) : int
+    + handleTie(tied : List<Player>) : void
+  }
+
+  class LargestArmyCard extends SpecialCard {
+    - MINIMUM_KNIGHTS : int = 3
+    - currentQualifyingCount : int
+    --
+    + getCardType() : SpecialCardType
+    + evaluate(players : List<Player>) : void
+  }
+}
+
+' ============================================================
+'  PACKAGE: robber
+' ============================================================
+package "robber" #EAFAF1 {
+
+  class Robber {
+    - currentTile : HexTile
+    --
+    + move(tile : HexTile) : void
+    + getCurrentTile() : HexTile
+    + getEligibleVictims(thief : Player, board : Board) : List<Player>
+    + stealRandomResource(thief : Player, victim : Player) : ResourceType
+    + activateDiscardPhase(players : List<Player>) : Map<Player, Integer>
+  }
+}
+
+' ============================================================
+'  PACKAGE: timer
+' ============================================================
+package "timer" #EAFAF1 {
+
+  class TurnTimer implements Runnable {
+    - durationSeconds : int = 90
+    - remainingSeconds : int
+    - running : boolean
+    - onExpire : Runnable
+    - onTick : Consumer<Integer>
+    - thread : Thread
+    --
+    + start() : void
+    + stop() : void
+    + reset() : void
+    + pause() : void
+    + resume() : void
+    + getRemainingSeconds() : int
+    + isRunning() : boolean
+    + setOnExpire(callback : Runnable) : void
+    + setOnTick(callback : Consumer<Integer>) : void
+    + run() : void
+  }
+}
+
+' ============================================================
+'  RELATIONSHIPS (internal)
+' ============================================================
+
+' card hierarchy
+DevelopmentCard ..|> ExperimentCard
+KnightCard --|> DevelopmentCard
+ProgressCard --|> DevelopmentCard
+RoadBuildingCard --|> ProgressCard
+MonopolyCard --|> ProgressCard
+VictoryPointCard --|> DevelopmentCard
+MonopolyCard ..> ResourceType
+
+CardDeck "1" *-- "*" ExperimentCard       : stores >
+CardDeck ..> DevelopmentCard
+
+ExperimentCard ..> GameState
+ExperimentCard ..> Player
+ExperimentCard ..> CardType
+
+' card.special
+SpecialCard --> Player                    : held by >
+SpecialCard ..> SpecialCardType
+LongestRoadCard --|> SpecialCard
+LongestRoadCard ..> Board
+LargestArmyCard --|> SpecialCard
+
+' robber
+Robber --> HexTile                        : placed on >
+Robber ..> Player
+Robber ..> Board
+Robber ..> ResourceType
+
+' timer
+TurnTimer ..|> Runnable
+
+' ============================================================
+'  NOTES
+' ============================================================
+note top of ExperimentCard
+  <b>Plugin Contract</b>
+  Wajib diimplementasikan oleh semua
+  plugin kartu dari file .jar eksternal.
+  Dimuat via URLClassLoader + Reflection.
+  applyEffect() dipanggil secara polymorphism.
+end note
+
+note bottom of CardDeck
+  <b>Komposisi Deck Default:</b>
+  14x KnightCard
+  3x RoadBuildingCard
+  3x MonopolyCard
+  5x VictoryPointCard
+  Total: 25 kartu
+end note
+
+note bottom of VictoryPointCard
+  <b>Pengecualian:</b>
+  Jika kartu ini langsung membuat total VP >= 10,
+  pemain BOLEH langsung mengungkap & menang
+  meski baru saja dibeli pada giliran yang sama.
+end note
+
+note right of LongestRoadCard
+  <b>Aturan Seri:</b>
+  - Seri Perebutan: holder lama tetap
+  - Seri Terputus: kartu disisihkan (holder = null)
+  Minimum panjang jalan: 5 ruas berurutan.
+end note
+
+note right of TurnTimer
+  <b>Multithreading</b>
+  Implements Runnable, dijalankan di
+  background thread terpisah dari UI thread.
+  Durasi: 90 detik per giliran (fase Trade/Build).
+  Lempar dadu TIDAK dihitung dalam timer.
+  setOnTick() → update UI via Platform.runLater()
+  setOnExpire() → auto end turn
+end note
+
+note right of Robber
+  <b>Efek dadu 7:</b>
+  1. activateDiscardPhase() → pemain >7 kartu buang setengah (floor)
+  2. move() → pindah ke tile lain (wajib, beda tile)
+  3. stealRandomResource() → curi 1 kartu acak (opsional)
+  Kartu Temuan TIDAK dihitung & TIDAK dibuang.
+end note
+
+@enduml
