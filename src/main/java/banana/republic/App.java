@@ -12,7 +12,7 @@ public class App extends Application{
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("/fxml/main.fxml")));
-        primaryStage.setTitle("LabPro Courier App");
+        primaryStage.setTitle("Banana Republic");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
     }
