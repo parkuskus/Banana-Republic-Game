@@ -1,22 +1,16 @@
 package banana.republic.player;
 
-import banana.republic.board.HexTile;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
 import banana.republic.card.ExperimentCard;
 import banana.republic.core.GameState;
 import banana.republic.resource.ResourceType;
 
-import java.util.*;
 
-/**
- * Implementation of a bot-controlled player.
- * Delegates turn decisions to a PlayerStrategy.
- *
- * Edge cases handled:
- * - Strategy cannot be null.
- * - Cannot add/remove negative resource amounts.
- * - Cannot remove more resources than owned.
- * - Cannot remove a card not in hand.
- */
 public class BotPlayer implements Player {
 
     private final String name;
@@ -54,9 +48,7 @@ public class BotPlayer implements Player {
         }
     }
 
-    /**
-     * Executes the bot's turn by delegating to its strategy.
-     */
+
     public void executeTurn(GameState state) {
         if (state == null) {
             throw new IllegalArgumentException("GameState cannot be null");
