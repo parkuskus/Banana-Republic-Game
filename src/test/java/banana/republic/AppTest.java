@@ -1,4 +1,4 @@
-package org.example;
+package banana.republic;
 
 import org.junit.jupiter.api.Test;
 
