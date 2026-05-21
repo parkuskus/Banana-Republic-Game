@@ -30,7 +30,8 @@ public class ResourceProductionService {
      * - Multiple players on same tile: handled per finite bank rules.
      */
     public void distributeForRoll(int roll, Board board, List<Player> players, Bank bank) {
-  
+        // Placeholder: actual implementation requires Board.getHexTilesByRoll(roll) from Module 1
+        // For now, this method serves as a contract.
     }
 
 
