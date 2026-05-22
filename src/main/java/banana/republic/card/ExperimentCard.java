@@ -1,7 +1,12 @@
 package banana.republic.card;
 
+import banana.republic.core.GameState;
+import banana.republic.player.Player;
 
 public interface ExperimentCard {
     String getCardName();
-    CardType getCardType();
+
+    String getDescription();
+
+    void applyEffect(GameState state, Player player);
 }
