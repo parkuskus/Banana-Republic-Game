@@ -1,36 +1,37 @@
-.PHONY: build run test clean all
+.PHONY: build run test clean all verify
 
-# JavaFX version
-JFX_VERSION=21.0.2
-# https://gluonhq.com/products/javafx/
-JAVAFX_SDK_URL=https://download2.gluonhq.com/openjfx/21.0.11/openjfx-21.0.11_linux-x64_bin-sdk.zip
-JAR_NAME=template-if2010-2526-tubes-2-1.0-SNAPSHOT.jar
+# Project settings (must match pom.xml)
+JAR_NAME=if2010-oop2526-tubes2-1.0-SNAPSHOT.jar
+SHADED_JAR_NAME=if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar
 
-# Download JavaFX SDK if needed
-javafx-sdk:
-    curl -L $(JAVAFX_SDK_URL) -o javafx-sdk.zip
-    unzip -o javafx-sdk.zip
-    rm javafx-sdk.zip
+# Build the project with Maven
+build:
+	mvn clean package
 
-# Build with JavaFX
-build: javafx-sdk
-    export PATH_TO_FX="$(PWD)/javafx-sdk-$(JFX_VERSION)/lib" && \
-    mvn clean package
+# Run tests (headless compatible for CI/autograder)
+test:
+	mvn test
 
-# Run tests with JavaFX
-test: javafx-sdk
-    export PATH_TO_FX="$(PWD)/javafx-sdk-$(JFX_VERSION)/lib" && \
-    mvn test -Dtestfx.robot=glass -Dglass.platform=Monocle -Dmonocle.platform=Headless -Dprism.order=sw
+# Run the application using Maven JavaFX plugin (recommended for dev)
+run:
+	mvn javafx:run
 
-# Run the application
-run: javafx-sdk
-    export PATH_TO_FX="$(PWD)/javafx-sdk-$(JFX_VERSION)/lib" && \
-    java --module-path "$$PATH_TO_FX" --add-modules javafx.controls,javafx.fxml -jar target/$(JAR_NAME)
+# Run the shaded uber JAR (after build)
+run-jar: build
+	java -jar target/$(SHADED_JAR_NAME)
 
-# Clean the build artifacts
+# Run with module path (no JavaFX warnings)
+run-module: build
+	java --module-path target/lib --add-modules javafx.controls,javafx.fxml,javafx.graphics \
+	  -cp "target/$(JAR_NAME):target/lib/*" banana.republic.Main
+
+# Full verification: compile + test + package
+verify:
+	mvn clean verify
+
+# Clean build artifacts
 clean:
-    mvn clean
-    rm -rf javafx-sdk-$(JFX_VERSION)
+	mvn clean
 
 # Build and run
 all: build run
