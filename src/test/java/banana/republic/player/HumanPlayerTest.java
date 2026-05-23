@@ -1,6 +1,5 @@
 package banana.republic.player;
 
-import banana.republic.card.CardType;
 import banana.republic.card.ExperimentCard;
 import banana.republic.resource.ResourceType;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,7 +82,8 @@ class HumanPlayerTest {
     void testHandCards() {
         ExperimentCard card = new ExperimentCard() {
             @Override public String getCardName() { return "Knight"; }
-            @Override public CardType getCardType() { return CardType.KNIGHT; }
+            @Override public String getDescription() { return "A knight card"; }
+            @Override public void applyEffect(banana.republic.core.GameState state, banana.republic.player.Player player) {}
         };
         player.addCard(card);
         assertEquals(1, player.getHandCards().size());
@@ -95,7 +95,8 @@ class HumanPlayerTest {
     void testRemoveCardNotInHand() {
         ExperimentCard card = new ExperimentCard() {
             @Override public String getCardName() { return "Knight"; }
-            @Override public CardType getCardType() { return CardType.KNIGHT; }
+            @Override public String getDescription() { return "A knight card"; }
+            @Override public void applyEffect(banana.republic.core.GameState state, banana.republic.player.Player player) {}
         };
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> player.removeCard(card));

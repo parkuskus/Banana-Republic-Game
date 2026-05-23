@@ -1,7 +1,6 @@
 package banana.republic.player;
 
 import banana.republic.board.HexTile;
-import banana.republic.card.CardType;
 import banana.republic.card.ExperimentCard;
 import banana.republic.core.GameState;
 import banana.republic.resource.ResourceType;
@@ -85,7 +84,8 @@ class BotPlayerTest {
         BotPlayer bot = new BotPlayer("Bot1", PlayerColor.BLUE, dummyStrategy);
         ExperimentCard card = new ExperimentCard() {
             @Override public String getCardName() { return "Knight"; }
-            @Override public CardType getCardType() { return CardType.KNIGHT; }
+            @Override public String getDescription() { return "A knight card"; }
+            @Override public void applyEffect(banana.republic.core.GameState state, banana.republic.player.Player player) {}
         };
         bot.addCard(card);
         assertEquals(1, bot.getHandCards().size());
