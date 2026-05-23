@@ -34,7 +34,9 @@ public class BankImpl implements Bank {
             if (current < amount) {
                 throw new IllegalArgumentException(String.format("Insufficient %s in bank. Requested: %d, Available: %d",type, amount, current));
             }
-            resources.put(type, current - amount);
+            int newAmount = current - amount;
+            resources.put(type, newAmount);
+            assert newAmount >= 0 : "Bank resource count should never go below 0 for " + type;
         }
     }
 
@@ -46,7 +48,9 @@ public class BankImpl implements Bank {
             if (current + amount > MAX_PER_TYPE) {
                 throw new IllegalArgumentException(String.format("Cannot return %d %s. Would exceed max capacity of %d (current: %d)",amount, type, MAX_PER_TYPE, current));
             }
-            resources.put(type, current + amount);
+            int newAmount = current + amount;
+            resources.put(type, newAmount);
+            assert newAmount <= MAX_PER_TYPE : "Bank resource count should never exceed max for " + type;
         }
     }
 
