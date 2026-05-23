@@ -42,6 +42,7 @@ public class PlayerSupply {
             throw new IllegalStateException("No Pos Pantau remaining for " + owner.getName());
         }
         posPantau--;
+        assert posPantau >= 0 : "Pos Pantau supply should never be negative";
         return new PosPantau(owner);
     }
 
@@ -50,6 +51,7 @@ public class PlayerSupply {
             throw new IllegalStateException("No Laboratorium remaining for " + owner.getName());
         }
         laboratorium--;
+        assert laboratorium >= 0 : "Laboratorium supply should never be negative";
         return new Laboratorium(owner);
     }
 
@@ -59,6 +61,7 @@ public class PlayerSupply {
             throw new IllegalStateException("No roads remaining for " + owner.getName());
         }
         roads--;
+        assert roads >= 0 : "Road supply should never be negative";
         return new Road(owner);
     }
 
