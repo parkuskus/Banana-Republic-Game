@@ -68,7 +68,9 @@ public class HumanPlayer implements Player {
         if (type == null) {
             throw new IllegalArgumentException("Resource type cannot be null");
         }
-        resources.put(type, resources.getOrDefault(type, 0) + amount);
+        int newAmount = resources.getOrDefault(type, 0) + amount;
+        resources.put(type, newAmount);
+        assert newAmount >= 0 : "Player resource count should never be negative for " + type;
     }
 
     @Override
@@ -83,7 +85,9 @@ public class HumanPlayer implements Player {
                 String.format("Cannot remove %d %s. Only have %d", amount, type, current)
             );
         }
-        resources.put(type, current - amount);
+        int newAmount = current - amount;
+        resources.put(type, newAmount);
+        assert newAmount >= 0 : "Player resource count should never be negative for " + type;
     }
 
     @Override
