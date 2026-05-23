@@ -186,6 +186,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <argLine>-ea</argLine>
                     <systemPropertyVariables>
                         <java.awt.headless>true</java.awt.headless>
                         <testfx.robot>glass</testfx.robot>
