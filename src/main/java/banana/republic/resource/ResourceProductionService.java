@@ -1,59 +1,166 @@
 package banana.republic.resource;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.board.Intersection;
+import banana.republic.building.Building;
 import banana.republic.player.Player;
 
 
 public class ResourceProductionService {
 
-    /**
-     * Distributes resources for a single tile to affected players.
-     * This is a helper for per-tile distribution.
-     *
-     * Precondition: caller should verify the tile is not blocked by Nimon Ungu.
-     */
-    public void distribute(HexTile tile, List<Player> players, Bank bank) {
-        // Placeholder: actual implementation requires Board data (adjacency) from Module 1
-        // For now, this method serves as a contract.
+
+    public void distribute(HexTile tile, Board board, List<Player> players, Bank bank) {
+        if (tile == null || board == null || players == null || bank == null) {
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        if (!tile.canProduce()) {
+            return;
+        }
+
+        ResourceType resourceType = tile.getResourceType();
+        if (resourceType == null) {
+            return;
+        }
+
+        Map<Player, Integer> productionPerPlayer = calculateProduction(tile, board);
+        if (productionPerPlayer.isEmpty()) {
+            return;
+        }
+
+        int totalNeeded = productionPerPlayer.values().stream().mapToInt(Integer::intValue).sum();
+        int available = bank.getCount(resourceType);
+
+        if (totalNeeded <= available) {
+            for (Map.Entry<Player, Integer> entry : productionPerPlayer.entrySet()) {
+                int amount = entry.getValue();
+                if (amount > 0) {
+                    bank.takeResource(resourceType, amount);
+                    entry.getKey().addResource(resourceType, amount);
+                }
+            }
+        } else {
+            int affectedPlayerCount = productionPerPlayer.size();
+            if (affectedPlayerCount == 1) {
+                Map.Entry<Player, Integer> entry = productionPerPlayer.entrySet().iterator().next();
+                int amount = Math.min(entry.getValue(), available);
+                if (amount > 0) {
+                    bank.takeResource(resourceType, amount);
+                    entry.getKey().addResource(resourceType, amount);
+                }
+            } else {
+                System.out.println("Resource shortage for " + resourceType + " on tile " + tile.getId() +". Needed: " + totalNeeded + ", Available: " + available +". No resources distributed to any player.");
+            }
+        }
     }
 
-    /**
-     * Distributes resources for a given dice roll across the entire board.
-     * This should be called by the game engine after dice are rolled.
-     *
-     * Edge cases:
-     * - Roll is 7: no resources are produced (Nimon Ungu activation).
-     * - Multiple players on same tile: handled per finite bank rules.
-     */
+
     public void distributeForRoll(int roll, Board board, List<Player> players, Bank bank) {
-        // Placeholder: actual implementation requires Board.getHexTilesByRoll(roll) from Module 1
-        // For now, this method serves as a contract.
+        assert roll >= 2 && roll <= 12 : "Dice roll must be between 2 and 12, was: " + roll;
+        if (roll == 7) {
+            return;
+        }
+        if (board == null || players == null || bank == null) {
+            throw new IllegalArgumentException("Board, players, and bank cannot be null");
+        }
+
+        List<HexTile> tiles = board.getTilesWithToken(roll);
+        for (HexTile tile : tiles) {
+            if (tile.canProduce()) {
+                distribute(tile, board, players, bank);
+            }
+        }
     }
 
 
-    public boolean canDistribute(HexTile tile, List<Player> affected, Bank bank) {
-        if (affected == null || affected.isEmpty()) {
+    public boolean canDistribute(HexTile tile, Board board, List<Player> players, Bank bank) {
+        if (tile == null || board == null || players == null || bank == null) {
             return false;
         }
-        // Placeholder: actual logic needs resource type mapping from HexTile (Module 1)
-        return true;
+
+        if (!tile.canProduce()) {
+            return false;
+        }
+
+        ResourceType resourceType = tile.getResourceType();
+        if (resourceType == null) {
+            return false;
+        }
+
+        Map<Player, Integer> productionPerPlayer = calculateProduction(tile, board);
+        if (productionPerPlayer.isEmpty()) {
+            return false;
+        }
+
+        int totalNeeded = productionPerPlayer.values().stream().mapToInt(Integer::intValue).sum();
+        int available = bank.getCount(resourceType);
+
+        if (totalNeeded <= available) {
+            return true;
+        }
+
+        if (productionPerPlayer.size() == 1) {
+            return available > 0; // Single player gets partial
+        }
+
+        return false; // Multiple players, shortage -> nobody gets anything
     }
 
-    /**
-     * Distributes initial resources after the second Pos Pantau placement.
-     * Each player gets 1 resource card for each terrain hex adjacent to their second Pos Pantau.
-     *
-     * Edge cases:
-     * - Bank shortage: same finite rules apply.
-     * - Desert/Gurun tile: produces no resources.
-     */
+
     public void distributeInitialResources(Player player, Intersection secondPosPantau,
                                              Bank bank, Board board) {
-        // Placeholder: requires Board.getAdjacentHexTiles(intersection) from Module 1
-        // For now, this method serves as a contract.
+        if (player == null || secondPosPantau == null || bank == null || board == null) {
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
+        List<HexTile> adjacentHexes = board.getAdjacentHexTiles(secondPosPantau);
+        Map<ResourceType, Integer> resourceCounts = new EnumMap<>(ResourceType.class);
+
+        for (HexTile hex : adjacentHexes) {
+            if (hex.canProduce()) {
+                ResourceType type = hex.getResourceType();
+                if (type != null) {
+                    resourceCounts.merge(type, 1, Integer::sum);
+                }
+            }
+        }
+
+        for (Map.Entry<ResourceType, Integer> entry : resourceCounts.entrySet()) {
+            ResourceType type = entry.getKey();
+            int needed = entry.getValue();
+            int available = bank.getCount(type);
+
+            if (needed <= available) {
+                bank.takeResource(type, needed);
+                player.addResource(type, needed);
+            } else if (available > 0) {
+                // Only partial available - give what we can
+                bank.takeResource(type, available);
+                player.addResource(type, available);
+            }
+        }
+    }
+
+    private Map<Player, Integer> calculateProduction(HexTile tile, Board board) {
+        Map<Player, Integer> productionPerPlayer = new java.util.HashMap<>();
+        List<Intersection> adjacentIntersections = board.getAdjacentIntersections(tile);
+
+        for (Intersection intersection : adjacentIntersections) {
+            if (intersection.hasBuilding()) {
+                Building building = intersection.getBuilding();
+                Player owner = building.getOwner();
+                int production = building.getProductionAmount();
+                if (owner != null && production > 0) {
+                    productionPerPlayer.merge(owner, production, Integer::sum);
+                }
+            }
+        }
+
+        return productionPerPlayer;
     }
 }
