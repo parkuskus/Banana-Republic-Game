@@ -1,5 +1,9 @@
 package banana.republic.card;
 
+import banana.republic.board.Board;
+import banana.republic.board.Path;
+import banana.republic.building.PlayerSupply;
+import banana.republic.building.Road;
 import banana.republic.core.GameState;
 import banana.republic.player.Player;
 
@@ -20,18 +24,33 @@ public class RoadBuildingCard extends ProgressCard {
 
     @Override
     public void applyEffect(GameState state, Player player) {
-        // Efek Road Building:
-        // Pemain mendapat akses untuk menempatkan 2 pipa gratis.
-        // Logika placement dilakukan di controller (player memilih posisi).
-        // Card ini hanya marker untuk meng-unlock akses tersebut.
-
         assert player != null : "Player harus tidak null saat mainkan RoadBuildingCard";
         assert state != null : "GameState harus tidak null saat mainkan RoadBuildingCard";
 
-        // Reveal kartu
         this.reveal();
 
-        // Consume kartu karena sudah digunakan
+        Board board = state.getBoard();
+        PlayerSupply supply = player.getSupply();
+        if (board == null || supply == null || !supply.canBuildRoad()) {
+            this.consume();
+            return;
+        }
+
+        int roadsPlaced = 0;
+        for (Path path : board.getBuildableRoadPaths(player)) {
+            if (roadsPlaced >= 2 || !supply.canBuildRoad()) {
+                break;
+            }
+
+            if (!path.isEmpty()) {
+                continue;
+            }
+
+            Road road = supply.takeRoad();
+            path.placeRoad(road);
+            roadsPlaced++;
+        }
+
         this.consume();
     }
 

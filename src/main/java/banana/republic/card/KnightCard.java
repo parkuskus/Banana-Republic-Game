@@ -1,5 +1,7 @@
 package banana.republic.card;
 
+import banana.republic.board.Board;
+import banana.republic.board.HexTile;
 import banana.republic.core.GameState;
 import banana.republic.player.Player;
 import banana.republic.robber.Robber;
@@ -27,22 +29,30 @@ public class KnightCard extends DevelopmentCard {
 
     @Override
     public void applyEffect(GameState state, Player player) {
-        // Efek Knight:
-        // 1. Pindahkan Nimon Ungu (via Robber.move())
-        // 2. Boleh curi kartu acak dari pemain di sekitar lokasi baru
-        //
-        // Catatan: Logika pindah tile, curi, dan validasi pemain
-        // dilakukan di controller/TurnManager (tidak di kartu).
-        // Kartu ini hanya marker untuk trigger mekanisme.
-
         assert player != null : "Player harus tidak null saat mainkan KnightCard";
         assert state != null : "GameState harus tidak null saat mainkan KnightCard";
 
-        // Increment knights played counter untuk Largest Army tracking
         player.incrementKnightsPlayed();
-
-        // Reveal kartu karena sudah dimainkan
         this.reveal();
+
+        Board board = state.getBoard();
+        if (board == null || board.getAllHexTiles().isEmpty()) {
+            return;
+        }
+
+        HexTile currentRobberTile = board.getRobberTile().orElse(null);
+        HexTile chosenTile = chooseKnightTarget(board, currentRobberTile, player);
+        if (chosenTile == null) {
+            return;
+        }
+
+        board.moveRobber(chosenTile);
+
+        Robber robber = new Robber(chosenTile);
+        var victims = robber.getEligibleVictims(player, board);
+        if (!victims.isEmpty()) {
+            robber.stealRandomResource(player, victims.get(0));
+        }
     }
 
     @Override
@@ -63,5 +73,45 @@ public class KnightCard extends DevelopmentCard {
     @Override
     public CardType getCardType() {
         return CardType.KNIGHT;
+    }
+
+    private HexTile chooseKnightTarget(Board board, HexTile currentRobberTile, Player player) {
+        HexTile preferred = null;
+
+        for (HexTile tile : board.getAllHexTiles()) {
+            if (tile == null || tile.equals(currentRobberTile)) {
+                continue;
+            }
+
+            if (preferred == null) {
+                preferred = tile;
+            }
+
+            if (!getEligibleVictimsAt(tile, board, player).isEmpty()) {
+                return tile;
+            }
+        }
+
+        return preferred;
+    }
+
+    private java.util.List<Player> getEligibleVictimsAt(HexTile tile, Board board, Player thief) {
+        java.util.List<Player> victims = new java.util.ArrayList<>();
+        for (var intersection : board.getAdjacentIntersections(tile)) {
+            if (!intersection.hasBuilding()) {
+                continue;
+            }
+
+            Player owner = intersection.getOwner();
+            if (owner == null || owner.equals(thief) || victims.contains(owner)) {
+                continue;
+            }
+
+            if (owner.getTotalResourceCount() > 0) {
+                victims.add(owner);
+            }
+        }
+
+        return victims;
     }
 }
