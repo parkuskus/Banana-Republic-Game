@@ -36,13 +36,25 @@ public class RoadBuildingCard extends ProgressCard {
             return;
         }
 
+        java.util.List<Path> candidates = board.getBuildableRoadPaths(player);
+        java.util.List<Path> selectedPaths = state.chooseRoadBuildingPaths(
+            player,
+            java.util.Collections.unmodifiableList(candidates),
+            2
+        );
+
+        if (selectedPaths == null || selectedPaths.isEmpty()) {
+            this.consume();
+            return;
+        }
+
         int roadsPlaced = 0;
-        for (Path path : board.getBuildableRoadPaths(player)) {
-            if (roadsPlaced >= 2 || !supply.canBuildRoad()) {
+        for (Path path : selectedPaths) {
+            if (path == null || roadsPlaced >= 2 || !supply.canBuildRoad()) {
                 break;
             }
 
-            if (!path.isEmpty()) {
+            if (!candidates.contains(path) || !path.isEmpty()) {
                 continue;
             }
 

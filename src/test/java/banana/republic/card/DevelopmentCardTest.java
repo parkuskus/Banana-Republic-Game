@@ -25,7 +25,6 @@ import banana.republic.resource.ResourceType;
 public class DevelopmentCardTest {
     private DevelopmentCard knightCard;
     private DevelopmentCard roadCard;
-    private DevelopmentCard monopolyCard;
     private DevelopmentCard vpCard;
 
     // Mock objects untuk testing
@@ -33,10 +32,10 @@ public class DevelopmentCardTest {
     private MockPlayer mockPlayer;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         knightCard = new KnightCard();
         roadCard = new RoadBuildingCard();
-        monopolyCard = new MonopolyCard();
         vpCard = new VictoryPointCard();
 
         mockGameState = new MockGameState();

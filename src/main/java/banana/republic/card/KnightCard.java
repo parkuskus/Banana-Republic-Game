@@ -41,7 +41,14 @@ public class KnightCard extends DevelopmentCard {
         }
 
         HexTile currentRobberTile = board.getRobberTile().orElse(null);
-        HexTile chosenTile = chooseKnightTarget(board, currentRobberTile, player);
+        java.util.List<HexTile> candidates = new java.util.ArrayList<>();
+        for (HexTile tile : board.getAllHexTiles()) {
+            if (tile != null && !tile.equals(currentRobberTile)) {
+                candidates.add(tile);
+            }
+        }
+
+        HexTile chosenTile = state.chooseKnightTarget(player, java.util.Collections.unmodifiableList(candidates));
         if (chosenTile == null) {
             return;
         }
@@ -51,7 +58,10 @@ public class KnightCard extends DevelopmentCard {
         Robber robber = new Robber(chosenTile);
         var victims = robber.getEligibleVictims(player, board);
         if (!victims.isEmpty()) {
-            robber.stealRandomResource(player, victims.get(0));
+            Player chosenVictim = state.chooseKnightVictim(player, chosenTile, java.util.Collections.unmodifiableList(victims));
+            if (chosenVictim != null && victims.contains(chosenVictim)) {
+                robber.stealRandomResource(player, chosenVictim);
+            }
         }
     }
 
@@ -70,45 +80,5 @@ public class KnightCard extends DevelopmentCard {
     @Override
     public CardType getCardType() {
         return CardType.KNIGHT;
-    }
-
-    private HexTile chooseKnightTarget(Board board, HexTile currentRobberTile, Player player) {
-        HexTile preferred = null;
-
-        for (HexTile tile : board.getAllHexTiles()) {
-            if (tile == null || tile.equals(currentRobberTile)) {
-                continue;
-            }
-
-            if (preferred == null) {
-                preferred = tile;
-            }
-
-            if (!getEligibleVictimsAt(tile, board, player).isEmpty()) {
-                return tile;
-            }
-        }
-
-        return preferred;
-    }
-
-    private java.util.List<Player> getEligibleVictimsAt(HexTile tile, Board board, Player thief) {
-        java.util.List<Player> victims = new java.util.ArrayList<>();
-        for (var intersection : board.getAdjacentIntersections(tile)) {
-            if (!intersection.hasBuilding()) {
-                continue;
-            }
-
-            Player owner = intersection.getOwner();
-            if (owner == null || owner.equals(thief) || victims.contains(owner)) {
-                continue;
-            }
-
-            if (owner.getTotalResourceCount() > 0) {
-                victims.add(owner);
-            }
-        }
-
-        return victims;
     }
 }

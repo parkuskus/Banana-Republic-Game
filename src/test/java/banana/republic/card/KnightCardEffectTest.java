@@ -42,7 +42,7 @@ class KnightCardEffectTest {
             List.of()
         );
 
-        GameState state = new MockGameState(board, List.of(attacker, victim));
+        GameState state = new MockGameState(board, List.of(attacker, victim), victimTile, victim);
         KnightCard card = new KnightCard();
 
         card.applyEffect(state, attacker);
@@ -57,10 +57,14 @@ class KnightCardEffectTest {
     private static final class MockGameState implements GameState {
         private final Board board;
         private final List<Player> players;
+        private final HexTile selectedTarget;
+        private final Player selectedVictim;
 
-        private MockGameState(Board board, List<Player> players) {
+        private MockGameState(Board board, List<Player> players, HexTile selectedTarget, Player selectedVictim) {
             this.board = board;
             this.players = players;
+            this.selectedTarget = selectedTarget;
+            this.selectedVictim = selectedVictim;
         }
 
         @Override
@@ -76,6 +80,16 @@ class KnightCardEffectTest {
         @Override
         public Board getBoard() {
             return board;
+        }
+
+        @Override
+        public HexTile chooseKnightTarget(Player player, List<HexTile> candidates) {
+            return selectedTarget;
+        }
+
+        @Override
+        public Player chooseKnightVictim(Player player, HexTile target, List<Player> candidates) {
+            return selectedVictim;
         }
     }
 }

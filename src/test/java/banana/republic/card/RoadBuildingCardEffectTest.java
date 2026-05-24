@@ -37,7 +37,7 @@ class RoadBuildingCardEffectTest {
         a.placeBuilding(new PosPantau(player));
 
         Board board = new Board(List.of(), List.of(a, b, c), List.of(ab, ac), List.of());
-        GameState state = new MockGameState(board, List.of(player));
+        GameState state = new MockGameState(board, List.of(player), List.of(ab, ac));
 
         RoadBuildingCard card = new RoadBuildingCard();
         card.applyEffect(state, player);
@@ -50,10 +50,12 @@ class RoadBuildingCardEffectTest {
     private static final class MockGameState implements GameState {
         private final Board board;
         private final List<Player> players;
+        private final List<Path> selectedPaths;
 
-        private MockGameState(Board board, List<Player> players) {
+        private MockGameState(Board board, List<Player> players, List<Path> selectedPaths) {
             this.board = board;
             this.players = players;
+            this.selectedPaths = selectedPaths;
         }
 
         @Override
@@ -69,6 +71,11 @@ class RoadBuildingCardEffectTest {
         @Override
         public Board getBoard() {
             return board;
+        }
+
+        @Override
+        public List<Path> chooseRoadBuildingPaths(Player player, List<Path> candidates, int maxPlacements) {
+            return selectedPaths;
         }
     }
 }
