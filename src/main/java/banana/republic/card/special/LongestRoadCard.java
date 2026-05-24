@@ -72,23 +72,35 @@ public class LongestRoadCard extends SpecialCard {
             }
         }
 
-        // Tentukan hasil: transfer kartu, revoke, atau handle tie
+        // Tentukan hasil: transfer kartu, revoke, atau handle tie.
         if (qualifyingPlayers.isEmpty()) {
-            // Tidak ada yang qualify
             this.revoke();
             this.currentQualifyingLength = 0;
-        } else if (qualifyingPlayers.size() == 1) {
-            // Ada 1 pemenang
+            return;
+        }
+
+        if (qualifyingPlayers.size() == 1) {
             Player winner = qualifyingPlayers.get(0);
             if (holder == null || !holder.equals(winner)) {
-                // Kartu belum punya holder ATAU berpindah ke holder baru
                 transfer(winner);
             }
             this.currentQualifyingLength = maxLength;
-        } else {
-            handleTie(qualifyingPlayers);
-            this.currentQualifyingLength = isActive() ? maxLength : 0;
+            return;
         }
+
+        if (holder != null && qualifyingPlayers.contains(holder)) {
+            Integer holderLength = roadLengths.get(holder);
+            if (holderLength != null && holderLength == currentQualifyingLength && holderLength >= MINIMUM_LENGTH) {
+                // Tie karena perebutan: holder masih berada di posisi yang sama.
+                this.active = true;
+                this.currentQualifyingLength = holderLength;
+                return;
+            }
+        }
+
+        // Tie karena jaringan holder berubah/terputus: kartu disisihkan.
+        this.revoke();
+        this.currentQualifyingLength = 0;
     }
 
     /**

@@ -61,25 +61,33 @@ public class LargestArmyCard extends SpecialCard {
 
         // Tentukan hasil
         if (qualifyingPlayers.isEmpty()) {
-            // Tidak ada yang qualify
             this.revoke();
             this.currentQualifyingCount = 0;
-        } else if (qualifyingPlayers.size() == 1) {
+            return;
+        }
+
+        if (qualifyingPlayers.size() == 1) {
             Player winner = qualifyingPlayers.get(0);
             if (holder == null || !holder.equals(winner)) {
                 transfer(winner);
             }
             this.currentQualifyingCount = maxKnights;
-        } else {
-            // Tie: holder lama tetap jika masih termasuk pemain teratas
-            if (holder != null && qualifyingPlayers.contains(holder)) {
+            return;
+        }
+
+        if (holder != null && qualifyingPlayers.contains(holder)) {
+            int holderKnights = holder.getKnightsPlayed();
+            if (holderKnights == maxKnights && holderKnights >= MINIMUM_KNIGHTS) {
+                // Tie karena perebutan: holder masih berada di angka puncak.
                 this.active = true;
                 this.currentQualifyingCount = maxKnights;
-            } else {
-                this.revoke();
-                this.currentQualifyingCount = 0;
+                return;
             }
         }
+
+        // Tie karena holder sudah tidak mempertahankan keunggulan: kartu disisihkan.
+        this.revoke();
+        this.currentQualifyingCount = 0;
     }
 
     /**
