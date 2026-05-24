@@ -84,6 +84,21 @@ class HumanPlayerTest {
             @Override public String getCardName() { return "Knight"; }
             @Override public String getDescription() { return "A knight card"; }
             @Override public void applyEffect(banana.republic.core.GameState state, banana.republic.player.Player player) {}
+
+            @Override
+            public boolean isPlayable() {
+                return true;
+            }
+
+            @Override
+            public boolean isSecret() {
+                return false;
+            }
+
+            @Override
+            public banana.republic.card.CardType getCardType() {
+                return banana.republic.card.CardType.KNIGHT;
+            }
         };
         player.addCard(card);
         assertEquals(1, player.getHandCards().size());
@@ -97,6 +112,21 @@ class HumanPlayerTest {
             @Override public String getCardName() { return "Knight"; }
             @Override public String getDescription() { return "A knight card"; }
             @Override public void applyEffect(banana.republic.core.GameState state, banana.republic.player.Player player) {}
+
+            @Override
+            public boolean isPlayable() {
+                return true;
+            }
+
+            @Override
+            public boolean isSecret() {
+                return false;
+            }
+
+            @Override
+            public banana.republic.card.CardType getCardType() {
+                return banana.republic.card.CardType.KNIGHT;
+            }
         };
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
             () -> player.removeCard(card));

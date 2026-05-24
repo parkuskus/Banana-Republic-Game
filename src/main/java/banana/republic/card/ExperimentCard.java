@@ -9,4 +9,21 @@ public interface ExperimentCard {
     String getDescription();
 
     void applyEffect(GameState state, Player player);
+
+    /**
+     * Cek apakah kartu bisa dimainkan sekarang.
+     * Aturan: tidak bisa dimainkan jika baru diambil (newlyDrawn) kecuali untuk Victory Point.
+     */
+    boolean isPlayable();
+
+    /**
+     * Cek apakah kartu bersifat secret (tersembunyi dari pemain lain).
+     * Victory Point cards selalu secret; Knight terungkap jika dimainkan.
+     */
+    boolean isSecret();
+
+    /**
+     * Dapatkan tipe kartu untuk identification dan categorization.
+     */
+    CardType getCardType();
 }
