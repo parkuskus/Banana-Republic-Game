@@ -11,4 +11,8 @@ public interface GameState {
     List<Player> getAllPlayers();
     Bank getBank();
     Board getBoard();
+
+    default Player getCurrentPlayer() {
+        return null;
+    }
 }

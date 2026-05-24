@@ -1,6 +1,11 @@
 package banana.republic.card.special;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import banana.republic.board.Board;
 import banana.republic.board.Path;
@@ -81,17 +86,8 @@ public class LongestRoadCard extends SpecialCard {
             }
             this.currentQualifyingLength = maxLength;
         } else {
-            // Ada ties (lebih dari 1 pemain dengan panjang sama >= MINIMUM_LENGTH)
-            // Aturan seri: jika holder lama ada di list, holder tetap
-            if (holder != null && qualifyingPlayers.contains(holder)) {
-                // Holder lama masih qualify, tetap memegang
-                this.currentQualifyingLength = maxLength;
-            } else {
-                // Holder lama tidak ada atau tidak qualify
-                // Kartu disisihkan (seri terputus)
-                this.revoke();
-                this.currentQualifyingLength = 0;
-            }
+            handleTie(qualifyingPlayers);
+            this.currentQualifyingLength = isActive() ? maxLength : 0;
         }
     }
 
@@ -156,7 +152,16 @@ public class LongestRoadCard extends SpecialCard {
      * Handle kondisi seri (untuk future use jika perlu explicit handling).
      */
     public void handleTie(List<Player> tied) {
-        // Implementasi aturan tie (seri terputus vs seri perebutan)
-        // Untuk sekarang, delegasi ke evaluate() method
+        if (tied == null || tied.isEmpty()) {
+            this.revoke();
+            return;
+        }
+
+        if (holder != null && tied.contains(holder)) {
+            this.active = true;
+            return;
+        }
+
+        this.revoke();
     }
 }

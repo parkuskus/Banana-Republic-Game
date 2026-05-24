@@ -1,6 +1,7 @@
 package banana.republic.card.special;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import banana.republic.player.Player;
 import banana.republic.player.SpecialCardType;
@@ -43,30 +44,41 @@ public class LargestArmyCard extends SpecialCard {
 
         // Cari pemain dengan knights dimainkan terbanyak (>= MINIMUM_KNIGHTS)
         int maxKnights = 0;
-        Player topPlayer = null;
+        List<Player> qualifyingPlayers = new ArrayList<>();
 
         for (Player player : players) {
             int knightsPlayed = player.getKnightsPlayed();
             if (knightsPlayed >= MINIMUM_KNIGHTS) {
                 if (knightsPlayed > maxKnights) {
                     maxKnights = knightsPlayed;
-                    topPlayer = player;
+                    qualifyingPlayers.clear();
+                    qualifyingPlayers.add(player);
+                } else if (knightsPlayed == maxKnights) {
+                    qualifyingPlayers.add(player);
                 }
             }
         }
 
         // Tentukan hasil
-        if (topPlayer == null) {
+        if (qualifyingPlayers.isEmpty()) {
             // Tidak ada yang qualify
             this.revoke();
             this.currentQualifyingCount = 0;
-        } else {
-            // Ada pemain yang qualify
-            if (holder == null || !holder.equals(topPlayer)) {
-                // Kartu belum ada holder ATAU berpindah ke holder baru
-                transfer(topPlayer);
+        } else if (qualifyingPlayers.size() == 1) {
+            Player winner = qualifyingPlayers.get(0);
+            if (holder == null || !holder.equals(winner)) {
+                transfer(winner);
             }
             this.currentQualifyingCount = maxKnights;
+        } else {
+            // Tie: holder lama tetap jika masih termasuk pemain teratas
+            if (holder != null && qualifyingPlayers.contains(holder)) {
+                this.active = true;
+                this.currentQualifyingCount = maxKnights;
+            } else {
+                this.revoke();
+                this.currentQualifyingCount = 0;
+            }
         }
     }
 
