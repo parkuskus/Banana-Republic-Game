@@ -52,14 +52,7 @@ public class VictoryPointCard extends DevelopmentCard {
 
     @Override
     public boolean isPlayable() {
-        // Victory Point Card tidak "dimainkan" dalam arti mengeluarkan efek.
-        // Nilai otomatis dihitung saat victory check.
-        // Tapi ada PENGECUALIAN: jika kartu ini membuat total VP ≥ 10,
-        // pemain boleh mengungkap dan langsung menang (bahkan jika baru diambil).
-        //
-        // Untuk implementasi sederhana: return true jika total VP >= 10
-        // (delegasi ke GameController untuk handle logika ini)
-        return true;
+        return !isNewlyDrawn();
     }
 
     @Override

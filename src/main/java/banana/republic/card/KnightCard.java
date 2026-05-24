@@ -57,10 +57,7 @@ public class KnightCard extends DevelopmentCard {
 
     @Override
     public boolean isPlayable() {
-        // Knight bisa dimainkan kapan saja, bahkan jika baru diambil
-        // (berbeda dengan Progress Card yang tidak bisa langsung dimainkan).
-        // Tapi ada aturan: max 1 kartu per giliran.
-        return true;
+        return !isNewlyDrawn();
     }
 
     @Override

@@ -63,9 +63,9 @@ public class DevelopmentCardTest {
     }
 
     @Test
-    @DisplayName("Knight card should be playable immediately")
-    void testKnightPlayableImmediately() {
-        assertTrue(knightCard.isPlayable(), "Knight bisa dimainkan kapan saja");
+    @DisplayName("Knight card should not be playable when newly drawn")
+    void testKnightNotPlayableWhenNew() {
+        assertFalse(knightCard.isPlayable(), "Knight baru tidak boleh langsung dimainkan");
     }
 
     @Test
@@ -79,6 +79,12 @@ public class DevelopmentCardTest {
     void testProgressCardPlayableAfterTurn() {
         roadCard.setNewlyDrawn(false);
         assertTrue(roadCard.isPlayable(), "Progress card playable setelah 1 turn");
+    }
+
+    @Test
+    @DisplayName("Victory point card should not be playable when newly drawn")
+    void testVPCardNotPlayableWhenNew() {
+        assertFalse(vpCard.isPlayable(), "VP card baru tidak boleh langsung dimainkan");
     }
 
     @Test
