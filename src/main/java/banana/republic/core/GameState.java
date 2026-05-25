@@ -29,4 +29,5 @@ public interface GameState {
     default List<Path> chooseRoadBuildingPaths(Player player, List<Path> candidates, int maxPlacements) {
         return List.of();
     }
+
 }
