@@ -2,6 +2,7 @@ package banana.republic.player;
 
 import java.util.List;
 
+import banana.republic.building.PlayerSupply;
 import banana.republic.card.ExperimentCard;
 import banana.republic.resource.ResourceType;
 
@@ -41,4 +42,8 @@ public interface Player {
     void setSpecialCard(SpecialCardType type, boolean owned);
 
     boolean isBot();
+
+    default PlayerSupply getSupply() {
+        return null;
+    }
 }

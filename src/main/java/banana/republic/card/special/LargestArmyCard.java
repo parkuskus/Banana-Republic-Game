@@ -1,9 +1,99 @@
 package banana.republic.card.special;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import banana.republic.player.Player;
+import banana.republic.player.SpecialCardType;
+
 /**
- * Largest Army special card.
- * Refer to class-diagram/Module3_Cards_Robber_Timer.puml for full specification.
+ * Largest Army special card (Pasukan Terbesar).
+ * Jumlah: 1 kartu
+ * Bonus: 2 Poin Prestasi
+ *
+ * Syarat: Pemain harus sudah memainkan minimal 3 Kartu Penjaga (Knight).
+ *
+ * Mekanisme:
+ * - Pemain pertama yang play 3 Knight mendapat kartu ini
+ * - Jika pemain lain play lebih banyak Knight, kartu berpindah (+ ambil 2 VP)
+ * - Aturan seri: Holder lama tetap sampai ada yang melampaui
  */
 public class LargestArmyCard extends SpecialCard {
-    // TODO: Implement
+    private static final int MINIMUM_KNIGHTS = 3;
+    private int currentQualifyingCount;
+
+    /**
+     * Constructor untuk Largest Army Card.
+     */
+    public LargestArmyCard() {
+        super();
+        this.currentQualifyingCount = 0;
+    }
+
+    @Override
+    public SpecialCardType getCardType() {
+        return SpecialCardType.LARGEST_ARMY;
+    }
+
+    /**
+     * Evaluasi dan tentukan siapa yang berhak memegang kartu ini.
+     * Harus dipanggil setiap kali ada pemain yang play Knight card.
+     */
+    public void evaluate(List<Player> players) {
+        assert players != null : "Players list tidak boleh null";
+
+        // Cari pemain dengan knights dimainkan terbanyak (>= MINIMUM_KNIGHTS)
+        int maxKnights = 0;
+        List<Player> qualifyingPlayers = new ArrayList<>();
+
+        for (Player player : players) {
+            int knightsPlayed = player.getKnightsPlayed();
+            if (knightsPlayed >= MINIMUM_KNIGHTS) {
+                if (knightsPlayed > maxKnights) {
+                    maxKnights = knightsPlayed;
+                    qualifyingPlayers.clear();
+                    qualifyingPlayers.add(player);
+                } else if (knightsPlayed == maxKnights) {
+                    qualifyingPlayers.add(player);
+                }
+            }
+        }
+
+        // Tentukan hasil
+        if (qualifyingPlayers.isEmpty()) {
+            this.revoke();
+            this.currentQualifyingCount = 0;
+            return;
+        }
+
+        if (qualifyingPlayers.size() == 1) {
+            Player winner = qualifyingPlayers.get(0);
+            if (holder == null || !holder.equals(winner)) {
+                transfer(winner);
+            }
+            this.currentQualifyingCount = maxKnights;
+            return;
+        }
+
+        if (holder != null && qualifyingPlayers.contains(holder)) {
+            int holderKnights = holder.getKnightsPlayed();
+            if (holderKnights == maxKnights && holderKnights >= MINIMUM_KNIGHTS) {
+                // Tie karena perebutan: holder masih berada di angka puncak.
+                this.active = true;
+                this.currentQualifyingCount = maxKnights;
+                return;
+            }
+        }
+
+        // Tie karena holder sudah tidak mempertahankan keunggulan: kartu disisihkan.
+        this.revoke();
+        this.currentQualifyingCount = 0;
+    }
+
+    /**
+     * Get jumlah knights yang saat ini memqualify untuk kartu ini.
+     */
+    public int getCurrentQualifyingCount() {
+        return currentQualifyingCount;
+    }
 }
