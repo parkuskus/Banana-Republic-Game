@@ -45,7 +45,7 @@
    Jar file akan berada di folder `target/`. Jalankan jar file dengan command berikut.
 
    ```bash
-   java --module-path $PATH_TO_FX --add-modules javafx.controls,javafx.fxml -jar target/courier-app-1.0-SNAPSHOT.jar
+   java -jar target/if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar
    ```
 
 5. **Menjalankan Unit Testing**

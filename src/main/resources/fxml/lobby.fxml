@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="568.0" prefWidth="881.0" styleClass="lobby-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.LobbyController">
+   <children>
+      <BorderPane prefHeight="200.0" prefWidth="200.0">
+         <center>
+            <HBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+               <children>
+                  <VBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="427.0" prefWidth="700.0" spacing="5.0" styleClass="vbox-shade">
+                     <children>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-h1" text="Session Setup" />
+                        <HBox alignment="CENTER" prefHeight="35.0" prefWidth="500.0">
+                           <children>
+                              <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="600.0" styleClass="marcellus-text" text="Number of Players" />
+                              <ComboBox fx:id="numPlayersBox" prefHeight="26.0" prefWidth="350.0" styleClass="marcellus-text13" />
+                           </children>
+                        </HBox>
+                        <Region maxHeight="-Infinity" prefHeight="20.0" prefWidth="200.0" />
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-text" text="Players Name" />
+                        <HBox fx:id="player1Box" alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0">
+                           <children>
+                              <TextField alignment="TOP_LEFT" prefHeight="40.0" prefWidth="400.0" styleClass="marcellus-text15" />
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <Circle fill="#c21a09" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#305cde" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#4fc978" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#ff7f00" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="player2Box" alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0">
+                           <children>
+                              <TextField alignment="TOP_LEFT" prefHeight="40.0" prefWidth="400.0" styleClass="marcellus-text15" />
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <Circle fill="#c21a09" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#305cde" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#4fc978" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#ff7f00" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="player3Box" alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0">
+                           <children>
+                              <TextField alignment="TOP_LEFT" prefHeight="40.0" prefWidth="400.0" styleClass="marcellus-text15" />
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <Circle fill="#c21a09" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#305cde" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#4fc978" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#ff7f00" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                        <HBox fx:id="player4Box" alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0">
+                           <children>
+                              <TextField alignment="TOP_LEFT" prefHeight="40.0" prefWidth="400.0" styleClass="marcellus-text15" />
+                              <HBox prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+                                 <children>
+                                    <Circle fill="#c21a09" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#305cde" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#4fc978" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                    <Circle fill="#ff7f00" radius="16.0" stroke="BLACK" strokeType="INSIDE" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                        <HBox alignment="BOTTOM_LEFT" prefHeight="74.0" prefWidth="318.0">
+                           <children>
+                              <Button alignment="BOTTOM_LEFT" mnemonicParsing="false" onAction="#exit" styleClass="small-button" text="Back to Main Menu" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets left="50.0" right="50.0" />
+                     </padding>
+                  </VBox>
+                  <VBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="427.0" prefWidth="700.0" spacing="5.0" styleClass="vbox-shade2">
+                     <children>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-h1" text="Plugin Matrix" />
+                        <HBox alignment="CENTER" prefHeight="35.0" prefWidth="500.0">
+                           <children>
+                              <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="600.0" styleClass="marcellus-text" text="Environment Data" />
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" onMouseClicked="#handleLoadMap" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
+                           <children>
+                              <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/map.png" />
+                                 </image>
+                              </ImageView>
+                              <Region prefHeight="47.0" prefWidth="46.0" />
+                              <Label maxWidth="1.7976931348623157E308" prefHeight="62.0" prefWidth="170.0" styleClass="marcellus-text13" text="Load Map Plugin (.jar)" />
+                              <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
+                              <ImageView fitHeight="32.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/file_upload_gfont.png" />
+                                 </image>
+                                 <HBox.margin>
+                                    <Insets right="30.0" />
+                                 </HBox.margin>
+                              </ImageView>
+                           </children>
+                        </HBox>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-text" text="Automaton Intelligence" />
+                        <HBox alignment="CENTER" onMouseClicked="#handleLoadMap" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
+                           <children>
+                              <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/bot.png" />
+                                 </image>
+                              </ImageView>
+                              <Region prefHeight="47.0" prefWidth="46.0" />
+                              <Label maxWidth="1.7976931348623157E308" prefHeight="62.0" prefWidth="170.0" styleClass="marcellus-text13" text="Load Bot Plugin (.jar)" />
+                              <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
+                              <ImageView fitHeight="32.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../icons/file_upload_gfont.png" />
+                                 </image>
+                                 <HBox.margin>
+                                    <Insets right="30.0" />
+                                 </HBox.margin>
+                              </ImageView>
+                           </children>
+                        </HBox>
+                        <HBox alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0" />
+                        <HBox alignment="CENTER_RIGHT" prefHeight="74.0" prefWidth="318.0">
+                           <children>
+                              <Button alignment="BOTTOM_LEFT" mnemonicParsing="false" onAction="#exit" styleClass="button-red" text="Start Game" />
+                           </children>
+                        </HBox>
+                     </children>
+                     <padding>
+                        <Insets left="50.0" right="50.0" />
+                     </padding>
+                  </VBox>
+               </children>
+               <padding>
+                  <Insets bottom="100.0" />
+               </padding>
+            </HBox>
+         </center>
+         <top>
+            <VBox alignment="BOTTOM_CENTER" prefHeight="150.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label alignment="CENTER" contentDisplay="CENTER" styleClass="lobby-title" text="Lobby" />
+                  <Region prefHeight="30.0" prefWidth="200.0" />
+               </children>
+            </VBox>
+         </top>
+      </BorderPane>
+   </children>
+</StackPane>

@@ -1,21 +1,129 @@
-body {
-    -fx-background-color: #f0f0f0;
+@font-face {
+    font-family: 'RussoOne-Regular';
+    src: url('../fonts/RussoOne-Regular.ttf');
+}
+
+.root {
+}
+
+.main-menu-bg {
+    -fx-background-color: #ffd55e;
+}
+
+.lobby-bg {
+    -fx-background-color: #fffff0;
 }
 
 .button {
     -fx-background-color: #007bff;
     -fx-text-fill: white;
     -fx-padding: 10px 20px;
-    -fx-font-size: 14px;
+    -fx-font-size: 2em;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
 }
+
+.button-red {
+    -fx-background-color: #ff1a1a;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1.5em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
+.small-button {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
 
 .button:hover {
     -fx-background-color: #0056b3;
 }
 
+.dropzone-box {
+    -fx-border-color: #a27c5b;
+    -fx-border-style: dashed;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+
+    -fx-padding: 15px 20px;
+
+    -fx-cursor: hand;
+}
+
+.dropzone-box:hover {
+    -fx-background-color: #ffd56f;
+    -fx-border-color: #685139;
+}
+
 .label {
     -fx-font-size: 16px;
     -fx-text-fill: #333;
+}
+
+.main-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 5em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.lobby-title {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 3em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.marcellus-text {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-h1 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2.5em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-text15 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.5em;
+    -fx-text-fill: #42200b;
+}
+
+
+.marcellus-text13 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.3em;
+    -fx-text-fill: #42200b;
+}
+
+.russo-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 2em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.main-vbox {
+    -fx-background-color: #3498db;
+}
+
+.vbox-shade {
+    -fx-background-color: #fff6e9;
+}
+
+.vbox-shade2 {
+    -fx-background-color: #fff6d6;
 }
