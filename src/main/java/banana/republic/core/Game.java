@@ -2,17 +2,28 @@ package banana.republic.core;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import banana.republic.board.Board;
+import banana.republic.board.HexTile;
+import banana.republic.board.Intersection;
+import banana.republic.board.Path;
+import banana.republic.building.PlayerSupply;
+import banana.republic.building.PosPantau;
+import banana.republic.building.Road;
 import banana.republic.card.CardDeck;
+import banana.republic.card.ExperimentCard;
 import banana.republic.dice.Dice;
 import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
 import banana.republic.plugin.MapGeneratorPlugin;
 import banana.republic.resource.Bank;
 import banana.republic.resource.BankImpl;
+import banana.republic.resource.ResourceProductionService;
 import banana.republic.robber.Robber;
+import banana.republic.timer.TurnTimer;
 
 /**
  * Orkestrator utama permainan Banana Republic.
@@ -56,23 +67,24 @@ public class Game {
     // State utama permainan
     // =========================================================================
 
-    private final List<Player>    players;
-    private final Board           board;
-    private final Bank            bank;
-    private final CardDeck        cardDeck;
-    private final Dice            dice;
-    private final Robber          robber;
-    private final GameLog         gameLog;
-    private final TurnManager     turnManager;
+    private final List<Player>               players;
+    private final Board                       board;
+    private final Bank                        bank;
+    private final CardDeck                    cardDeck;
+    private final Dice                        dice;
+    private final Robber                      robber;
+    private final GameLog                     gameLog;
+    private final ResourceProductionService   productionService;
+    private       TurnManager                 turnManager;
+
+    /** Supply bangunan per pemain: Pos Pantau, Lab, Road. */
+    private final Map<Player, PlayerSupply>   supplies;
 
     /** Adapter singleton — dibuat satu kali di {@link #getState()}. */
     private GameStateAdapter stateAdapter;
 
     /** Fase permainan saat ini. */
     private GamePhase currentPhase;
-
-    /** Indeks pemain aktif dalam list {@link #players}. */
-    private int activePlayerIndex;
 
     /** Nomor giliran permainan (bertambah setiap kali semua pemain selesai satu putaran). */
     private int turnNumber;
@@ -82,6 +94,18 @@ public class Game {
 
     /** Hasil lemparan dadu terakhir. */
     private DiceResult lastDiceResult;
+
+    /**
+     * Jumlah Pos Pantau yang sudah ditempatkan pemain aktif di fase setup.
+     * 0 = belum ada, 1 = sudah taruh pertama (tunggu road), 2 = putaran selesai.
+     */
+    private int setupSettlementCount;
+
+    /** Kartu yang dimainkan giliran ini (maks 1 per giliran). */
+    private ExperimentCard cardPlayedThisTurn;
+
+    /** Kartu yang baru dibeli giliran ini (tidak boleh langsung dimainkan). */
+    private ExperimentCard cardBoughtThisTurn;
 
     // =========================================================================
     // Konstruktor
@@ -108,12 +132,20 @@ public class Game {
         this.dice              = new Dice();
         this.robber            = new Robber();
         this.gameLog           = new GameLog();
-        this.turnManager       = new TurnManager();
+        this.productionService = new ResourceProductionService();
         this.currentPhase      = GamePhase.SETUP_FIRST_ROUND;
-        this.activePlayerIndex = 0;
         this.turnNumber        = 1;
         this.winner            = null;
         this.lastDiceResult    = null;
+        this.setupSettlementCount = 0;
+        this.cardPlayedThisTurn   = null;
+        this.cardBoughtThisTurn   = null;
+
+        // Supply bangunan per pemain
+        this.supplies = new HashMap<>();
+        for (Player p : this.players) {
+            supplies.put(p, new PlayerSupply(p));
+        }
 
         // Generate board — fallback ke StandardMapGenerator jika tidak ada plugin
         MapGeneratorPlugin generator = (mapPlugin != null)
@@ -121,8 +153,11 @@ public class Game {
                 : new banana.republic.plugin.StandardMapGenerator();
         this.board = generator.generateBoard();
 
+        // TurnManager dibuat setelah board siap agar this::endTurn bisa dipakai
+        this.turnManager = new TurnManager(this.players, 0, this::endTurn);
+
         gameLog.addEntry(LogEntry.EventType.SYSTEM,
-                "Permainan Banana Republic dimulai dengan " + players.size() + " pemain.");
+                "Permainan Banana Republic dimulai dengan " + this.players.size() + " pemain.");
     }
 
     // =========================================================================
@@ -136,7 +171,12 @@ public class Game {
 
     /** Mengembalikan pemain yang sedang aktif (giliran sekarang). */
     public Player getActivePlayer() {
-        return players.get(activePlayerIndex);
+        return turnManager.getActivePlayer();
+    }
+
+    /** Mengembalikan PlayerSupply milik pemain tertentu. */
+    public PlayerSupply getSupply(Player player) {
+        return supplies.get(player);
     }
 
     /** Mengembalikan papan permainan. */
@@ -219,7 +259,27 @@ public class Game {
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
     public void startSetupPhase() {
-        throw new UnsupportedOperationException("startSetupPhase() — diimplementasikan di Fase 2");
+        currentPhase = GamePhase.SETUP_FIRST_ROUND;
+        setupSettlementCount = 0;
+        turnManager.setOrder(TurnOrder.CLOCKWISE);
+        gameLog.addEntry(LogEntry.EventType.SYSTEM, "Fase Setup dimulai. Pemain menentukan urutan dengan dadu.");
+
+        // Tentukan pemain pertama: setiap pemain lempar dadu, yang tertinggi mulai
+        int highestRoll = -1;
+        int firstPlayerIndex = 0;
+        for (int i = 0; i < players.size(); i++) {
+            DiceResult roll = dice.roll();
+            int total = roll.getTotal();
+            gameLog.addEntry(LogEntry.EventType.SYSTEM, players.get(i).getName(),
+                    players.get(i).getName() + " melempar dadu: " + roll.getDie1() + " + " + roll.getDie2() + " = " + total);
+            if (total > highestRoll) {
+                highestRoll = total;
+                firstPlayerIndex = i;
+            }
+        }
+        turnManager.setActiveIndex(firstPlayerIndex);
+        gameLog.addEntry(LogEntry.EventType.TURN_CHANGE, players.get(firstPlayerIndex).getName(),
+                players.get(firstPlayerIndex).getName() + " memulai pertama (dadu tertinggi: " + highestRoll + ")");
     }
 
     /**
@@ -228,7 +288,10 @@ public class Game {
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
     public void startMainGame() {
-        throw new UnsupportedOperationException("startMainGame() — diimplementasikan di Fase 2");
+        assert currentPhase.isSetupPhase() : "startMainGame() hanya boleh dipanggil setelah setup selesai";
+        currentPhase = GamePhase.RESOURCE_GATHERING;
+        turnManager.setOrder(TurnOrder.CLOCKWISE);
+        gameLog.addEntry(LogEntry.EventType.SYSTEM, "Permainan utama dimulai!");
     }
 
     // =========================================================================
@@ -241,8 +304,33 @@ public class Game {
      *
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
-    public void placeInitialSettlement(Player player, banana.republic.board.Intersection intersection) {
-        throw new UnsupportedOperationException("placeInitialSettlement() — diimplementasikan di Fase 2");
+    public void placeInitialSettlement(Player player, Intersection intersection) {
+        assert currentPhase.isSetupPhase() : "placeInitialSettlement() hanya boleh dipanggil saat fase setup";
+        if (!currentPhase.isSetupPhase()) {
+            throw new IllegalStateException("Bukan fase setup");
+        }
+        if (intersection == null) {
+            throw new IllegalArgumentException("Intersection tidak boleh null");
+        }
+        if (intersection.hasBuilding()) {
+            throw new IllegalStateException("Intersection sudah ada bangunan");
+        }
+        if (!board.isDistanceRuleValid(intersection)) {
+            throw new IllegalStateException("Distance rule dilanggar");
+        }
+
+        PlayerSupply supply = supplies.get(player);
+        PosPantau pp = supply.takePosPantau();
+        intersection.placeBuilding(pp);
+        setupSettlementCount++;
+
+        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
+                player.getName() + " menempatkan Pos Pantau di intersection #" + intersection.getId());
+
+        // Putaran kedua: berikan resource awal dari petak sekitar Pos Pantau kedua
+        if (currentPhase == GamePhase.SETUP_SECOND_ROUND) {
+            productionService.distributeInitialResources(player, intersection, bank, board);
+        }
     }
 
     /**
@@ -250,8 +338,29 @@ public class Game {
      *
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
-    public void placeInitialRoad(Player player, banana.republic.board.Path path) {
-        throw new UnsupportedOperationException("placeInitialRoad() — diimplementasikan di Fase 2");
+    public void placeInitialRoad(Player player, Path path) {
+        if (!currentPhase.isSetupPhase()) {
+            throw new IllegalStateException("placeInitialRoad() hanya boleh dipanggil saat fase setup");
+        }
+        if (path == null || path.hasRoad()) {
+            throw new IllegalArgumentException("Path tidak valid atau sudah ada road");
+        }
+        // Road harus terhubung ke salah satu Pos Pantau milik pemain
+        boolean connected = (path.getIntersectionA().getOwner() == player)
+                || (path.getIntersectionB().getOwner() == player);
+        if (!connected) {
+            throw new IllegalStateException("Road harus terhubung ke Pos Pantau milik " + player.getName());
+        }
+
+        PlayerSupply supply = supplies.get(player);
+        Road road = supply.takeRoad();
+        path.placeRoad(road);
+
+        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
+                player.getName() + " menempatkan Pipa di path #" + path.getId());
+
+        // Setelah menempatkan road, tentukan apakah giliran setup berpindah
+        advanceSetupTurn();
     }
 
     // =========================================================================
@@ -265,7 +374,31 @@ public class Game {
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
     public DiceResult rollDice() {
-        throw new UnsupportedOperationException("rollDice() — diimplementasikan di Fase 2");
+        if (currentPhase != GamePhase.RESOURCE_GATHERING) {
+            throw new IllegalStateException("Dadu hanya boleh dilempar pada fase RESOURCE_GATHERING");
+        }
+
+        lastDiceResult = dice.roll();
+        int total = lastDiceResult.getTotal();
+
+        gameLog.addEntry(LogEntry.EventType.SYSTEM, getActivePlayer().getName(),
+                getActivePlayer().getName() + " melempar dadu: "
+                        + lastDiceResult.getDie1() + " + " + lastDiceResult.getDie2() + " = " + total);
+
+        if (lastDiceResult.isSeven()) {
+            // Nimon Ungu aktif — diproses di Fase 4; sementara set phase ke TRADE_BUILD
+            gameLog.addEntry(LogEntry.EventType.ROBBER, getActivePlayer().getName(),
+                    "Dadu 7! Nimon Ungu aktif.");
+        } else {
+            // Distribusi resource normal
+            productionService.distributeForRoll(total, board, players, bank);
+        }
+
+        // Pindah ke fase Trade/Build dan mulai timer
+        currentPhase = GamePhase.TRADE_BUILD;
+        cardPlayedThisTurn = null;
+        cardBoughtThisTurn = null;
+        return lastDiceResult;
     }
 
     /**
@@ -274,12 +407,33 @@ public class Game {
      * <p><em>Diimplementasikan di Fase 2.</em>
      */
     public void endTurn() {
-        throw new UnsupportedOperationException("endTurn() — diimplementasikan di Fase 2");
+        if (currentPhase == GamePhase.GAME_OVER) return;
+
+        turnManager.stopTimer();
+        Player prev = getActivePlayer();
+        turnManager.advanceTurn();
+        currentPhase = GamePhase.RESOURCE_GATHERING;
+        turnNumber++;
+
+        gameLog.addEntry(LogEntry.EventType.TURN_CHANGE, prev.getName(),
+                prev.getName() + " mengakhiri giliran. Sekarang giliran " + getActivePlayer().getName() + ".");
     }
 
     // =========================================================================
     // Aksi build — diimplementasikan di Fase 3
     // =========================================================================
+
+    /**
+     * Memulai TurnTimer untuk fase Trade/Build.
+     * Dipanggil oleh UI (GameController) setelah rollDice() selesai.
+     *
+     * @param onTick callback per detik untuk update label timer di UI; boleh null
+     */
+    public void startTradeBuildTimer(TurnTimer.OnTickCallback onTick) {
+        if (currentPhase == GamePhase.TRADE_BUILD) {
+            turnManager.startTimer(onTick);
+        }
+    }
 
     /**
      * Membangun Pipa Transportasi milik pemain di jalur yang ditentukan.
@@ -384,6 +538,43 @@ public class Game {
      */
     public static Game loadGame(String filePath) {
         throw new UnsupportedOperationException("loadGame() — diimplementasikan di Fase 7");
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    /**
+     * Memajukan giliran saat fase setup setelah satu pasang (Settlement + Road) ditempatkan.
+     * Menangani transisi:
+     *   Putaran 1 (CW): setiap pemain taruh 1 Settlement + 1 Road
+     *   Transisi: pemain terakhir langsung mulai putaran 2
+     *   Putaran 2 (CCW): setiap pemain taruh 1 Settlement + 1 Road (urutan terbalik)
+     *   Setelah semua selesai: startMainGame()
+     */
+    private void advanceSetupTurn() {
+        int playerCount = players.size();
+        // setupSettlementCount: total settlement yang sudah ditempatkan seluruh pemain
+        if (currentPhase == GamePhase.SETUP_FIRST_ROUND) {
+            if (setupSettlementCount < playerCount) {
+                // Masih dalam putaran pertama — maju ke pemain berikutnya
+                turnManager.advanceTurnInDirection(TurnOrder.CLOCKWISE);
+            } else {
+                // Putaran pertama selesai — pemain terakhir langsung mulai putaran 2 (tidak bergerak)
+                currentPhase = GamePhase.SETUP_SECOND_ROUND;
+                turnManager.setOrder(TurnOrder.COUNTER_CLOCKWISE);
+                gameLog.addEntry(LogEntry.EventType.SYSTEM,
+                        "Putaran setup pertama selesai. Mulai putaran kedua (berlawanan arah).");
+            }
+        } else if (currentPhase == GamePhase.SETUP_SECOND_ROUND) {
+            if (setupSettlementCount < playerCount * 2) {
+                turnManager.advanceTurnInDirection(TurnOrder.COUNTER_CLOCKWISE);
+            } else {
+                // Semua pemain selesai setup
+                gameLog.addEntry(LogEntry.EventType.SYSTEM, "Fase setup selesai!");
+                startMainGame();
+            }
+        }
     }
 
     // =========================================================================
