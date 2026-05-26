@@ -1,80 +1,153 @@
 package banana.republic.timer;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import javafx.application.Platform;
-
 /**
- * Turn Timer (Timer Giliran).
+ * Countdown timer 90 detik untuk fase Trade/Build setiap giliran.
  *
- * 90-detik countdown timer untuk phase Trade/Build per giliran.
- * Berjalan di background thread terpisah dari UI thread.
- * Non-blocking UI updates via Platform.runLater().
+ * <p>Berjalan di <strong>background daemon thread</strong> agar tidak memblokir
+ * UI thread (spesifikasi multithreading). Mendukung dua pola penggunaan:
  *
- * State management:
- * - running: flag untuk kontrol thread
- * - remainingSeconds: counter yang di-update per 1 detik
- * - thread: reference ke background thread
+ * <ul>
+ *   <li><strong>Constructor injection</strong> — dipakai oleh {@code TurnManager}:
+ *       <pre>{@code new TurnTimer(() -> game.endTurn(), secs -> updateLabel(secs))}</pre>
+ *   </li>
+ *   <li><strong>Setter callbacks</strong> — dipakai oleh UI controller:
+ *       <pre>{@code timer.setOnExpire(() -> ...); timer.setOnTick(s -> ...);}</pre>
+ *   </li>
+ * </ul>
  *
- * Callbacks:
- * - onTick: dipanggil setiap detik (update UI timer display)
- * - onExpire: dipanggil ketika timer habis (auto end turn)
+ * <p>Fitur:
+ * <ul>
+ *   <li>Pause / Resume tanpa stop dan restart timer</li>
+ *   <li>Stop menghentikan thread dan menunggu terminasi (max 1 detik)</li>
+ *   <li>{@code safeRunLater} — callback aman di lingkungan headless (test) maupun JavaFX</li>
+ * </ul>
  */
 public class TurnTimer implements Runnable {
-    private static final int DURATION_SECONDS = 90;
 
-    private final AtomicInteger remainingSeconds;
-    private volatile boolean running;
-    private volatile boolean paused;
-    private Thread thread;
+    /** Durasi giliran dalam detik (sesuai spesifikasi: 90 detik). */
+    public static final int TURN_DURATION_SECONDS = 90;
 
-    private Runnable onExpire;
-    private Consumer<Integer> onTick;
+    // -------------------------------------------------------------------------
+    // Callback interfaces
+    // -------------------------------------------------------------------------
+
+    /** Dipanggil saat timer mencapai nol (bukan saat di-cancel/stop). */
+    @FunctionalInterface
+    public interface OnTimerEndCallback {
+        void onTimerEnd();
+    }
+
+    /** Dipanggil setiap detik dengan sisa waktu. */
+    @FunctionalInterface
+    public interface OnTickCallback {
+        void onTick(int secondsRemaining);
+    }
+
+    // -------------------------------------------------------------------------
+    // State
+    // -------------------------------------------------------------------------
+
+    private final AtomicBoolean running   = new AtomicBoolean(false);
+    private final AtomicBoolean cancelled = new AtomicBoolean(false);
+    private final AtomicInteger remaining = new AtomicInteger(TURN_DURATION_SECONDS);
+
+    private volatile boolean paused = false;
+    private Thread timerThread;
+
+    // Callbacks — bisa diset via constructor atau setter
+    private OnTimerEndCallback onEnd;
+    private OnTickCallback     onTick;
+
+    // Legacy-compatible setter-based callbacks (Consumer<Integer> for onTick)
+    private Runnable           onExpire;
+    private Consumer<Integer>  onTickConsumer;
+
+    // -------------------------------------------------------------------------
+    // Konstruktor
+    // -------------------------------------------------------------------------
 
     /**
-     * Constructor untuk TurnTimer.
+     * Constructor injection — dipakai oleh {@link banana.republic.core.TurnManager}.
+     *
+     * @param onEnd  dipanggil saat waktu habis; tidak boleh {@code null}
+     * @param onTick dipanggil setiap detik; boleh {@code null}
+     */
+    public TurnTimer(OnTimerEndCallback onEnd, OnTickCallback onTick) {
+        if (onEnd == null) {
+            throw new IllegalArgumentException("OnTimerEndCallback cannot be null");
+        }
+        this.onEnd  = onEnd;
+        this.onTick = onTick;
+    }
+
+    /** Constructor tanpa tick callback. */
+    public TurnTimer(OnTimerEndCallback onEnd) {
+        this(onEnd, null);
+    }
+
+    /**
+     * Default constructor — gunakan setter {@link #setOnExpire} dan {@link #setOnTick}
+     * sebelum memanggil {@link #start()}.
      */
     public TurnTimer() {
-        this.remainingSeconds = new AtomicInteger(DURATION_SECONDS);
-        this.running = false;
-        this.paused = false;
-        this.thread = null;
-        this.onExpire = null;
-        this.onTick = null;
+        // callbacks diset via setter
+    }
+
+    // -------------------------------------------------------------------------
+    // Setter callbacks (pola alternatif — kompatibel dengan UI controller lama)
+    // -------------------------------------------------------------------------
+
+    /** Set callback saat timer expire. Menggantikan callback dari constructor jika keduanya diset. */
+    public void setOnExpire(Runnable callback) {
+        this.onExpire = callback;
     }
 
     /**
-     * Mulai timer di background thread.
-     * Jika sudah running, tidak ada action.
+     * Set callback per detik dengan sisa waktu (pakai {@link Consumer}{@code <Integer>}).
+     * Kompatibel dengan controller yang sudah pakai lambda {@code s -> label.setText(...)}.
      */
-    public void start() {
-        if (running) {
+    public void setOnTick(Consumer<Integer> callback) {
+        this.onTickConsumer = callback;
+    }
+
+    // -------------------------------------------------------------------------
+    // Lifecycle
+    // -------------------------------------------------------------------------
+
+    /**
+     * Memulai countdown di background daemon thread.
+     * Panggilan diabaikan jika timer sudah berjalan.
+     */
+    public synchronized void start() {
+        if (running.get()) {
             return;
         }
-
-        running = true;
+        cancelled.set(false);
         paused = false;
-        remainingSeconds.set(DURATION_SECONDS);
+        remaining.set(TURN_DURATION_SECONDS);
+        running.set(true);
 
-        thread = new Thread(this);
-        thread.setDaemon(true); // Set sebagai daemon thread
-        thread.setName("TurnTimer-" + System.nanoTime());
-        thread.start();
+        timerThread = new Thread(this, "TurnTimer-" + System.nanoTime());
+        timerThread.setDaemon(true);
+        timerThread.start();
     }
 
     /**
-     * Stop timer.
+     * Menghentikan timer sepenuhnya dan menunggu thread terminasi (maks 1 detik).
+     * Callback expire <strong>tidak</strong> akan dipanggil setelah {@code stop()}.
      */
     public void stop() {
-        running = false;
+        cancelled.set(true);
+        running.set(false);
         paused = false;
-
-        if (thread != null) {
+        if (timerThread != null) {
+            timerThread.interrupt();
             try {
-                // Interrupt the thread to wake it if sleeping, then join
-                thread.interrupt();
-                thread.join(1000); // Wait max 1 detik untuk thread terminate
+                timerThread.join(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -82,126 +155,129 @@ public class TurnTimer implements Runnable {
     }
 
     /**
-     * Pause timer (tetap running, tapi clock di-pause).
+     * Alias untuk {@link #stop()} — kompatibel dengan nama yang dipakai TurnManager.
+     */
+    public void cancel() {
+        stop();
+    }
+
+    /**
+     * Mem-pause countdown (clock berhenti sementara, thread tetap hidup).
+     * Resume dengan {@link #resume()}.
      */
     public void pause() {
-        this.paused = true;
-        // Wake thread if it's sleeping so pause takes effect immediately
-        if (thread != null) {
-            thread.interrupt();
+        paused = true;
+        if (timerThread != null) {
+            timerThread.interrupt(); // wake up sleep agar flag paused langsung efektif
         }
     }
 
-    /**
-     * Resume timer dari pause.
-     */
+    /** Melanjutkan countdown setelah {@link #pause()}. */
     public void resume() {
-        this.paused = false;
-        // Wake thread if it's sleeping so resume takes effect immediately
-        if (thread != null) {
-            thread.interrupt();
+        paused = false;
+        if (timerThread != null) {
+            timerThread.interrupt(); // wake up sleep agar resume langsung efektif
         }
     }
 
-    /**
-     * Reset timer ke 90 detik tanpa stop/start.
-     */
+    /** Reset sisa waktu ke {@link #TURN_DURATION_SECONDS} tanpa stop/start. */
     public void reset() {
-        remainingSeconds.set(DURATION_SECONDS);
+        remaining.set(TURN_DURATION_SECONDS);
     }
 
-    /**
-     * Dapatkan sisa waktu (dalam detik).
-     */
+    // -------------------------------------------------------------------------
+    // Query
+    // -------------------------------------------------------------------------
+
+    /** Sisa waktu dalam detik (snapshot). */
     public int getRemainingSeconds() {
-        return remainingSeconds.get();
+        return remaining.get();
     }
 
-    /**
-     * Cek apakah timer sedang berjalan.
-     */
+    /** {@code true} jika timer sedang berjalan (belum stop/cancel). */
     public boolean isRunning() {
-        return running;
+        return running.get();
     }
 
-    /**
-     * Set callback ketika timer expire (habis).
-     * Callback dijalankan via Platform.runLater() untuk thread-safety UI.
-     */
-    public void setOnExpire(Runnable callback) {
-        this.onExpire = callback;
+    /** {@code true} jika timer sedang di-pause. */
+    public boolean isPaused() {
+        return paused;
     }
 
-    /**
-     * Set callback untuk setiap tick (setiap 1 detik).
-     * Consumer menerima sisa waktu dalam detik.
-     * Callback dijalankan via Platform.runLater() untuk thread-safety UI.
-     */
-    public void setOnTick(Consumer<Integer> callback) {
-        this.onTick = callback;
-    }
+    // -------------------------------------------------------------------------
+    // Runnable — loop countdown
+    // -------------------------------------------------------------------------
 
-    /**
-     * Run method (dijalankan di background thread).
-     * Loop setiap 1 detik, decrement counter, dan trigger callbacks.
-     */
     @Override
     public void run() {
         try {
-            while (running && remainingSeconds.get() > 0) {
+            while (running.get() && remaining.get() > 0) {
                 if (!paused) {
-                    // Tunggu 1 detik, dengan handling interrupt untuk responsive pause/stop
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException ie) {
-                        // If interrupted due to pause/stop, continue loop to re-evaluate flags
-                        if (!running) break;
-                        continue;
+                        if (!running.get()) break;
+                        continue; // bisa karena pause/resume — re-evaluate flags
                     }
 
-                    // Decrement counter
-                    int updated = remainingSeconds.decrementAndGet();
+                    int updated = remaining.decrementAndGet();
+                    fireOnTick(updated);
 
-                    // Trigger onTick via UI thread (non-blocking)
-                    if (onTick != null) {
-                        safeRunLater(() -> onTick.accept(updated));
-                    }
-
-                    // Cek apakah timer sudah habis
                     if (updated <= 0) {
-                        running = false;
-                        if (onExpire != null) {
-                            safeRunLater(onExpire);
-                        }
+                        running.set(false);
+                        fireOnExpire();
                     }
                 } else {
-                    // Pause: sleep tanpa decrement, wakeable by interrupt
+                    // Pause mode: tidur pendek, mudah dibangunkan
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException ie) {
-                        if (!running) break;
-                        // continue and re-check paused flag
+                        if (!running.get()) break;
                     }
                 }
             }
         } finally {
-            running = false;
+            running.set(false);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    /** Panggil semua callback onTick yang terdaftar (dari constructor maupun setter). */
+    private void fireOnTick(int secs) {
+        if (onTick != null) {
+            safeRunLater(() -> onTick.onTick(secs));
+        }
+        if (onTickConsumer != null) {
+            safeRunLater(() -> onTickConsumer.accept(secs));
+        }
+    }
+
+    /** Panggil semua callback expire yang terdaftar (dari constructor maupun setter). */
+    private void fireOnExpire() {
+        if (onEnd != null) {
+            safeRunLater(onEnd::onTimerEnd);
+        }
+        if (onExpire != null) {
+            safeRunLater(onExpire);
         }
     }
 
     /**
-     * Helper untuk menjalankan callback di UI thread jika tersedia,
-     * atau langsung jika JavaFX Platform belum di-initialize.
+     * Jalankan {@code r} via {@code Platform.runLater()} jika JavaFX tersedia,
+     * atau langsung jika toolkit belum di-init (misal: unit test headless).
      */
     private void safeRunLater(Runnable r) {
         try {
-            Platform.runLater(r);
+            javafx.application.Platform.runLater(r);
         } catch (IllegalStateException ex) {
-            // Toolkit not initialized (tests/headless). Jalankan langsung.
+            // Toolkit not initialized — jalankan langsung (test/headless environment)
             try {
                 r.run();
             } catch (Exception e) {
-                // swallow to avoid breaking timer loop
+                // Swallow agar tidak merusak timer loop
             }
         }
     }
