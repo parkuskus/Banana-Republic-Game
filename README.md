@@ -1,83 +1,115 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/FE4lxIC7)
-# Template Tugas Besar 2
+# Banana Republic - Tugas Besar 2 IF2010 OOP 2526
 
 ## Prerequisites
 
-- IntelliJ IDEA (Sangat disarankan, karena mempermudah hidup kalian wkwkwk)
-- Java Development Kit (JDK) 8 or higher (disarankan pilih sdk terbaru yang compatible dengan sdk javaFX)
-- Apache Maven
-- JavaFX SDK
+- **Java Development Kit (JDK) 21** (LTS)
+- **Apache Maven 3.9+**
 
-## Installation (Jika tidak menggunakan IntelliJ, bisa install dan setup sendiri. Jangan lupa setup maven dlu ya)
+> No manual JavaFX SDK download is required — JavaFX is managed via Maven dependencies.
 
-1. **Download JavaFX SDK:**
+## Project Structure
 
-   Pakai curl, download JavaFX SDK. Untuk memudahkan, pastikan lakukan command ini pada folder `app/` bukan pada root directory.
-   source: https://gluonhq.com/products/javafx/
-   ```bash
-   curl -L "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_linux-x64_bin-sdk.zip" -o javafx-sdk.zip
-   ```
+The project follows the class diagram specifications in `class-diagram/`:
 
-2. **Unzip JavaFX SDK**
+| Module | Package(s) | Responsibility |
+|--------|-----------|----------------|
+| Module 1 | `board`, `dice`, `plugin` | Board/map generation, dice, plugins |
+| Module 2 | `player`, `building`, `resource` | Players, buildings, bank, resources |
+| Module 3 | `card`, `card.special`, `robber`, `timer` | Cards, robber, turn timer |
+| Module 4 | `core`, `trade` | Game engine, trade system |
+| Module 5 | `ui`, `plugin`, `save` | JavaFX UI, plugin loader, save/load |
 
-   Setelah download berhasil, unzip sdk.
+## Quick Start
 
-   ```bash
-   unzip javafx-sdk.zip
-   ```
+### Compile
+```bash
+mvn clean compile
+```
 
-3. **Set Path Variable untuk JavaFX SDK:**
+### Run Tests
+```bash
+mvn test
+```
 
-   Set `PATH_TO_FX` env variable
+Tests run in headless mode (suitable for CI/autograder) using TestFX + Monocle.
 
-   ```bash
-   export PATH_TO_FX="$PWD/javafx-sdk-21.0.2/lib"
-   ```
+### Run Application (Development)
+```bash
+mvn javafx:run
+```
 
-4. **Compile Aplikasi**
+### Build & Package
+```bash
+mvn clean package
+```
 
-   Untuk membuat runnable JAR file, gunakan command berikut.
+This creates:
+- `target/if2010-oop2526-tubes2-1.0-SNAPSHOT.jar` — standard JAR (manifest set)
+- `target/if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar` — uber JAR with all dependencies
+- `target/lib/` — individual dependency JARs
 
-   ```bash
-   mvn package
-   ```
+### Run Packaged JAR
+**Recommended (using module path, no warnings):**
+```bash
+java --module-path target/lib --add-modules javafx.controls,javafx.fxml,javafx.graphics \
+  -cp "target/if2010-oop2526-tubes2-1.0-SNAPSHOT.jar:target/lib/*" banana.republic.Main
+```
 
-   Jar file akan berada di folder `target/`. Jalankan jar file dengan command berikut.
+**Simple (shaded JAR — may show a non-fatal module warning):**
+```bash
+java -jar target/if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar
+```
 
-   ```bash
-   java --module-path $PATH_TO_FX --add-modules javafx.controls,javafx.fxml -jar target/courier-app-1.0-SNAPSHOT.jar
-   ```
+### Makefile Targets
+```bash
+make build    # mvn clean package
+make test     # mvn test
+make run      # mvn javafx:run
+make run-jar  # build + run the shaded JAR
+make verify   # mvn clean verify
+make clean    # mvn clean
+```
 
-5. **Menjalankan Unit Testing**
+## IntelliJ IDEA Setup
 
-   Untuk menjalankan unit testing, gunakan command berikut.
+1. Open the project folder in IntelliJ IDEA.
+2. IntelliJ should auto-detect the Maven project.
+3. Ensure Project SDK is set to **JDK 21**:
+   - `File → Project Structure → Project SDK → 21`
+4. Reload Maven project if needed:
+   - Click the Maven reload button in the top-right or right-click `pom.xml → Maven → Reload Project`
 
-   ```bash
-   mvn test -Djava.awt.headless=true -Dtestfx.robot=glass -Dglass.platform=Monocle -Dmonocle.platform=Headless -Dprism.order=sw
-   ```
+## Headless Testing Configuration
 
-## Common Problems
+Headless GUI testing is configured automatically in `pom.xml` via the `maven-surefire-plugin`:
 
-1. Rendering Issue untuk MacOS Apple Silicon (Development)
+```xml
+<testfx.robot>glass</testfx.robot>
+<testfx.headless>true</testfx.headless>
+<prism.order>sw</prism.order>
+<glass.platform>Monocle</glass.platform>
+<monocle.platform>Headless</monocle.platform>
+```
 
-   Seharusnya ini tidak terjadi karena seharusnya menggunakan lingkungan Linux, tetapi jika kalian ada yang memakai MacOS untuk development (tidak disarankan), ini beberapa fix yang bisa dilakukan, download JavaFX SDK dengan `arch64`.
+No additional flags are needed when running `mvn test`.
 
-   **Cek arsitektur sistem:**
-   ```bash
-   <!-- Cek apakah sistem menggunakan ARM architecture (Apple Silicon) -->
-   uname -m
-   ```
+## Common Issues
 
-   ```bash
-   <!-- Download JavaFX SDK untuk Apple Silicon (M1/M2/M3) -->
-   curl -L "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_osx-aarch64_bin-sdk.zip" -o javafx-sdk.zip
+### "JavaFX runtime components are missing"
+If you try to run the plain `.class` files without the module path, you may see this error. Use one of the provided methods:
+- `mvn javafx:run`
+- `java -jar target/if2010-oop2526-tubes2-1.0-SNAPSHOT.jar`
 
-   <!-- Unzip file -->
-   unzip javafx-sdk.zip
+### Rendering Issues on macOS (Development only)
+If developing on macOS with Apple Silicon, the JavaFX Maven dependencies will resolve the correct native libraries automatically. No manual SDK download is needed.
 
-   <!-- Set path -->
-   export PATH_TO_FX="$PWD/javafx-sdk-21.0.2/lib"
+If you still encounter issues, you can force software rendering:
+```bash
+mvn javafx:run -Djavafx.prism.order=sw
+```
 
-   <!-- Jalankan aplikasi dengan tambahan flag berikut -->
-   java --module-path $PATH_TO_FX --add-modules javafx.controls,javafx.fxml -Dprism.order=sw -jar target/courier-app-1.0-SNAPSHOT.jar
-   ```
+## Notes
+
+- The project targets **Java 21** (`<release>21</release>`).
+- JavaFX version is **21.0.2** (matches the Java version major release).
+- All UI updates from non-UI threads must use `Platform.runLater()`.
