@@ -64,6 +64,11 @@ class RoadBuildingCardEffectTest {
         }
 
         @Override
+        public Player getActivePlayer() {
+            return players.isEmpty() ? null : players.get(0);
+        }
+
+        @Override
         public Bank getBank() {
             return null;
         }
@@ -71,6 +76,21 @@ class RoadBuildingCardEffectTest {
         @Override
         public Board getBoard() {
             return board;
+        }
+
+        @Override
+        public banana.republic.core.GamePhase getCurrentPhase() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.core.GameLog getGameLog() {
+            return null;
+        }
+
+        @Override
+        public int getTurnNumber() {
+            return 1;
         }
 
         @Override

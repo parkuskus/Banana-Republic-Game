@@ -1,11 +1,10 @@
 package banana.republic.board;
 
+import banana.republic.player.Player;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import banana.republic.player.Player;
 
 public class Board {
 
@@ -101,7 +100,8 @@ public class Board {
         if (intersection == null) {
             return false;
         }
-        for (Intersection neighbor : intersection.getNeighboringIntersections()) {
+        for (Intersection neighbor :
+             intersection.getNeighboringIntersections()) {
             if (neighbor.hasBuilding()) {
                 return false;
             }
@@ -186,6 +186,16 @@ public class Board {
         return Collections.unmodifiableList(result);
     }
 
+    /**
+     * Mengembalikan true jika path terhubung ke jaringan road/bangunan
+     * milik player.
+     *
+     * Dipakai untuk validasi buildRoad.
+     */
+    public boolean isPathConnectedToPlayer(Path path, Player player) {
+        return isPathConnectedToPlayerNetwork(path, player);
+    }
+
     private <T> List<T> copyList(List<T> source) {
         if (source == null) {
             return new ArrayList<>();
@@ -204,7 +214,8 @@ public class Board {
             }
 
             for (Path adjacentPath : intersection.getAdjacentPaths()) {
-                if (adjacentPath.hasRoad() && player.equals(adjacentPath.getOwner())) {
+                if (adjacentPath.hasRoad() &&
+                    player.equals(adjacentPath.getOwner())) {
                     return true;
                 }
             }
