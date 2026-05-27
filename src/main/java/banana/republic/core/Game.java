@@ -91,6 +91,9 @@ public class Game {
     /** Manajemen trade domestik dan maritim per giliran. */
     private final TradeManager tradeManager;
 
+    /** Kalkulasi Poin Prestasi dan penentuan pemenang. */
+    private final VictoryPointCalculator vpCalculator;
+
     /**
      * Membuat instance Game baru dengan daftar pemain dan generator peta.
      *
@@ -117,6 +120,7 @@ public class Game {
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
         this.tradeManager = new TradeManager();
+        this.vpCalculator = new VictoryPointCalculator();
         this.currentPhase = GamePhase.SETUP_FIRST_ROUND;
         this.turnNumber = 1;
         this.winner = null;
@@ -571,9 +575,10 @@ public class Game {
         path.placeRoad(road);
 
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
-                         player.getName() +
-                             " membangun Pipa Transportasi di path #" +
-                             path.getId());
+                player.getName() + " membangun Pipa Transportasi di path #" + path.getId());
+
+        // Perbarui Jalan Terpanjang setelah road baru dipasang
+        updateLongestRoad();
     }
 
     /**
@@ -933,8 +938,21 @@ public class Game {
      * Belum diproses sebagai pemenang.
      */
     public Player checkVictory() {
-        throw new UnsupportedOperationException(
-            "checkVictory() — diimplementasikan di Fase 6");
+        if (currentPhase == GamePhase.GAME_OVER && winner != null) {
+            return winner; // sudah pernah ditetapkan
+        }
+
+        Player candidate = vpCalculator.findWinner(players, board, VICTORY_POINTS_TO_WIN);
+        if (candidate != null) {
+            winner = candidate;
+            currentPhase = GamePhase.GAME_OVER;
+            turnManager.stopTimer();
+
+            int totalVP = vpCalculator.getTotalVP(winner, board);
+            gameLog.addEntry(LogEntry.EventType.VICTORY, winner.getName(),
+                    winner.getName() + " MENANG dengan " + totalVP + " Poin Prestasi!");
+        }
+        return winner;
     }
 
     /**
@@ -1024,6 +1042,64 @@ public class Game {
      *
      * Memberi 2 Poin Prestasi tambahan kepada pemegangnya.
      */
+    /**
+     * Memperbarui kepemilikan Jalan Terpanjang setelah road baru dipasang.
+     * Dipanggil secara internal oleh {@link #buildRoad} dan {@link #placeInitialRoad}.
+     */
+    private void updateLongestRoad() {
+        Player prev    = null;
+        for (Player p : players) {
+            if (p.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) { prev = p; break; }
+        }
+
+        Player newHolder = vpCalculator.updateLongestRoad(players);
+
+        if (newHolder != null && !newHolder.equals(prev)) {
+            if (prev != null) {
+                gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, prev.getName(),
+                        prev.getName() + " kehilangan Jalan Terpanjang.");
+            }
+            gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, newHolder.getName(),
+                    newHolder.getName() + " mendapat Jalan Terpanjang ("
+                    + newHolder.getLongestRoadLength() + " road)! (+2 PP)");
+        }
+    }
+
+    // =========================================================================
+    // VP query — Fase 6
+    // =========================================================================
+
+    /**
+     * Menghitung dan mengembalikan breakdown VP pemain tertentu.
+     * Berguna untuk UI yang ingin menampilkan detail skor pemain.
+     *
+     * @param player pemain yang ingin dihitung VP-nya
+     * @return {@link VictoryPointBreakdown} berisi total dan rincian per kategori
+     */
+    public VictoryPointBreakdown getVPBreakdown(Player player) {
+        return vpCalculator.calculate(player, board);
+    }
+
+    /**
+     * Menghitung VP semua pemain sekaligus, diurutkan dari tertinggi ke terendah.
+     * Berguna untuk leaderboard / scoreboard UI.
+     *
+     * @return list {@link VictoryPointBreakdown} terurut descending
+     */
+    public java.util.List<VictoryPointBreakdown> getAllVPBreakdowns() {
+        return vpCalculator.calculateAll(players, board);
+    }
+
+    /**
+     * Shortcut total VP pemain tanpa breakdown rincian.
+     *
+     * @param player pemain yang dihitung
+     * @return total VP termasuk VictoryPointCard tersembunyi
+     */
+    public int getVPTotal(Player player) {
+        return vpCalculator.getTotalVP(player, board);
+    }
+
     private void updateLargestArmy() {
         final int MIN_KNIGHTS = 3;
         Player currentHolder = null;

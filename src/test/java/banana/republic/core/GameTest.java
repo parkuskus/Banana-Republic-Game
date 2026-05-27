@@ -187,11 +187,11 @@ public class GameTest {
     }
 
     @Test
-    @DisplayName("checkVictory should throw UnsupportedOperationException")
-    void testCheckVictoryNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
-            game.checkVictory();
-        }, "checkVictory harus throw UnsupportedOperationException");
+    @DisplayName("checkVictory should work without errors")
+    void testCheckVictory() {
+        // Should not throw any exception
+        assertDoesNotThrow(() -> game.checkVictory(),
+            "checkVictory harus berjalan tanpa error");
     }
 
     @Test
