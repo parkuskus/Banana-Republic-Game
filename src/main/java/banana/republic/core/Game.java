@@ -100,7 +100,6 @@ public class Game {
         this.bank = new BankImpl();
         this.cardDeck = new CardDeck();
         this.dice = new Dice();
-        this.robber = new Robber();
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
         this.currentPhase = GamePhase.SETUP_FIRST_ROUND;
@@ -124,6 +123,10 @@ public class Game {
                 ? mapPlugin
                 : new banana.republic.plugin.StandardMapGenerator();
         this.board = generator.generateBoard();
+
+        // Inisialisasi Robber setelah board tersedia (cari tile gurun)
+        HexTile desertTile = findDesertTile();
+        this.robber = new Robber(desertTile);
 
         // TurnManager dibuat setelah board siap agar this::endTurn bisa dipakai
         this.turnManager = new TurnManager(this.players, 0, this::endTurn);
@@ -364,7 +367,6 @@ public class Game {
 
     /**
      * Membangun Pipa Transportasi milik pemain di jalur yang ditentukan.
-     *
      */
     public void buildRoad(Player player, Path path) {
         if (currentPhase != GamePhase.TRADE_BUILD) {
@@ -598,37 +600,167 @@ public class Game {
     /**
      * Mengaktifkan mekanisme Nimon Ungu: memindahkan robber dan opsional
      * mencuri resource.
-     *
      */
-    public void activateRobber(banana.republic.board.HexTile targetTile,
-                               Player victim) {
-        throw new UnsupportedOperationException(
-            "activateRobber() not implemented");
+    public void activateRobber(HexTile targetTile, Player victim) {
+        if (targetTile == null) {
+            throw new IllegalArgumentException("Target tile tidak boleh null");
+        }
+        if (targetTile.equals(robber.getCurrentTile())) {
+            throw new IllegalStateException(
+                "Nimon Ungu harus pindah ke petak berbeda");
+        }
+
+        // Pindahkan Nimon Ungu
+        robber.move(targetTile);
+        gameLog.addEntry(LogEntry.EventType.ROBBER, getActivePlayer().getName(),
+                         getActivePlayer().getName() +
+                             " memindahkan Nimon Ungu ke tile #" +
+                             targetTile.getId());
+
+        // Curi resource dari victim (opsional, victim boleh null jika tidak
+        // ada yang dicuri)
+        if (victim != null) {
+            List<Player> eligible =
+                robber.getEligibleVictims(getActivePlayer(), board);
+            if (!eligible.contains(victim)) {
+                throw new IllegalStateException(
+                    victim.getName() + (" tidak eligible untuk dicuri di "
+                                        + "posisi Nimon Ungu saat ini"));
+            }
+            if (victim.getTotalResourceCount() == 0) {
+                // Victim tidak punya resource — skip steal tanpa error
+                gameLog.addEntry(
+                    LogEntry.EventType.STEAL, getActivePlayer().getName(),
+                    victim.getName() + " tidak punya resource untuk dicuri.");
+            } else {
+                ResourceType stolen =
+                    robber.stealRandomResource(getActivePlayer(), victim);
+                gameLog.addEntry(
+                    LogEntry.EventType.STEAL, getActivePlayer().getName(),
+                    getActivePlayer().getName() + " mencuri 1 " +
+                        stolen.getDisplayName() + " dari " + victim.getName());
+            }
+        }
+
+        // Setelah robber aktif (dari dadu 7), lanjutkan ke fase Trade/Build
+        currentPhase = GamePhase.TRADE_BUILD;
     }
 
     /**
      * Memproses pembuangan kartu dari semua pemain yang memiliki lebih dari
      * #HAND_LIMIT} kartu (efek dadu 7, langkah 1).
-     *
      */
     public void processDiscardPhase() {
-        throw new UnsupportedOperationException(
-            "processDiscardPhase() not implemented");
+        // Cek siapa yang harus buang kartu (lebih dari HAND_LIMIT resource)
+        Map<Player, Integer> discardMap = robber.activateDiscardPhase(players);
+        if (discardMap.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<Player, Integer> entry : discardMap.entrySet()) {
+            Player player = entry.getKey();
+            int toDiscard = entry.getValue();
+
+            // Bot: buang resource acak secara otomatis
+            if (player.isBot()) {
+                int discarded = 0;
+                for (ResourceType type : ResourceType.values()) {
+                    if (discarded >= toDiscard)
+                        break;
+                    int count = player.getResourceCount(type);
+                    int remove = Math.min(count, toDiscard - discarded);
+                    if (remove > 0) {
+                        player.removeResource(type, remove);
+                        bank.returnResource(type, remove);
+                        discarded += remove;
+                    }
+                }
+                gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
+                                 player.getName() + " (bot) membuang " +
+                                     discarded + " kartu resource.");
+            } else {
+                // Human: dicatat saja — UI akan meminta pemain memilih kartu
+                // yang dibuang UI harus memanggil discardResource(player, type,
+                // amount) per resource
+                gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
+                                 player.getName() + " harus membuang " +
+                                     toDiscard + " kartu resource.");
+            }
+        }
+    }
+
+    /**
+     * Dipakai UI untuk memproses pembuangan resource satu per satu dari human
+     * player.
+     */
+    public void discardResource(Player player, ResourceType type, int amount) {
+        if (player == null || type == null) {
+            throw new IllegalArgumentException(
+                "Player dan ResourceType tidak boleh null");
+        }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Jumlah yang dibuang harus > 0");
+        }
+        if (!player.hasResource(type, amount)) {
+            throw new IllegalStateException(player.getName() + " tidak punya " +
+                                            amount + " " + type);
+        }
+        player.removeResource(type, amount);
+        bank.returnResource(type, amount);
+        gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
+                         player.getName() + " membuang " + amount + " " +
+                             type.getDisplayName());
     }
 
     /**
      * Memainkan satu Kartu Temuan milik pemain aktif.
-     *
      */
-    public void playCard(Player player,
-                         banana.republic.card.ExperimentCard card) {
-        throw new UnsupportedOperationException("playCard() not implemented");
+    public void playCard(Player player, ExperimentCard card) {
+        if (currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "Kartu hanya bisa dimainkan saat fase TRADE_BUILD");
+        }
+        if (player == null || card == null) {
+            throw new IllegalArgumentException(
+                "Player dan kartu tidak boleh null");
+        }
+        if (!player.getHandCards().contains(card)) {
+            throw new IllegalStateException(
+                player.getName() + " tidak punya kartu tersebut di tangan");
+        }
+        if (card == cardBoughtThisTurn) {
+            throw new IllegalStateException(
+                "Kartu yang baru dibeli tidak bisa langsung dimainkan "
+                + "giliran ini");
+        }
+        if (cardPlayedThisTurn != null) {
+            throw new IllegalStateException(
+                "Hanya boleh memainkan 1 kartu per giliran");
+        }
+        if (!card.isPlayable()) {
+            throw new IllegalStateException("Kartu " + card.getCardName() +
+                                            " tidak bisa dimainkan saat ini");
+        }
+
+        // Jalankan efek kartu: card akan memanggil state.chooseKnightTarget()
+        // dsb. bila perlu
+        card.applyEffect(getState(), player);
+        cardPlayedThisTurn = card;
+
+        // Pindahkan ke discard pile
+        player.removeCard(card);
+        cardDeck.addToDiscardPile(card);
+
+        gameLog.addEntry(LogEntry.EventType.CARD_PLAYED, player.getName(),
+                         player.getName() + " memainkan " + card.getCardName());
+
+        // Update Largest Army setelah Knight dimainkan
+        updateLargestArmy();
     }
 
     /**
      * Memeriksa apakah ada pemain yang mencapai #VICTORY_POINTS_TO_WIN} PP dan
      * belum diproses sebagai pemenang.
-     *
      */
     public Player checkVictory() {
         throw new UnsupportedOperationException(
@@ -687,6 +819,69 @@ public class Game {
                 gameLog.addEntry(LogEntry.EventType.SYSTEM,
                                  "Fase setup selesai!");
                 startMainGame();
+            }
+        }
+    }
+
+    /**
+     * Mencari tile gurun di board untuk inisialisasi Robber. Jika tidak ada,
+     * gunakan tile pertama.
+     */
+    private HexTile findDesertTile() {
+        for (HexTile tile : board.getAllHexTiles()) {
+            if (tile.getTerrainType() == TerrainType.DESERT) {
+                return tile;
+            }
+        }
+        // Fallback: gunakan tile pertama jika tidak ada gurun
+        return board.getAllHexTiles().get(0);
+    }
+
+    /**
+     * Memeriksa dan memperbarui Largest Army (Pasukan Terbesar) setelah setiap
+     * Knight Card dimainkan. Syarat: minimal 3 knight, lebih banyak dari
+     * pemegang saat ini. Memberi 2 Poin Prestasi tambahan kepada pemegangnya.
+     */
+    private void updateLargestArmy() {
+        final int MIN_KNIGHTS = 3;
+        Player currentHolder = null;
+        int holderKnights = 0;
+
+        // Temukan pemegang Largest Army saat ini
+        for (Player p : players) {
+            if (p.hasSpecialCard(SpecialCardType.LARGEST_ARMY)) {
+                currentHolder = p;
+                holderKnights = p.getKnightsPlayed();
+                break;
+            }
+        }
+
+        // Cek apakah ada pemain yang layak mengambil alih
+        for (Player p : players) {
+            int knights = p.getKnightsPlayed();
+            if (knights < MIN_KNIGHTS)
+                continue;
+
+            boolean qualifies = (currentHolder == null)
+                                    ? knights >= MIN_KNIGHTS
+                                    : knights > holderKnights;
+
+            if (qualifies && p != currentHolder) {
+                // Ambil dari pemegang lama
+                if (currentHolder != null) {
+                    currentHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY,
+                                                 false);
+                    gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD,
+                                     currentHolder.getName(),
+                                     currentHolder.getName() +
+                                         " kehilangan Pasukan Terbesar.");
+                }
+                // Berikan ke pemegang baru
+                p.setSpecialCard(SpecialCardType.LARGEST_ARMY, true);
+                gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, p.getName(),
+                                 p.getName() + " mendapat Pasukan Terbesar (" +
+                                     knights + " knight)! (+2 PP)");
+                break;
             }
         }
     }
