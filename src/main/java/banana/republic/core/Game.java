@@ -24,6 +24,9 @@ import banana.republic.resource.ResourceProductionService;
 import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
 import banana.republic.timer.TurnTimer;
+import banana.republic.trade.TradeManager;
+import banana.republic.trade.TradeOffer;
+import banana.republic.trade.ValidationResult;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,12 +36,18 @@ import java.util.Map;
 /**
  * Orkestrator utama permainan Banana Republic.
  *
- * Kelas ini adalah Facade (GoF Structural) dari seluruh sistem permainan. Semua
- * aksi pemain (build, trade, play card, end turn) masuk melalui kelas ini.
- * Tidak ada modul lain yang perlu tahu detail implementasi internal permainan,
- * interaksi lewat GameState (untuk plugin) atau method public kelas ini (untuk
- * UI layer M5).
+ * Kelas ini adalah Facade (GoF Structural) dari seluruh sistem permainan.
  *
+ * Semua aksi pemain masuk melalui kelas ini:
+ * - build
+ * - trade
+ * - play card
+ * - end turn
+ *
+ * Tidak ada modul lain yang perlu tahu detail implementasi internal.
+ * Interaksi dilakukan lewat:
+ * - GameState (untuk plugin)
+ * - Method public kelas ini (untuk UI layer M5)
  */
 public class Game {
 
@@ -69,22 +78,27 @@ public class Game {
     /**
      * Jumlah Pos Pantau yang sudah ditempatkan pemain aktif di fase setup.
      *
-     * 0 = belum ada, 1 = sudah taruh pertama (tunggu road), 2 = putaran
-     * selesai.
+     * Nilai:
+     * - 0 = belum ada
+     * - 1 = sudah taruh pertama (tunggu road)
+     * - 2 = putaran selesai
      */
     private int setupSettlementCount;
 
     private ExperimentCard cardPlayedThisTurn;
     private ExperimentCard cardBoughtThisTurn;
 
+    /** Manajemen trade domestik dan maritim per giliran. */
+    private final TradeManager tradeManager;
+
     /**
      * Membuat instance Game baru dengan daftar pemain dan generator peta.
      *
-     * @param players daftar pemain (3–4 orang); tidak boleh {@code null} atau
-     *     kosong
-     * @param mapPlugin generator peta yang menghasilkan Board, jika {@code
-     *     null}, digunakan {@link banana.republic.plugin.StandardMapGenerator}
-     * secara default
+     * @param players daftar pemain (3-4 orang)
+     *        - tidak boleh null
+     *        - tidak boleh kosong
+     * @param mapPlugin generator peta yang menghasilkan Board
+     *        - jika null, digunakan StandardMapGenerator secara default
      */
     public Game(List<Player> players, MapGeneratorPlugin mapPlugin) {
         if (players == null || players.isEmpty()) {
@@ -102,6 +116,7 @@ public class Game {
         this.dice = new Dice();
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
+        this.tradeManager = new TradeManager();
         this.currentPhase = GamePhase.SETUP_FIRST_ROUND;
         this.turnNumber = 1;
         this.winner = null;
@@ -169,8 +184,11 @@ public class Game {
     public Player getWinner() { return winner; }
 
     /**
-     * Mengembalikan GameState adapter singleton untuk diserahkan ke plugin dan
-     * UI.
+     * Mengembalikan GameState adapter singleton.
+     *
+     * Digunakan untuk:
+     * - Plugin
+     * - UI
      *
      * Lazy-init: adapter dibuat saat pertama kali dipanggil, lalu di-cache.
      */
@@ -182,9 +200,9 @@ public class Game {
     }
 
     /**
-     * Memulai fase setup (inisiasi papan). Menentukan urutan giliran pertama
-     * berdasarkan lemparan dadu.
+     * Memulai fase setup (inisiasi papan).
      *
+     * Menentukan urutan giliran pertama berdasarkan lemparan dadu.
      */
     public void startSetupPhase() {
         currentPhase = GamePhase.SETUP_FIRST_ROUND;
@@ -220,7 +238,6 @@ public class Game {
 
     /**
      * Memulai permainan utama setelah fase setup selesai.
-     *
      */
     public void startMainGame() {
         assert currentPhase.isSetupPhase()
@@ -231,9 +248,9 @@ public class Game {
     }
 
     /**
-     * Menempatkan Pos Pantau awal pada fase setup. Hanya bisa dilakukan saat
-     * currentPhase.isSetupPhase()}
+     * Menempatkan Pos Pantau awal pada fase setup.
      *
+     * Hanya bisa dilakukan saat currentPhase.isSetupPhase()
      */
     public void placeInitialSettlement(Player player,
                                        Intersection intersection) {
@@ -300,8 +317,9 @@ public class Game {
     }
 
     /**
-     * Melempar dadu untuk giliran ini (Fase 1: Resource Gathering). Jika
-     * hasilnya 7, mengaktifkan mekanisme Nimon Ungu.
+     * Melempar dadu untuk giliran ini (Fase 1: Resource Gathering).
+     *
+     * Jika hasilnya 7, mengaktifkan mekanisme Nimon Ungu.
      */
     public DiceResult rollDice() {
         if (currentPhase != GamePhase.RESOURCE_GATHERING) {
@@ -336,14 +354,16 @@ public class Game {
     }
 
     /**
-     * Mengakhiri giliran pemain aktif dan memindahkan giliran ke pemain
-     * berikutnya.
+     * Mengakhiri giliran pemain aktif.
+     *
+     * Memindahkan giliran ke pemain berikutnya.
      */
     public void endTurn() {
         if (currentPhase == GamePhase.GAME_OVER)
             return;
 
         turnManager.stopTimer();
+        tradeManager.reset(); // tutup semua negosiasi yang masih terbuka
         Player prev = getActivePlayer();
         turnManager.advanceTurn();
         currentPhase = GamePhase.RESOURCE_GATHERING;
@@ -356,8 +376,9 @@ public class Game {
     }
 
     /**
-     * Memulai TurnTimer untuk fase Trade/Build. Dipanggil oleh UI
-     * (GameController) setelah rollDice() selesai.
+     * Memulai TurnTimer untuk fase Trade/Build.
+     *
+     * Dipanggil oleh UI (GameController) setelah rollDice() selesai.
      */
     public void startTradeBuildTimer(TurnTimer.OnTickCallback onTick) {
         if (currentPhase == GamePhase.TRADE_BUILD) {
@@ -366,8 +387,146 @@ public class Game {
     }
 
     /**
-     * Membangun Pipa Transportasi milik pemain di jalur yang ditentukan.
+     * Pemain aktif membuat penawaran dagang ke pemain lain (atau broadcast ke semua).
+     *
+     * Gunakan target = null untuk broadcast offer.
+     *
+     * @param offer penawaran yang dibuat
+     * @return hasil validasi; jika gagal offer tidak dibuat
      */
+    public ValidationResult makeTradeOffer(TradeOffer offer) {
+        ValidationResult result = tradeManager.makeOffer(offer, currentPhase);
+        if (result.isValid()) {
+            String targetName = offer.getTarget() != null
+                                    ? offer.getTarget().getName()
+                                    : "semua pemain";
+            gameLog.addEntry(LogEntry.EventType.TRADE,
+                             offer.getOfferer().getName(),
+                             offer.getOfferer().getName() +
+                                 " menawarkan dagang ke " + targetName);
+        }
+        return result;
+    }
+
+    /**
+     * Pemain acceptingPlayer menerima offer yang sedang aktif.
+     *
+     * Transfer resource dilakukan otomatis.
+     *
+     * @param acceptingPlayer pemain yang menerima
+     * @return hasil validasi
+     */
+    public ValidationResult acceptTradeOffer(Player acceptingPlayer) {
+        ValidationResult result = tradeManager.acceptOffer(acceptingPlayer);
+        if (result.isValid()) {
+            gameLog.addEntry(
+                LogEntry.EventType.TRADE, acceptingPlayer.getName(),
+                acceptingPlayer.getName() + " menerima penawaran dagang.");
+        }
+        return result;
+    }
+
+    /**
+     * Pemain rejectingPlayer menolak offer yang sedang aktif.
+     *
+     * @param rejectingPlayer pemain yang menolak
+     * @return hasil validasi
+     */
+    public ValidationResult rejectTradeOffer(Player rejectingPlayer) {
+        ValidationResult result = tradeManager.rejectOffer(rejectingPlayer);
+        if (result.isValid()) {
+            gameLog.addEntry(
+                LogEntry.EventType.TRADE, rejectingPlayer.getName(),
+                rejectingPlayer.getName() + " menolak penawaran dagang.");
+        }
+        return result;
+    }
+
+    /**
+     * Target mengajukan counter-offer ke offerer.
+     *
+     * @param counter penawaran balik dari target
+     * @return hasil validasi
+     */
+    public ValidationResult counterTradeOffer(TradeOffer counter) {
+        ValidationResult result =
+            tradeManager.counterOffer(counter, currentPhase);
+        if (result.isValid()) {
+            gameLog.addEntry(LogEntry.EventType.TRADE,
+                             counter.getOfferer().getName(),
+                             counter.getOfferer().getName() +
+                                 " mengajukan counter-offer.");
+        }
+        return result;
+    }
+
+    /**
+     * Offerer membatalkan offer aktif.
+     *
+     * @param offerer pemain yang membatalkan (harus offerer asli)
+     * @return hasil validasi
+     */
+    public ValidationResult cancelTradeOffer(Player offerer) {
+        ValidationResult result = tradeManager.cancelOffer(offerer);
+        if (result.isValid()) {
+            gameLog.addEntry(LogEntry.EventType.TRADE, offerer.getName(),
+                             offerer.getName() +
+                                 " membatalkan penawaran dagang.");
+        }
+        return result;
+    }
+
+    /**
+     * Pemain melakukan trade maritim dengan bank.
+     *
+     * Rasio otomatis dihitung berdasarkan harbor terbaik pemain.
+     *
+     * @param player pemain yang trade
+     * @param sellType resource yang dijual
+     * @param buyType resource yang dibeli (selalu 1 unit)
+     * @return hasil validasi
+     */
+    public ValidationResult tradeWithBank(Player player, ResourceType sellType,
+                                          ResourceType buyType) {
+        ValidationResult result = tradeManager.tradeWithBank(
+            player, sellType, buyType, bank, board, currentPhase);
+        if (result.isValid()) {
+            int ratio = tradeManager.getBestTradeRatio(player, sellType, board);
+            gameLog.addEntry(LogEntry.EventType.TRADE, player.getName(),
+                             player.getName() + " trade " + ratio + " " +
+                                 sellType.getDisplayName() + " → 1 " +
+                                 buyType.getDisplayName() + " (bank)");
+        }
+        return result;
+    }
+
+    /**
+     * Mengembalikan rasio trade terbaik pemain untuk resource tertentu.
+     *
+     * Berguna untuk UI menampilkan harbor panel.
+     *
+     * @param player pemain
+     * @param sellType resource yang akan dijual
+     * @return rasio (2, 3, atau 4)
+     */
+    public int getTradeRatio(Player player, ResourceType sellType) {
+        return tradeManager.getBestTradeRatio(player, sellType, board);
+    }
+
+    /**
+     * Mengembalikan semua rasio trade pemain (satu per ResourceType).
+     *
+     * Index sesuai urutan ResourceType#values().
+     */
+    public int[] getAllTradeRatios(Player player) {
+        return tradeManager.getAllTradeRatios(player, board);
+    }
+
+    /**
+     * Mengembalikan TradeManager untuk UI yang butuh akses negosiasi aktif.
+     */
+    public TradeManager getTradeManager() { return tradeManager; }
+
     public void buildRoad(Player player, Path path) {
         if (currentPhase != GamePhase.TRADE_BUILD) {
             throw new IllegalStateException(
@@ -598,8 +757,11 @@ public class Game {
     }
 
     /**
-     * Mengaktifkan mekanisme Nimon Ungu: memindahkan robber dan opsional
-     * mencuri resource.
+     * Mengaktifkan mekanisme Nimon Ungu.
+     *
+     * Meliputi:
+     * - Memindahkan robber
+     * - Mencuri resource (opsional)
      */
     public void activateRobber(HexTile targetTile, Player victim) {
         if (targetTile == null) {
@@ -647,8 +809,10 @@ public class Game {
     }
 
     /**
-     * Memproses pembuangan kartu dari semua pemain yang memiliki lebih dari
-     * #HAND_LIMIT} kartu (efek dadu 7, langkah 1).
+     * Memproses pembuangan kartu dari semua pemain.
+     *
+     * Berlaku untuk pemain yang memiliki lebih dari HAND_LIMIT kartu
+     * (efek dadu 7, langkah 1).
      */
     public void processDiscardPhase() {
         // Cek siapa yang harus buang kartu (lebih dari HAND_LIMIT resource)
@@ -690,8 +854,9 @@ public class Game {
     }
 
     /**
-     * Dipakai UI untuk memproses pembuangan resource satu per satu dari human
-     * player.
+     * Dipakai UI untuk memproses pembuangan resource satu per satu.
+     *
+     * Digunakan untuk human player.
      */
     public void discardResource(Player player, ResourceType type, int amount) {
         if (player == null || type == null) {
@@ -714,6 +879,9 @@ public class Game {
 
     /**
      * Memainkan satu Kartu Temuan milik pemain aktif.
+     *
+     * Kartu yang baru dibeli tidak bisa langsung dimainkan giliran ini.
+     * Hanya boleh memainkan 1 kartu per giliran.
      */
     public void playCard(Player player, ExperimentCard card) {
         if (currentPhase != GamePhase.TRADE_BUILD) {
@@ -759,8 +927,10 @@ public class Game {
     }
 
     /**
-     * Memeriksa apakah ada pemain yang mencapai #VICTORY_POINTS_TO_WIN} PP dan
-     * belum diproses sebagai pemenang.
+     * Memeriksa apakah ada pemain yang mencapai kemenangan.
+     *
+     * VICTORY_POINTS_TO_WIN = 10 PP
+     * Belum diproses sebagai pemenang.
      */
     public Player checkVictory() {
         throw new UnsupportedOperationException(
@@ -769,7 +939,6 @@ public class Game {
 
     /**
      * Menyimpan state permainan ke file.
-     *
      */
     public void saveGame(String filePath) {
         throw new UnsupportedOperationException(
@@ -785,14 +954,20 @@ public class Game {
     }
 
     /**
-     * Memajukan giliran saat fase setup setelah satu pasang (Settlement + Road)
-     * ditempatkan. Menangani transisi:
+     * Memajukan giliran saat fase setup.
      *
-     * Putaran 1 (CW): setiap pemain taruh 1 Settlement + 1 Road Transisi:
-     * pemain terakhir langsung mulai putaran 2
+     * Dipanggil setelah satu pasang (Settlement + Road) ditempatkan.
      *
-     * Putaran 2 (CCW): setiap pemain taruh 1 Settlement + 1 Road (urutan
-     * terbalik) Setelah semua selesai: startMainGame()
+     * Menangani transisi:
+     *
+     * Putaran 1 (Clockwise):
+     * - Setiap pemain taruh 1 Settlement + 1 Road
+     * - Transisi: pemain terakhir langsung mulai putaran 2
+     *
+     * Putaran 2 (Counter-clockwise):
+     * - Setiap pemain taruh 1 Settlement + 1 Road
+     * - Urutan terbalik
+     * - Setelah semua selesai: startMainGame()
      */
     private void advanceSetupTurn() {
         int playerCount = players.size();
@@ -824,8 +999,9 @@ public class Game {
     }
 
     /**
-     * Mencari tile gurun di board untuk inisialisasi Robber. Jika tidak ada,
-     * gunakan tile pertama.
+     * Mencari tile gurun di board untuk inisialisasi Robber.
+     *
+     * Jika tidak ada tile gurun, gunakan tile pertama sebagai fallback.
      */
     private HexTile findDesertTile() {
         for (HexTile tile : board.getAllHexTiles()) {
@@ -838,9 +1014,15 @@ public class Game {
     }
 
     /**
-     * Memeriksa dan memperbarui Largest Army (Pasukan Terbesar) setelah setiap
-     * Knight Card dimainkan. Syarat: minimal 3 knight, lebih banyak dari
-     * pemegang saat ini. Memberi 2 Poin Prestasi tambahan kepada pemegangnya.
+     * Memeriksa dan memperbarui Largest Army (Pasukan Terbesar).
+     *
+     * Dipanggil setelah setiap Knight Card dimainkan.
+     *
+     * Syarat:
+     * - Minimal 3 knight
+     * - Lebih banyak dari pemegang saat ini
+     *
+     * Memberi 2 Poin Prestasi tambahan kepada pemegangnya.
      */
     private void updateLargestArmy() {
         final int MIN_KNIGHTS = 3;
