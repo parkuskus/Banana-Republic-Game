@@ -4,10 +4,6 @@ import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.board.Intersection;
 import banana.republic.board.Path;
-import banana.republic.board.TerrainType;
-import banana.republic.building.Building;
-import banana.republic.building.BuildingType;
-import banana.republic.building.Laboratorium;
 import banana.republic.building.PlayerSupply;
 import banana.republic.building.PosPantau;
 import banana.republic.building.Road;
@@ -16,17 +12,12 @@ import banana.republic.card.ExperimentCard;
 import banana.republic.dice.Dice;
 import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
-import banana.republic.player.SpecialCardType;
 import banana.republic.plugin.MapGeneratorPlugin;
 import banana.republic.resource.Bank;
 import banana.republic.resource.BankImpl;
 import banana.republic.resource.ResourceProductionService;
-import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
 import banana.republic.timer.TurnTimer;
-import banana.republic.trade.TradeManager;
-import banana.republic.trade.TradeOffer;
-import banana.republic.trade.ValidationResult;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,18 +27,12 @@ import java.util.Map;
 /**
  * Orkestrator utama permainan Banana Republic.
  *
- * Kelas ini adalah Facade (GoF Structural) dari seluruh sistem permainan.
+ * Kelas ini adalah Facade (GoF Structural) dari seluruh sistem permainan. Semua
+ * aksi pemain (build, trade, play card, end turn) masuk melalui kelas ini.
+ * Tidak ada modul lain yang perlu tahu detail implementasi internal permainan,
+ * interaksi lewat GameState (untuk plugin) atau method public kelas ini (untuk
+ * UI layer M5).
  *
- * Semua aksi pemain masuk melalui kelas ini:
- * - build
- * - trade
- * - play card
- * - end turn
- *
- * Tidak ada modul lain yang perlu tahu detail implementasi internal.
- * Interaksi dilakukan lewat:
- * - GameState (untuk plugin)
- * - Method public kelas ini (untuk UI layer M5)
  */
 public class Game {
 
@@ -78,30 +63,22 @@ public class Game {
     /**
      * Jumlah Pos Pantau yang sudah ditempatkan pemain aktif di fase setup.
      *
-     * Nilai:
-     * - 0 = belum ada
-     * - 1 = sudah taruh pertama (tunggu road)
-     * - 2 = putaran selesai
+     * 0 = belum ada, 1 = sudah taruh pertama (tunggu road), 2 = putaran
+     * selesai.
      */
     private int setupSettlementCount;
 
     private ExperimentCard cardPlayedThisTurn;
     private ExperimentCard cardBoughtThisTurn;
 
-    /** Manajemen trade domestik dan maritim per giliran. */
-    private final TradeManager tradeManager;
-
-    /** Kalkulasi Poin Prestasi dan penentuan pemenang. */
-    private final VictoryPointCalculator vpCalculator;
-
     /**
      * Membuat instance Game baru dengan daftar pemain dan generator peta.
      *
-     * @param players daftar pemain (3-4 orang)
-     *        - tidak boleh null
-     *        - tidak boleh kosong
-     * @param mapPlugin generator peta yang menghasilkan Board
-     *        - jika null, digunakan StandardMapGenerator secara default
+     * @param players daftar pemain (3–4 orang); tidak boleh {@code null} atau
+     *     kosong
+     * @param mapPlugin generator peta yang menghasilkan Board, jika {@code
+     *     null}, digunakan {@link banana.republic.plugin.StandardMapGenerator}
+     * secara default
      */
     public Game(List<Player> players, MapGeneratorPlugin mapPlugin) {
         if (players == null || players.isEmpty()) {
@@ -117,10 +94,9 @@ public class Game {
         this.bank = new BankImpl();
         this.cardDeck = new CardDeck();
         this.dice = new Dice();
+        this.robber = new Robber();
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
-        this.tradeManager = new TradeManager();
-        this.vpCalculator = new VictoryPointCalculator();
         this.currentPhase = GamePhase.SETUP_FIRST_ROUND;
         this.turnNumber = 1;
         this.winner = null;
@@ -142,10 +118,6 @@ public class Game {
                 ? mapPlugin
                 : new banana.republic.plugin.StandardMapGenerator();
         this.board = generator.generateBoard();
-
-        // Inisialisasi Robber setelah board tersedia (cari tile gurun)
-        HexTile desertTile = findDesertTile();
-        this.robber = new Robber(desertTile);
 
         // TurnManager dibuat setelah board siap agar this::endTurn bisa dipakai
         this.turnManager = new TurnManager(this.players, 0, this::endTurn);
@@ -188,11 +160,8 @@ public class Game {
     public Player getWinner() { return winner; }
 
     /**
-     * Mengembalikan GameState adapter singleton.
-     *
-     * Digunakan untuk:
-     * - Plugin
-     * - UI
+     * Mengembalikan GameState adapter singleton untuk diserahkan ke plugin dan
+     * UI.
      *
      * Lazy-init: adapter dibuat saat pertama kali dipanggil, lalu di-cache.
      */
@@ -204,9 +173,9 @@ public class Game {
     }
 
     /**
-     * Memulai fase setup (inisiasi papan).
+     * Memulai fase setup (inisiasi papan). Menentukan urutan giliran pertama
+     * berdasarkan lemparan dadu.
      *
-     * Menentukan urutan giliran pertama berdasarkan lemparan dadu.
      */
     public void startSetupPhase() {
         currentPhase = GamePhase.SETUP_FIRST_ROUND;
@@ -242,6 +211,7 @@ public class Game {
 
     /**
      * Memulai permainan utama setelah fase setup selesai.
+     *
      */
     public void startMainGame() {
         assert currentPhase.isSetupPhase()
@@ -252,9 +222,9 @@ public class Game {
     }
 
     /**
-     * Menempatkan Pos Pantau awal pada fase setup.
+     * Menempatkan Pos Pantau awal pada fase setup. Hanya bisa dilakukan saat
+     * currentPhase.isSetupPhase()}
      *
-     * Hanya bisa dilakukan saat currentPhase.isSetupPhase()
      */
     public void placeInitialSettlement(Player player,
                                        Intersection intersection) {
@@ -292,6 +262,9 @@ public class Game {
 
     /**
      * Menempatkan Pipa Transportasi awal pada fase setup.
+     *
+     * <p>
+     * <em>Diimplementasikan di Fase 2.</em>
      */
     public void placeInitialRoad(Player player, Path path) {
         if (!currentPhase.isSetupPhase()) {
@@ -321,9 +294,9 @@ public class Game {
     }
 
     /**
-     * Melempar dadu untuk giliran ini (Fase 1: Resource Gathering).
+     * Melempar dadu untuk giliran ini (Fase 1: Resource Gathering). Jika
+     * hasilnya 7, mengaktifkan mekanisme Nimon Ungu.
      *
-     * Jika hasilnya 7, mengaktifkan mekanisme Nimon Ungu.
      */
     public DiceResult rollDice() {
         if (currentPhase != GamePhase.RESOURCE_GATHERING) {
@@ -358,16 +331,17 @@ public class Game {
     }
 
     /**
-     * Mengakhiri giliran pemain aktif.
+     * Mengakhiri giliran pemain aktif dan memindahkan giliran ke pemain
+     * berikutnya.
      *
-     * Memindahkan giliran ke pemain berikutnya.
+     * <p>
+     * <em>Diimplementasikan di Fase 2.</em>
      */
     public void endTurn() {
         if (currentPhase == GamePhase.GAME_OVER)
             return;
 
         turnManager.stopTimer();
-        tradeManager.reset(); // tutup semua negosiasi yang masih terbuka
         Player prev = getActivePlayer();
         turnManager.advanceTurn();
         currentPhase = GamePhase.RESOURCE_GATHERING;
@@ -380,9 +354,8 @@ public class Game {
     }
 
     /**
-     * Memulai TurnTimer untuk fase Trade/Build.
-     *
-     * Dipanggil oleh UI (GameController) setelah rollDice() selesai.
+     * Memulai TurnTimer untuk fase Trade/Build. Dipanggil oleh UI
+     * (GameController) setelah rollDice() selesai.
      */
     public void startTradeBuildTimer(TurnTimer.OnTickCallback onTick) {
         if (currentPhase == GamePhase.TRADE_BUILD) {
@@ -391,572 +364,83 @@ public class Game {
     }
 
     /**
-     * Pemain aktif membuat penawaran dagang ke pemain lain (atau broadcast ke semua).
+     * Membangun Pipa Transportasi milik pemain di jalur yang ditentukan.
      *
-     * Gunakan target = null untuk broadcast offer.
-     *
-     * @param offer penawaran yang dibuat
-     * @return hasil validasi; jika gagal offer tidak dibuat
      */
-    public ValidationResult makeTradeOffer(TradeOffer offer) {
-        ValidationResult result = tradeManager.makeOffer(offer, currentPhase);
-        if (result.isValid()) {
-            String targetName = offer.getTarget() != null
-                                    ? offer.getTarget().getName()
-                                    : "semua pemain";
-            gameLog.addEntry(LogEntry.EventType.TRADE,
-                             offer.getOfferer().getName(),
-                             offer.getOfferer().getName() +
-                                 " menawarkan dagang ke " + targetName);
-        }
-        return result;
-    }
-
-    /**
-     * Pemain acceptingPlayer menerima offer yang sedang aktif.
-     *
-     * Transfer resource dilakukan otomatis.
-     *
-     * @param acceptingPlayer pemain yang menerima
-     * @return hasil validasi
-     */
-    public ValidationResult acceptTradeOffer(Player acceptingPlayer) {
-        ValidationResult result = tradeManager.acceptOffer(acceptingPlayer);
-        if (result.isValid()) {
-            gameLog.addEntry(
-                LogEntry.EventType.TRADE, acceptingPlayer.getName(),
-                acceptingPlayer.getName() + " menerima penawaran dagang.");
-        }
-        return result;
-    }
-
-    /**
-     * Pemain rejectingPlayer menolak offer yang sedang aktif.
-     *
-     * @param rejectingPlayer pemain yang menolak
-     * @return hasil validasi
-     */
-    public ValidationResult rejectTradeOffer(Player rejectingPlayer) {
-        ValidationResult result = tradeManager.rejectOffer(rejectingPlayer);
-        if (result.isValid()) {
-            gameLog.addEntry(
-                LogEntry.EventType.TRADE, rejectingPlayer.getName(),
-                rejectingPlayer.getName() + " menolak penawaran dagang.");
-        }
-        return result;
-    }
-
-    /**
-     * Target mengajukan counter-offer ke offerer.
-     *
-     * @param counter penawaran balik dari target
-     * @return hasil validasi
-     */
-    public ValidationResult counterTradeOffer(TradeOffer counter) {
-        ValidationResult result =
-            tradeManager.counterOffer(counter, currentPhase);
-        if (result.isValid()) {
-            gameLog.addEntry(LogEntry.EventType.TRADE,
-                             counter.getOfferer().getName(),
-                             counter.getOfferer().getName() +
-                                 " mengajukan counter-offer.");
-        }
-        return result;
-    }
-
-    /**
-     * Offerer membatalkan offer aktif.
-     *
-     * @param offerer pemain yang membatalkan (harus offerer asli)
-     * @return hasil validasi
-     */
-    public ValidationResult cancelTradeOffer(Player offerer) {
-        ValidationResult result = tradeManager.cancelOffer(offerer);
-        if (result.isValid()) {
-            gameLog.addEntry(LogEntry.EventType.TRADE, offerer.getName(),
-                             offerer.getName() +
-                                 " membatalkan penawaran dagang.");
-        }
-        return result;
-    }
-
-    /**
-     * Pemain melakukan trade maritim dengan bank.
-     *
-     * Rasio otomatis dihitung berdasarkan harbor terbaik pemain.
-     *
-     * @param player pemain yang trade
-     * @param sellType resource yang dijual
-     * @param buyType resource yang dibeli (selalu 1 unit)
-     * @return hasil validasi
-     */
-    public ValidationResult tradeWithBank(Player player, ResourceType sellType,
-                                          ResourceType buyType) {
-        ValidationResult result = tradeManager.tradeWithBank(
-            player, sellType, buyType, bank, board, currentPhase);
-        if (result.isValid()) {
-            int ratio = tradeManager.getBestTradeRatio(player, sellType, board);
-            gameLog.addEntry(LogEntry.EventType.TRADE, player.getName(),
-                             player.getName() + " trade " + ratio + " " +
-                                 sellType.getDisplayName() + " → 1 " +
-                                 buyType.getDisplayName() + " (bank)");
-        }
-        return result;
-    }
-
-    /**
-     * Mengembalikan rasio trade terbaik pemain untuk resource tertentu.
-     *
-     * Berguna untuk UI menampilkan harbor panel.
-     *
-     * @param player pemain
-     * @param sellType resource yang akan dijual
-     * @return rasio (2, 3, atau 4)
-     */
-    public int getTradeRatio(Player player, ResourceType sellType) {
-        return tradeManager.getBestTradeRatio(player, sellType, board);
-    }
-
-    /**
-     * Mengembalikan semua rasio trade pemain (satu per ResourceType).
-     *
-     * Index sesuai urutan ResourceType#values().
-     */
-    public int[] getAllTradeRatios(Player player) {
-        return tradeManager.getAllTradeRatios(player, board);
-    }
-
-    /**
-     * Mengembalikan TradeManager untuk UI yang butuh akses negosiasi aktif.
-     */
-    public TradeManager getTradeManager() { return tradeManager; }
-
-    public void buildRoad(Player player, Path path) {
-        if (currentPhase != GamePhase.TRADE_BUILD) {
-            throw new IllegalStateException(
-                "buildRoad() hanya boleh dipanggil saat fase TRADE_BUILD");
-        }
-        if (player == null || path == null) {
-            throw new IllegalArgumentException(
-                "Player dan Path tidak boleh null");
-        }
-        if (path.hasRoad()) {
-            throw new IllegalStateException("Path sudah ada road");
-        }
-        if (!board.isPathConnectedToPlayer(path, player)) {
-            throw new IllegalStateException(
-                "Road harus terhubung ke jaringan " + player.getName());
-        }
-
-        // Biaya: 1 WOOD + 1 BRICK
-        assert player.hasResource(ResourceType.WOOD, 1) &&
-            player.hasResource(ResourceType.BRICK, 1)
-            : "Pemain tidak punya resource cukup untuk membangun road";
-        if (!player.hasResource(ResourceType.WOOD, 1) ||
-            !player.hasResource(ResourceType.BRICK, 1)) {
-            throw new IllegalStateException(
-                player.getName() + " tidak punya resource cukup untuk Pipa");
-        }
-
-        PlayerSupply supply = supplies.get(player);
-        if (!supply.canBuildRoad()) {
-            throw new IllegalStateException(player.getName() +
-                                            " sudah kehabisan stok Pipa");
-        }
-
-        // Deduct resource
-        player.removeResource(ResourceType.WOOD, 1);
-        player.removeResource(ResourceType.BRICK, 1);
-        bank.returnResource(ResourceType.WOOD, 1);
-        bank.returnResource(ResourceType.BRICK, 1);
-
-        // Tempatkan road
-        Road road = supply.takeRoad();
-        path.placeRoad(road);
-
-        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
-                player.getName() + " membangun Pipa Transportasi di path #" + path.getId());
-
-        // Perbarui Jalan Terpanjang setelah road baru dipasang
-        updateLongestRoad();
+    public void buildRoad(Player player, banana.republic.board.Path path) {
+        throw new UnsupportedOperationException(
+            "buildRoad() — diimplementasikan di Fase 3");
     }
 
     /**
      * Membangun Pos Pantau milik pemain di persimpangan yang ditentukan.
      */
-    public void buildSettlement(Player player, Intersection intersection) {
-        if (currentPhase != GamePhase.TRADE_BUILD) {
-            throw new IllegalStateException("buildSettlement() hanya boleh "
-                                            +
-                                            "dipanggil saat fase TRADE_BUILD");
-        }
-        if (player == null || intersection == null) {
-            throw new IllegalArgumentException(
-                "Player dan Intersection tidak boleh null");
-        }
-        if (intersection.hasBuilding()) {
-            throw new IllegalStateException("Intersection sudah ada bangunan");
-        }
-        if (!board.isDistanceRuleValid(intersection)) {
-            throw new IllegalStateException(
-                "Distance rule dilanggar — harus berjarak minimal 2 edge");
-        }
-        // Harus terhubung ke minimal 1 road milik pemain
-        boolean connected = intersection.getAdjacentPaths().stream().anyMatch(
-            p -> p.hasRoad() && player.equals(p.getOwner()));
-        if (!connected) {
-            throw new IllegalStateException(
-                "Pos Pantau harus terhubung ke Pipa milik " + player.getName());
-        }
-
-        // Biaya: 1 WOOD + 1 BRICK + 1 WHEAT + 1 BANANA
-        assert player.hasResource(ResourceType.WOOD, 1) &&
-            player.hasResource(ResourceType.BRICK, 1) &&
-            player.hasResource(ResourceType.WHEAT, 1) &&
-            player.hasResource(ResourceType.BANANA, 1)
-            : "Pemain tidak punya resource cukup untuk Pos Pantau";
-        if (!player.hasResource(ResourceType.WOOD, 1) ||
-            !player.hasResource(ResourceType.BRICK, 1) ||
-            !player.hasResource(ResourceType.WHEAT, 1) ||
-            !player.hasResource(ResourceType.BANANA, 1)) {
-            throw new IllegalStateException(
-                player.getName() +
-                " tidak punya resource cukup untuk Pos Pantau");
-        }
-
-        PlayerSupply supply = supplies.get(player);
-        if (!supply.canBuildPosPantau()) {
-            throw new IllegalStateException(
-                player.getName() + " sudah kehabisan stok Pos Pantau");
-        }
-
-        // Deduct resource
-        player.removeResource(ResourceType.WOOD, 1);
-        player.removeResource(ResourceType.BRICK, 1);
-        player.removeResource(ResourceType.WHEAT, 1);
-        player.removeResource(ResourceType.BANANA, 1);
-        bank.returnResource(ResourceType.WOOD, 1);
-        bank.returnResource(ResourceType.BRICK, 1);
-        bank.returnResource(ResourceType.WHEAT, 1);
-        bank.returnResource(ResourceType.BANANA, 1);
-
-        // Tempatkan Pos Pantau
-        PosPantau pp = supply.takePosPantau();
-        intersection.placeBuilding(pp);
-
-        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
-                         player.getName() +
-                             " membangun Pos Pantau di intersection #" +
-                             intersection.getId());
+    public void
+    buildSettlement(Player player,
+                    banana.republic.board.Intersection intersection) {
+        throw new UnsupportedOperationException(
+            "buildSettlement() not implemented");
     }
 
     /**
      * Mengupgrade Pos Pantau menjadi Laboratorium.
      */
-    public void buildCity(Player player, Intersection intersection) {
-        if (currentPhase != GamePhase.TRADE_BUILD) {
-            throw new IllegalStateException(
-                "buildCity() hanya boleh dipanggil saat fase TRADE_BUILD");
-        }
-        if (player == null || intersection == null) {
-            throw new IllegalArgumentException(
-                "Player dan Intersection tidak boleh null");
-        }
-        if (!intersection.hasBuilding()) {
-            throw new IllegalStateException(
-                "Intersection tidak ada bangunan untuk di-upgrade");
-        }
-        if (!player.equals(intersection.getOwner())) {
-            throw new IllegalStateException(
-                "Hanya pemilik Pos Pantau yang bisa upgrade ke Laboratorium");
-        }
-        if (intersection.getBuilding().getBuildingType() !=
-            BuildingType.POS_PANTAU) {
-            throw new IllegalStateException(
-                "Hanya Pos Pantau yang bisa di-upgrade");
-        }
-
-        // Biaya: 2 WHEAT + 3 ORE
-        assert player.hasResource(ResourceType.WHEAT, 2) &&
-            player.hasResource(ResourceType.ORE, 3)
-            : "Pemain tidak punya resource cukup untuk Laboratorium";
-        if (!player.hasResource(ResourceType.WHEAT, 2) ||
-            !player.hasResource(ResourceType.ORE, 3)) {
-            throw new IllegalStateException(
-                player.getName() +
-                " tidak punya resource cukup untuk Laboratorium");
-        }
-
-        PlayerSupply supply = supplies.get(player);
-        if (!supply.canBuildLaboratorium()) {
-            throw new IllegalStateException(
-                player.getName() + " sudah kehabisan stok Laboratorium");
-        }
-
-        // Deduct resource
-        player.removeResource(ResourceType.WHEAT, 2);
-        player.removeResource(ResourceType.ORE, 3);
-        bank.returnResource(ResourceType.WHEAT, 2);
-        bank.returnResource(ResourceType.ORE, 3);
-
-        // Tukar PosPantau → Laboratorium
-        Building removed = intersection.removeBuilding();
-        if (removed instanceof PosPantau) {
-            supply.returnPosPantau(
-                (PosPantau)removed); // kembalikan PosPantau ke supply
-        }
-        Laboratorium lab = supply.takeLaboratorium();
-        intersection.placeBuilding(lab);
-
-        gameLog.addEntry(
-            LogEntry.EventType.BUILD, player.getName(),
-            player.getName() +
-                " meng-upgrade Pos Pantau ke Laboratorium di intersection #" +
-                intersection.getId());
+    public void buildCity(Player player,
+                          banana.republic.board.Intersection intersection) {
+        throw new UnsupportedOperationException("buildCity() not implemented");
     }
 
     /**
      * Membeli Kartu Temuan dari deck.
      */
     public void buyDevelopmentCard(Player player) {
-        if (currentPhase != GamePhase.TRADE_BUILD) {
-            throw new IllegalStateException(
-                "Kartu hanya bisa dibeli saat fase TRADE_BUILD");
-        }
-        if (player == null) {
-            throw new IllegalArgumentException("Player tidak boleh null");
-        }
-        if (cardDeck.isEmpty()) {
-            throw new IllegalStateException("Deck kartu sudah habis");
-        }
-
-        // Biaya: 1 ORE + 1 WHEAT + 1 BANANA
-        assert player.hasResource(ResourceType.ORE, 1) &&
-            player.hasResource(ResourceType.WHEAT, 1) &&
-            player.hasResource(ResourceType.BANANA, 1)
-            : "Pemain tidak punya resource cukup untuk membeli Kartu Temuan";
-        if (!player.hasResource(ResourceType.ORE, 1) ||
-            !player.hasResource(ResourceType.WHEAT, 1) ||
-            !player.hasResource(ResourceType.BANANA, 1)) {
-            throw new IllegalStateException(
-                player.getName() +
-                " tidak punya resource cukup untuk Kartu Temuan");
-        }
-
-        // Deduct resource
-        player.removeResource(ResourceType.ORE, 1);
-        player.removeResource(ResourceType.WHEAT, 1);
-        player.removeResource(ResourceType.BANANA, 1);
-        bank.returnResource(ResourceType.ORE, 1);
-        bank.returnResource(ResourceType.WHEAT, 1);
-        bank.returnResource(ResourceType.BANANA, 1);
-
-        // Tarik kartu — tidak bisa langsung dimainkan giliran ini
-        ExperimentCard card = cardDeck.draw();
-        player.addCard(card);
-        cardBoughtThisTurn = card;
-
-        gameLog.addEntry(LogEntry.EventType.CARD_BOUGHT, player.getName(),
-                         player.getName() + " membeli Kartu Temuan (" +
-                             card.getCardName() + ")");
+        throw new UnsupportedOperationException(
+            "buyDevelopmentCard() — diimplementasikan di Fase 3");
     }
 
     /**
-     * Mengaktifkan mekanisme Nimon Ungu.
+     * Mengaktifkan mekanisme Nimon Ungu: memindahkan robber dan opsional
+     * mencuri resource.
      *
-     * Meliputi:
-     * - Memindahkan robber
-     * - Mencuri resource (opsional)
      */
-    public void activateRobber(HexTile targetTile, Player victim) {
-        if (targetTile == null) {
-            throw new IllegalArgumentException("Target tile tidak boleh null");
-        }
-        if (targetTile.equals(robber.getCurrentTile())) {
-            throw new IllegalStateException(
-                "Nimon Ungu harus pindah ke petak berbeda");
-        }
-
-        // Pindahkan Nimon Ungu
-        robber.move(targetTile);
-        gameLog.addEntry(LogEntry.EventType.ROBBER, getActivePlayer().getName(),
-                         getActivePlayer().getName() +
-                             " memindahkan Nimon Ungu ke tile #" +
-                             targetTile.getId());
-
-        // Curi resource dari victim (opsional, victim boleh null jika tidak
-        // ada yang dicuri)
-        if (victim != null) {
-            List<Player> eligible =
-                robber.getEligibleVictims(getActivePlayer(), board);
-            if (!eligible.contains(victim)) {
-                throw new IllegalStateException(
-                    victim.getName() + (" tidak eligible untuk dicuri di "
-                                        + "posisi Nimon Ungu saat ini"));
-            }
-            if (victim.getTotalResourceCount() == 0) {
-                // Victim tidak punya resource — skip steal tanpa error
-                gameLog.addEntry(
-                    LogEntry.EventType.STEAL, getActivePlayer().getName(),
-                    victim.getName() + " tidak punya resource untuk dicuri.");
-            } else {
-                ResourceType stolen =
-                    robber.stealRandomResource(getActivePlayer(), victim);
-                gameLog.addEntry(
-                    LogEntry.EventType.STEAL, getActivePlayer().getName(),
-                    getActivePlayer().getName() + " mencuri 1 " +
-                        stolen.getDisplayName() + " dari " + victim.getName());
-            }
-        }
-
-        // Setelah robber aktif (dari dadu 7), lanjutkan ke fase Trade/Build
-        currentPhase = GamePhase.TRADE_BUILD;
+    public void activateRobber(banana.republic.board.HexTile targetTile,
+                               Player victim) {
+        throw new UnsupportedOperationException(
+            "activateRobber() not implemented");
     }
 
     /**
-     * Memproses pembuangan kartu dari semua pemain.
+     * Memproses pembuangan kartu dari semua pemain yang memiliki lebih dari
+     * #HAND_LIMIT} kartu (efek dadu 7, langkah 1).
      *
-     * Berlaku untuk pemain yang memiliki lebih dari HAND_LIMIT kartu
-     * (efek dadu 7, langkah 1).
      */
     public void processDiscardPhase() {
-        // Cek siapa yang harus buang kartu (lebih dari HAND_LIMIT resource)
-        Map<Player, Integer> discardMap = robber.activateDiscardPhase(players);
-        if (discardMap.isEmpty()) {
-            return;
-        }
-
-        for (Map.Entry<Player, Integer> entry : discardMap.entrySet()) {
-            Player player = entry.getKey();
-            int toDiscard = entry.getValue();
-
-            // Bot: buang resource acak secara otomatis
-            if (player.isBot()) {
-                int discarded = 0;
-                for (ResourceType type : ResourceType.values()) {
-                    if (discarded >= toDiscard)
-                        break;
-                    int count = player.getResourceCount(type);
-                    int remove = Math.min(count, toDiscard - discarded);
-                    if (remove > 0) {
-                        player.removeResource(type, remove);
-                        bank.returnResource(type, remove);
-                        discarded += remove;
-                    }
-                }
-                gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
-                                 player.getName() + " (bot) membuang " +
-                                     discarded + " kartu resource.");
-            } else {
-                // Human: dicatat saja — UI akan meminta pemain memilih kartu
-                // yang dibuang UI harus memanggil discardResource(player, type,
-                // amount) per resource
-                gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
-                                 player.getName() + " harus membuang " +
-                                     toDiscard + " kartu resource.");
-            }
-        }
-    }
-
-    /**
-     * Dipakai UI untuk memproses pembuangan resource satu per satu.
-     *
-     * Digunakan untuk human player.
-     */
-    public void discardResource(Player player, ResourceType type, int amount) {
-        if (player == null || type == null) {
-            throw new IllegalArgumentException(
-                "Player dan ResourceType tidak boleh null");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("Jumlah yang dibuang harus > 0");
-        }
-        if (!player.hasResource(type, amount)) {
-            throw new IllegalStateException(player.getName() + " tidak punya " +
-                                            amount + " " + type);
-        }
-        player.removeResource(type, amount);
-        bank.returnResource(type, amount);
-        gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
-                         player.getName() + " membuang " + amount + " " +
-                             type.getDisplayName());
+        throw new UnsupportedOperationException(
+            "processDiscardPhase() not implemented");
     }
 
     /**
      * Memainkan satu Kartu Temuan milik pemain aktif.
      *
-     * Kartu yang baru dibeli tidak bisa langsung dimainkan giliran ini.
-     * Hanya boleh memainkan 1 kartu per giliran.
      */
-    public void playCard(Player player, ExperimentCard card) {
-        if (currentPhase != GamePhase.TRADE_BUILD) {
-            throw new IllegalStateException(
-                "Kartu hanya bisa dimainkan saat fase TRADE_BUILD");
-        }
-        if (player == null || card == null) {
-            throw new IllegalArgumentException(
-                "Player dan kartu tidak boleh null");
-        }
-        if (!player.getHandCards().contains(card)) {
-            throw new IllegalStateException(
-                player.getName() + " tidak punya kartu tersebut di tangan");
-        }
-        if (card == cardBoughtThisTurn) {
-            throw new IllegalStateException(
-                "Kartu yang baru dibeli tidak bisa langsung dimainkan "
-                + "giliran ini");
-        }
-        if (cardPlayedThisTurn != null) {
-            throw new IllegalStateException(
-                "Hanya boleh memainkan 1 kartu per giliran");
-        }
-        if (!card.isPlayable()) {
-            throw new IllegalStateException("Kartu " + card.getCardName() +
-                                            " tidak bisa dimainkan saat ini");
-        }
-
-        // Jalankan efek kartu: card akan memanggil state.chooseKnightTarget()
-        // dsb. bila perlu
-        card.applyEffect(getState(), player);
-        cardPlayedThisTurn = card;
-
-        // Pindahkan ke discard pile
-        player.removeCard(card);
-        cardDeck.addToDiscardPile(card);
-
-        gameLog.addEntry(LogEntry.EventType.CARD_PLAYED, player.getName(),
-                         player.getName() + " memainkan " + card.getCardName());
-
-        // Update Largest Army setelah Knight dimainkan
-        updateLargestArmy();
+    public void playCard(Player player,
+                         banana.republic.card.ExperimentCard card) {
+        throw new UnsupportedOperationException("playCard() not implemented");
     }
 
     /**
-     * Memeriksa apakah ada pemain yang mencapai kemenangan.
+     * Memeriksa apakah ada pemain yang mencapai #VICTORY_POINTS_TO_WIN} PP dan
+     * belum diproses sebagai pemenang.
      *
-     * VICTORY_POINTS_TO_WIN = 10 PP
-     * Belum diproses sebagai pemenang.
      */
     public Player checkVictory() {
-        if (currentPhase == GamePhase.GAME_OVER && winner != null) {
-            return winner; // sudah pernah ditetapkan
-        }
-
-        Player candidate = vpCalculator.findWinner(players, board, VICTORY_POINTS_TO_WIN);
-        if (candidate != null) {
-            winner = candidate;
-            currentPhase = GamePhase.GAME_OVER;
-            turnManager.stopTimer();
-
-            int totalVP = vpCalculator.getTotalVP(winner, board);
-            gameLog.addEntry(LogEntry.EventType.VICTORY, winner.getName(),
-                    winner.getName() + " MENANG dengan " + totalVP + " Poin Prestasi!");
-        }
-        return winner;
+        throw new UnsupportedOperationException(
+            "checkVictory() — diimplementasikan di Fase 6");
     }
 
     /**
      * Menyimpan state permainan ke file.
+     *
      */
     public void saveGame(String filePath) {
         throw new UnsupportedOperationException(
@@ -972,20 +456,14 @@ public class Game {
     }
 
     /**
-     * Memajukan giliran saat fase setup.
+     * Memajukan giliran saat fase setup setelah satu pasang (Settlement + Road)
+     * ditempatkan. Menangani transisi:
      *
-     * Dipanggil setelah satu pasang (Settlement + Road) ditempatkan.
+     * Putaran 1 (CW): setiap pemain taruh 1 Settlement + 1 Road Transisi:
+     * pemain terakhir langsung mulai putaran 2
      *
-     * Menangani transisi:
-     *
-     * Putaran 1 (Clockwise):
-     * - Setiap pemain taruh 1 Settlement + 1 Road
-     * - Transisi: pemain terakhir langsung mulai putaran 2
-     *
-     * Putaran 2 (Counter-clockwise):
-     * - Setiap pemain taruh 1 Settlement + 1 Road
-     * - Urutan terbalik
-     * - Setelah semua selesai: startMainGame()
+     * Putaran 2 (CCW): setiap pemain taruh 1 Settlement + 1 Road (urutan
+     * terbalik) Setelah semua selesai: startMainGame()
      */
     private void advanceSetupTurn() {
         int playerCount = players.size();
@@ -1012,134 +490,6 @@ public class Game {
                 gameLog.addEntry(LogEntry.EventType.SYSTEM,
                                  "Fase setup selesai!");
                 startMainGame();
-            }
-        }
-    }
-
-    /**
-     * Mencari tile gurun di board untuk inisialisasi Robber.
-     *
-     * Jika tidak ada tile gurun, gunakan tile pertama sebagai fallback.
-     */
-    private HexTile findDesertTile() {
-        for (HexTile tile : board.getAllHexTiles()) {
-            if (tile.getTerrainType() == TerrainType.DESERT) {
-                return tile;
-            }
-        }
-        // Fallback: gunakan tile pertama jika tidak ada gurun
-        return board.getAllHexTiles().get(0);
-    }
-
-    /**
-     * Memeriksa dan memperbarui Largest Army (Pasukan Terbesar).
-     *
-     * Dipanggil setelah setiap Knight Card dimainkan.
-     *
-     * Syarat:
-     * - Minimal 3 knight
-     * - Lebih banyak dari pemegang saat ini
-     *
-     * Memberi 2 Poin Prestasi tambahan kepada pemegangnya.
-     */
-    /**
-     * Memperbarui kepemilikan Jalan Terpanjang setelah road baru dipasang.
-     * Dipanggil secara internal oleh {@link #buildRoad} dan {@link #placeInitialRoad}.
-     */
-    private void updateLongestRoad() {
-        Player prev    = null;
-        for (Player p : players) {
-            if (p.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) { prev = p; break; }
-        }
-
-        Player newHolder = vpCalculator.updateLongestRoad(players);
-
-        if (newHolder != null && !newHolder.equals(prev)) {
-            if (prev != null) {
-                gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, prev.getName(),
-                        prev.getName() + " kehilangan Jalan Terpanjang.");
-            }
-            gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, newHolder.getName(),
-                    newHolder.getName() + " mendapat Jalan Terpanjang ("
-                    + newHolder.getLongestRoadLength() + " road)! (+2 PP)");
-        }
-    }
-
-    // =========================================================================
-    // VP query — Fase 6
-    // =========================================================================
-
-    /**
-     * Menghitung dan mengembalikan breakdown VP pemain tertentu.
-     * Berguna untuk UI yang ingin menampilkan detail skor pemain.
-     *
-     * @param player pemain yang ingin dihitung VP-nya
-     * @return {@link VictoryPointBreakdown} berisi total dan rincian per kategori
-     */
-    public VictoryPointBreakdown getVPBreakdown(Player player) {
-        return vpCalculator.calculate(player, board);
-    }
-
-    /**
-     * Menghitung VP semua pemain sekaligus, diurutkan dari tertinggi ke terendah.
-     * Berguna untuk leaderboard / scoreboard UI.
-     *
-     * @return list {@link VictoryPointBreakdown} terurut descending
-     */
-    public java.util.List<VictoryPointBreakdown> getAllVPBreakdowns() {
-        return vpCalculator.calculateAll(players, board);
-    }
-
-    /**
-     * Shortcut total VP pemain tanpa breakdown rincian.
-     *
-     * @param player pemain yang dihitung
-     * @return total VP termasuk VictoryPointCard tersembunyi
-     */
-    public int getVPTotal(Player player) {
-        return vpCalculator.getTotalVP(player, board);
-    }
-
-    private void updateLargestArmy() {
-        final int MIN_KNIGHTS = 3;
-        Player currentHolder = null;
-        int holderKnights = 0;
-
-        // Temukan pemegang Largest Army saat ini
-        for (Player p : players) {
-            if (p.hasSpecialCard(SpecialCardType.LARGEST_ARMY)) {
-                currentHolder = p;
-                holderKnights = p.getKnightsPlayed();
-                break;
-            }
-        }
-
-        // Cek apakah ada pemain yang layak mengambil alih
-        for (Player p : players) {
-            int knights = p.getKnightsPlayed();
-            if (knights < MIN_KNIGHTS)
-                continue;
-
-            boolean qualifies = (currentHolder == null)
-                                    ? knights >= MIN_KNIGHTS
-                                    : knights > holderKnights;
-
-            if (qualifies && p != currentHolder) {
-                // Ambil dari pemegang lama
-                if (currentHolder != null) {
-                    currentHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY,
-                                                 false);
-                    gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD,
-                                     currentHolder.getName(),
-                                     currentHolder.getName() +
-                                         " kehilangan Pasukan Terbesar.");
-                }
-                // Berikan ke pemegang baru
-                p.setSpecialCard(SpecialCardType.LARGEST_ARMY, true);
-                gameLog.addEntry(LogEntry.EventType.SPECIAL_CARD, p.getName(),
-                                 p.getName() + " mendapat Pasukan Terbesar (" +
-                                     knights + " knight)! (+2 PP)");
-                break;
             }
         }
     }
