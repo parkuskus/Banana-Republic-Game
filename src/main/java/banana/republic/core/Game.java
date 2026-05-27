@@ -4,6 +4,10 @@ import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.board.Intersection;
 import banana.republic.board.Path;
+import banana.republic.board.TerrainType;
+import banana.republic.building.Building;
+import banana.republic.building.BuildingType;
+import banana.republic.building.Laboratorium;
 import banana.republic.building.PlayerSupply;
 import banana.republic.building.PosPantau;
 import banana.republic.building.Road;
@@ -12,10 +16,12 @@ import banana.republic.card.ExperimentCard;
 import banana.republic.dice.Dice;
 import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
+import banana.republic.player.SpecialCardType;
 import banana.republic.plugin.MapGeneratorPlugin;
 import banana.republic.resource.Bank;
 import banana.republic.resource.BankImpl;
 import banana.republic.resource.ResourceProductionService;
+import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
 import banana.republic.timer.TurnTimer;
 import java.util.ArrayList;
@@ -262,9 +268,6 @@ public class Game {
 
     /**
      * Menempatkan Pipa Transportasi awal pada fase setup.
-     *
-     * <p>
-     * <em>Diimplementasikan di Fase 2.</em>
      */
     public void placeInitialRoad(Player player, Path path) {
         if (!currentPhase.isSetupPhase()) {
@@ -296,7 +299,6 @@ public class Game {
     /**
      * Melempar dadu untuk giliran ini (Fase 1: Resource Gathering). Jika
      * hasilnya 7, mengaktifkan mekanisme Nimon Ungu.
-     *
      */
     public DiceResult rollDice() {
         if (currentPhase != GamePhase.RESOURCE_GATHERING) {
@@ -333,9 +335,6 @@ public class Game {
     /**
      * Mengakhiri giliran pemain aktif dan memindahkan giliran ke pemain
      * berikutnya.
-     *
-     * <p>
-     * <em>Diimplementasikan di Fase 2.</em>
      */
     public void endTurn() {
         if (currentPhase == GamePhase.GAME_OVER)
@@ -367,35 +366,233 @@ public class Game {
      * Membangun Pipa Transportasi milik pemain di jalur yang ditentukan.
      *
      */
-    public void buildRoad(Player player, banana.republic.board.Path path) {
-        throw new UnsupportedOperationException(
-            "buildRoad() — diimplementasikan di Fase 3");
+    public void buildRoad(Player player, Path path) {
+        if (currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "buildRoad() hanya boleh dipanggil saat fase TRADE_BUILD");
+        }
+        if (player == null || path == null) {
+            throw new IllegalArgumentException(
+                "Player dan Path tidak boleh null");
+        }
+        if (path.hasRoad()) {
+            throw new IllegalStateException("Path sudah ada road");
+        }
+        if (!board.isPathConnectedToPlayer(path, player)) {
+            throw new IllegalStateException(
+                "Road harus terhubung ke jaringan " + player.getName());
+        }
+
+        // Biaya: 1 WOOD + 1 BRICK
+        assert player.hasResource(ResourceType.WOOD, 1) &&
+            player.hasResource(ResourceType.BRICK, 1)
+            : "Pemain tidak punya resource cukup untuk membangun road";
+        if (!player.hasResource(ResourceType.WOOD, 1) ||
+            !player.hasResource(ResourceType.BRICK, 1)) {
+            throw new IllegalStateException(
+                player.getName() + " tidak punya resource cukup untuk Pipa");
+        }
+
+        PlayerSupply supply = supplies.get(player);
+        if (!supply.canBuildRoad()) {
+            throw new IllegalStateException(player.getName() +
+                                            " sudah kehabisan stok Pipa");
+        }
+
+        // Deduct resource
+        player.removeResource(ResourceType.WOOD, 1);
+        player.removeResource(ResourceType.BRICK, 1);
+        bank.returnResource(ResourceType.WOOD, 1);
+        bank.returnResource(ResourceType.BRICK, 1);
+
+        // Tempatkan road
+        Road road = supply.takeRoad();
+        path.placeRoad(road);
+
+        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
+                         player.getName() +
+                             " membangun Pipa Transportasi di path #" +
+                             path.getId());
     }
 
     /**
      * Membangun Pos Pantau milik pemain di persimpangan yang ditentukan.
      */
-    public void
-    buildSettlement(Player player,
-                    banana.republic.board.Intersection intersection) {
-        throw new UnsupportedOperationException(
-            "buildSettlement() not implemented");
+    public void buildSettlement(Player player, Intersection intersection) {
+        if (currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException("buildSettlement() hanya boleh "
+                                            +
+                                            "dipanggil saat fase TRADE_BUILD");
+        }
+        if (player == null || intersection == null) {
+            throw new IllegalArgumentException(
+                "Player dan Intersection tidak boleh null");
+        }
+        if (intersection.hasBuilding()) {
+            throw new IllegalStateException("Intersection sudah ada bangunan");
+        }
+        if (!board.isDistanceRuleValid(intersection)) {
+            throw new IllegalStateException(
+                "Distance rule dilanggar — harus berjarak minimal 2 edge");
+        }
+        // Harus terhubung ke minimal 1 road milik pemain
+        boolean connected = intersection.getAdjacentPaths().stream().anyMatch(
+            p -> p.hasRoad() && player.equals(p.getOwner()));
+        if (!connected) {
+            throw new IllegalStateException(
+                "Pos Pantau harus terhubung ke Pipa milik " + player.getName());
+        }
+
+        // Biaya: 1 WOOD + 1 BRICK + 1 WHEAT + 1 BANANA
+        assert player.hasResource(ResourceType.WOOD, 1) &&
+            player.hasResource(ResourceType.BRICK, 1) &&
+            player.hasResource(ResourceType.WHEAT, 1) &&
+            player.hasResource(ResourceType.BANANA, 1)
+            : "Pemain tidak punya resource cukup untuk Pos Pantau";
+        if (!player.hasResource(ResourceType.WOOD, 1) ||
+            !player.hasResource(ResourceType.BRICK, 1) ||
+            !player.hasResource(ResourceType.WHEAT, 1) ||
+            !player.hasResource(ResourceType.BANANA, 1)) {
+            throw new IllegalStateException(
+                player.getName() +
+                " tidak punya resource cukup untuk Pos Pantau");
+        }
+
+        PlayerSupply supply = supplies.get(player);
+        if (!supply.canBuildPosPantau()) {
+            throw new IllegalStateException(
+                player.getName() + " sudah kehabisan stok Pos Pantau");
+        }
+
+        // Deduct resource
+        player.removeResource(ResourceType.WOOD, 1);
+        player.removeResource(ResourceType.BRICK, 1);
+        player.removeResource(ResourceType.WHEAT, 1);
+        player.removeResource(ResourceType.BANANA, 1);
+        bank.returnResource(ResourceType.WOOD, 1);
+        bank.returnResource(ResourceType.BRICK, 1);
+        bank.returnResource(ResourceType.WHEAT, 1);
+        bank.returnResource(ResourceType.BANANA, 1);
+
+        // Tempatkan Pos Pantau
+        PosPantau pp = supply.takePosPantau();
+        intersection.placeBuilding(pp);
+
+        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
+                         player.getName() +
+                             " membangun Pos Pantau di intersection #" +
+                             intersection.getId());
     }
 
     /**
      * Mengupgrade Pos Pantau menjadi Laboratorium.
      */
-    public void buildCity(Player player,
-                          banana.republic.board.Intersection intersection) {
-        throw new UnsupportedOperationException("buildCity() not implemented");
+    public void buildCity(Player player, Intersection intersection) {
+        if (currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "buildCity() hanya boleh dipanggil saat fase TRADE_BUILD");
+        }
+        if (player == null || intersection == null) {
+            throw new IllegalArgumentException(
+                "Player dan Intersection tidak boleh null");
+        }
+        if (!intersection.hasBuilding()) {
+            throw new IllegalStateException(
+                "Intersection tidak ada bangunan untuk di-upgrade");
+        }
+        if (!player.equals(intersection.getOwner())) {
+            throw new IllegalStateException(
+                "Hanya pemilik Pos Pantau yang bisa upgrade ke Laboratorium");
+        }
+        if (intersection.getBuilding().getBuildingType() !=
+            BuildingType.POS_PANTAU) {
+            throw new IllegalStateException(
+                "Hanya Pos Pantau yang bisa di-upgrade");
+        }
+
+        // Biaya: 2 WHEAT + 3 ORE
+        assert player.hasResource(ResourceType.WHEAT, 2) &&
+            player.hasResource(ResourceType.ORE, 3)
+            : "Pemain tidak punya resource cukup untuk Laboratorium";
+        if (!player.hasResource(ResourceType.WHEAT, 2) ||
+            !player.hasResource(ResourceType.ORE, 3)) {
+            throw new IllegalStateException(
+                player.getName() +
+                " tidak punya resource cukup untuk Laboratorium");
+        }
+
+        PlayerSupply supply = supplies.get(player);
+        if (!supply.canBuildLaboratorium()) {
+            throw new IllegalStateException(
+                player.getName() + " sudah kehabisan stok Laboratorium");
+        }
+
+        // Deduct resource
+        player.removeResource(ResourceType.WHEAT, 2);
+        player.removeResource(ResourceType.ORE, 3);
+        bank.returnResource(ResourceType.WHEAT, 2);
+        bank.returnResource(ResourceType.ORE, 3);
+
+        // Tukar PosPantau → Laboratorium
+        Building removed = intersection.removeBuilding();
+        if (removed instanceof PosPantau) {
+            supply.returnPosPantau(
+                (PosPantau)removed); // kembalikan PosPantau ke supply
+        }
+        Laboratorium lab = supply.takeLaboratorium();
+        intersection.placeBuilding(lab);
+
+        gameLog.addEntry(
+            LogEntry.EventType.BUILD, player.getName(),
+            player.getName() +
+                " meng-upgrade Pos Pantau ke Laboratorium di intersection #" +
+                intersection.getId());
     }
 
     /**
      * Membeli Kartu Temuan dari deck.
      */
     public void buyDevelopmentCard(Player player) {
-        throw new UnsupportedOperationException(
-            "buyDevelopmentCard() — diimplementasikan di Fase 3");
+        if (currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "Kartu hanya bisa dibeli saat fase TRADE_BUILD");
+        }
+        if (player == null) {
+            throw new IllegalArgumentException("Player tidak boleh null");
+        }
+        if (cardDeck.isEmpty()) {
+            throw new IllegalStateException("Deck kartu sudah habis");
+        }
+
+        // Biaya: 1 ORE + 1 WHEAT + 1 BANANA
+        assert player.hasResource(ResourceType.ORE, 1) &&
+            player.hasResource(ResourceType.WHEAT, 1) &&
+            player.hasResource(ResourceType.BANANA, 1)
+            : "Pemain tidak punya resource cukup untuk membeli Kartu Temuan";
+        if (!player.hasResource(ResourceType.ORE, 1) ||
+            !player.hasResource(ResourceType.WHEAT, 1) ||
+            !player.hasResource(ResourceType.BANANA, 1)) {
+            throw new IllegalStateException(
+                player.getName() +
+                " tidak punya resource cukup untuk Kartu Temuan");
+        }
+
+        // Deduct resource
+        player.removeResource(ResourceType.ORE, 1);
+        player.removeResource(ResourceType.WHEAT, 1);
+        player.removeResource(ResourceType.BANANA, 1);
+        bank.returnResource(ResourceType.ORE, 1);
+        bank.returnResource(ResourceType.WHEAT, 1);
+        bank.returnResource(ResourceType.BANANA, 1);
+
+        // Tarik kartu — tidak bisa langsung dimainkan giliran ini
+        ExperimentCard card = cardDeck.draw();
+        player.addCard(card);
+        cardBoughtThisTurn = card;
+
+        gameLog.addEntry(LogEntry.EventType.CARD_BOUGHT, player.getName(),
+                         player.getName() + " membeli Kartu Temuan (" +
+                             card.getCardName() + ")");
     }
 
     /**

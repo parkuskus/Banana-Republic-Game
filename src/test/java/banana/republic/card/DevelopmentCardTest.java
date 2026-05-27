@@ -119,6 +119,11 @@ public class DevelopmentCardTest {
         }
 
         @Override
+        public Player getActivePlayer() {
+            return null;
+        }
+
+        @Override
         public Bank getBank() {
             return new MockBank();
         }
@@ -126,6 +131,21 @@ public class DevelopmentCardTest {
         @Override
         public banana.republic.board.Board getBoard() {
             return null;
+        }
+
+        @Override
+        public banana.republic.core.GamePhase getCurrentPhase() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.core.GameLog getGameLog() {
+            return null;
+        }
+
+        @Override
+        public int getTurnNumber() {
+            return 1;
         }
     }
 
