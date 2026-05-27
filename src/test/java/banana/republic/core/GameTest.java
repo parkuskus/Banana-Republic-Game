@@ -163,29 +163,27 @@ public class GameTest {
     }
 
     @Test
-    @DisplayName("activateRobber should throw UnsupportedOperationException")
-    void testActivateRobberNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
+    @DisplayName("activateRobber should throw IllegalArgumentException for null target")
+    void testActivateRobberRejectsNullTarget() {
+        assertThrows(IllegalArgumentException.class, () -> {
             game.activateRobber(null, null);
-        }, "activateRobber harus throw UnsupportedOperationException");
+        }, "activateRobber harus throw IllegalArgumentException untuk null target");
     }
 
     @Test
-    @DisplayName(
-        "processDiscardPhase should throw UnsupportedOperationException")
-    void
-    testProcessDiscardPhaseNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
-            game.processDiscardPhase();
-        }, "processDiscardPhase harus throw UnsupportedOperationException");
+    @DisplayName("processDiscardPhase should work without errors")
+    void testProcessDiscardPhase() {
+        // Should not throw any exception
+        assertDoesNotThrow(() -> game.processDiscardPhase(),
+            "processDiscardPhase harus berjalan tanpa error");
     }
 
     @Test
-    @DisplayName("playCard should throw UnsupportedOperationException")
-    void testPlayCardNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
+    @DisplayName("playCard should throw IllegalStateException when not in TRADE_BUILD phase")
+    void testPlayCardWrongPhase() {
+        assertThrows(IllegalStateException.class, () -> {
             game.playCard(null, null);
-        }, "playCard harus throw UnsupportedOperationException");
+        }, "playCard harus throw IllegalStateException saat bukan fase TRADE_BUILD");
     }
 
     @Test

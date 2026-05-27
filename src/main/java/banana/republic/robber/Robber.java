@@ -13,20 +13,23 @@ import java.util.*;
  * Nimon Ungu merepresentasikan "pembohong ungu jahat" yang bisa dipindahkan
  * saat dadu 7.
  *
- * Efek Nimon Ungu (saat dadu 7): 1. Discard Phase: Pemain dengan >7 kartu harus
- * buang setengah kartu 2. Move: Nimon Ungu WAJIB pindah ke petak terrain
- * lain 3. Steal (opsional): Pemain aktif boleh curi 1 kartu acak dari pemain
- * yang punya bangunan di sekitar lokasi baru
+ * Efek Nimon Ungu (saat dadu 7):
+ * - Discard Phase: Pemain dengan >7 kartu harus buang setengah kartu
+ * - Move: Nimon Ungu WAJIB pindah ke petak terrain lain
+ * - Steal (opsional): Pemain aktif boleh curi 1 kartu acak dari pemain
+ *   yang punya bangunan di sekitar lokasi baru
  *
- * Note: Kartu Temuan Dr. Neroifa TIDAK dihitung dan TIDAK BISA dibuang saat
+ * Note:
+ * Kartu Temuan Dr. Neroifa TIDAK dihitung dan TIDAK BISA dibuang saat
  * discard phase.
  */
 public class Robber {
     private HexTile currentTile;
 
     /**
-     * Constructor untuk Robber. Nimon Ungu dimulai di petak Gurun (terrain
-     * dengan type DESERT/GURUN).
+     * Constructor untuk Robber.
+     *
+     * Nimon Ungu dimulai di petak Gurun (terrain dengan type DESERT/GURUN).
      */
     public Robber(HexTile desertTile) {
         assert desertTile != null
@@ -36,8 +39,10 @@ public class Robber {
     }
 
     /**
-     * Pindahkan Nimon Ungu ke petak terrain lain. WAJIB pindah (tidak boleh
-     * tetap di tempat yang sama). Update status robber di HexTiles.
+     * Pindahkan Nimon Ungu ke petak terrain lain.
+     *
+     * WAJIB pindah (tidak boleh tetap di tempat yang sama).
+     * Update status robber di HexTiles.
      */
     public void move(HexTile newTile) {
         assert newTile != null
@@ -59,10 +64,14 @@ public class Robber {
     public HexTile getCurrentTile() { return currentTile; }
 
     /**
-     * Dapatkan daftar pemain yang eligible untuk dicuri. Criteria: 1. Memiliki
-     * Pos Pantau atau Laboratorium di persimpangan yang bersebelahan dengan
-     * tile sekarang 2. Memiliki minimal 1 kartu sumber daya di tangan (bukan
-     * kartu development) 3. Bukan pemain aktif (thief) sendiri
+     * Dapatkan daftar pemain yang eligible untuk dicuri.
+     *
+     * Criteria:
+     * - Memiliki Pos Pantau atau Laboratorium di persimpangan yang
+     *   bersebelahan dengan tile sekarang
+     * - Memiliki minimal 1 kartu sumber daya di tangan
+     *   (bukan kartu development)
+     * - Bukan pemain aktif (thief) sendiri
      */
     public List<Player> getEligibleVictims(Player thief, Board board) {
         assert thief != null : "Thief tidak boleh null";
@@ -94,9 +103,10 @@ public class Robber {
     }
 
     /**
-     * Curi 1 kartu sumber daya RANDOM dari victim. Memilih random index dari
-     * total resource count. Return tipe resource yang dicuri (untuk
-     * logging/UI).
+     * Curi 1 kartu sumber daya RANDOM dari victim.
+     *
+     * Memilih random index dari total resource count.
+     * Return tipe resource yang dicuri (untuk logging/UI).
      */
     public ResourceType stealRandomResource(Player thief, Player victim) {
         assert thief != null : "Thief tidak boleh null";
@@ -127,9 +137,13 @@ public class Robber {
     }
 
     /**
-     * Aktivasi Discard Phase: setiap pemain dengan >7 kartu sumber daya harus
-     * buang setengah. Return map: Player -> jumlah kartu yg harus dibuang. <p>
-     * Note: Kartu Temuan (development cards) TIDAK DIHITUNG dalam jumlah kartu.
+     * Aktivasi Discard Phase.
+     *
+     * Setiap pemain dengan >7 kartu sumber daya harus buang setengah.
+     * Return map: Player -> jumlah kartu yang harus dibuang.
+     *
+     * Note:
+     * Kartu Temuan (development cards) TIDAK DIHITUNG dalam jumlah kartu.
      */
     public Map<Player, Integer> activateDiscardPhase(List<Player> players) {
         assert players != null : "Players list tidak boleh null";

@@ -187,8 +187,10 @@ public class Board {
     }
 
     /**
-     * Mengembalikan true jika path terhubung ke jaringan road/bangunan milik
-     * player (dipakai validasi buildRoad).
+     * Mengembalikan true jika path terhubung ke jaringan road/bangunan
+     * milik player.
+     *
+     * Dipakai untuk validasi buildRoad.
      */
     public boolean isPathConnectedToPlayer(Path path, Player player) {
         return isPathConnectedToPlayerNetwork(path, player);
