@@ -63,6 +63,10 @@ public class TurnManager {
     // Mengembalikan indeks pemain aktif dalam list.
     public int getActiveIndex() { return activeIndex; }
 
+    public boolean isTimerPaused() {
+        return activeTimer != null && activeTimer.isPaused();
+    }
+
     public TurnOrder getCurrentOrder() { return currentOrder; }
 
     public Player advanceTurn() {
@@ -141,6 +145,23 @@ public class TurnManager {
     /** Mengembalikan true jika timer sedang aktif berjalan. */
     public boolean isTimerRunning() {
         return activeTimer != null && activeTimer.isRunning();
+    }
+
+    /**
+     * Restore timer dari save data.
+     */
+    public void restoreTimer(int remainingSeconds, boolean running,
+                             boolean paused, TurnTimer.OnTickCallback onTick) {
+        stopTimer();
+        if (!running || remainingSeconds <= 0) {
+            return;
+        }
+
+        activeTimer = new TurnTimer(onTimerExpired::run, onTick);
+        activeTimer.startWithRemaining(remainingSeconds);
+        if (paused) {
+            activeTimer.pause();
+        }
     }
 
     private int nextIndex(int current, TurnOrder order) {
