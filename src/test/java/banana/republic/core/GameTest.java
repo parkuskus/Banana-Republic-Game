@@ -2,18 +2,9 @@ package banana.republic.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import banana.republic.board.Board;
-import banana.republic.board.HexTile;
-import banana.republic.board.Intersection;
-import banana.republic.board.Path;
-import banana.republic.board.TerrainType;
-import banana.republic.building.PosPantau;
-import banana.republic.building.Road;
-import banana.republic.card.ExperimentCard;
 import banana.republic.player.HumanPlayer;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
-import banana.republic.resource.ResourceType;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -192,22 +183,6 @@ public class GameTest {
         // Should not throw any exception
         assertDoesNotThrow(() -> game.checkVictory(),
             "checkVictory harus berjalan tanpa error");
-    }
-
-    @Test
-    @DisplayName("saveGame should throw UnsupportedOperationException")
-    void testSaveGameNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
-            game.saveGame("test.save");
-        }, "saveGame harus throw UnsupportedOperationException");
-    }
-
-    @Test
-    @DisplayName("loadGame should throw UnsupportedOperationException")
-    void testLoadGameNotImplemented() {
-        assertThrows(UnsupportedOperationException.class, () -> {
-            Game.loadGame("test.save");
-        }, "loadGame harus throw UnsupportedOperationException");
     }
 
     @Test
