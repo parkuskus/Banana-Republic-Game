@@ -24,6 +24,7 @@ import banana.republic.resource.ResourceProductionService;
 import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
 import banana.republic.timer.TurnTimer;
+import banana.republic.save.GameSaveManager;
 import banana.republic.trade.TradeManager;
 import banana.republic.trade.TradeOffer;
 import banana.republic.trade.ValidationResult;
@@ -186,6 +187,8 @@ public class Game {
     public DiceResult getLastDiceResult() { return lastDiceResult; }
 
     public Player getWinner() { return winner; }
+
+    public int getSetupSettlementCount() { return setupSettlementCount; }
 
     /**
      * Mengembalikan GameState adapter singleton.
@@ -959,16 +962,78 @@ public class Game {
      * Menyimpan state permainan ke file.
      */
     public void saveGame(String filePath) {
-        throw new UnsupportedOperationException(
-            "saveGame() — diimplementasikan di Fase 7");
+        GameSaveManager.saveGame(this, filePath);
     }
 
     /**
      * Memuat state permainan dari file yang sudah disimpan.
      */
     public static Game loadGame(String filePath) {
-        throw new UnsupportedOperationException(
-            "loadGame() — diimplementasikan di Fase 7");
+        return GameSaveManager.loadGame(filePath);
+    }
+
+    /**
+     * Constructor khusus untuk restore state dari save data.
+     */
+    public Game(List<Player> players, Board board, Bank bank, CardDeck cardDeck,
+                GamePhase phase, int turnNumber, int activeIndex,
+                int setupSettlementCount, DiceResult lastDiceResult) {
+        if (players == null || players.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Players list cannot be null or empty");
+        }
+        if (players.size() < 3 || players.size() > 4) {
+            throw new IllegalArgumentException(
+                "Game requires 3 or 4 players, got: " + players.size());
+        }
+        if (board == null) {
+            throw new IllegalArgumentException("Board cannot be null");
+        }
+        if (bank == null) {
+            throw new IllegalArgumentException("Bank cannot be null");
+        }
+        if (cardDeck == null) {
+            throw new IllegalArgumentException("CardDeck cannot be null");
+        }
+
+        this.players = new ArrayList<>(players);
+        this.board = board;
+        this.bank = bank;
+        this.cardDeck = cardDeck;
+        this.dice = new Dice();
+        this.gameLog = new GameLog();
+        this.productionService = new ResourceProductionService();
+        this.tradeManager = new TradeManager();
+        this.vpCalculator = new VictoryPointCalculator();
+        this.currentPhase = (phase != null) ? phase : GamePhase.RESOURCE_GATHERING;
+        this.turnNumber = turnNumber;
+        this.winner = null;
+        this.lastDiceResult = lastDiceResult;
+        this.setupSettlementCount = setupSettlementCount;
+        this.cardPlayedThisTurn = null;
+        this.cardBoughtThisTurn = null;
+
+        // Supply bangunan per pemain
+        this.supplies = new HashMap<>();
+        for (Player p : this.players) {
+            supplies.put(p, p.getSupply());
+        }
+
+        // Inisialisasi Robber
+        HexTile robberTile = board.getRobberTile().orElse(findDesertTile());
+        this.robber = new Robber(robberTile);
+
+        // TurnManager
+        this.turnManager = new TurnManager(this.players, activeIndex, this::endTurn);
+        if (this.currentPhase == GamePhase.SETUP_SECOND_ROUND) {
+            this.turnManager.setOrder(TurnOrder.COUNTER_CLOCKWISE);
+        } else {
+            this.turnManager.setOrder(TurnOrder.CLOCKWISE);
+        }
+
+        if (this.currentPhase == GamePhase.GAME_OVER) {
+            this.winner = vpCalculator.findWinner(this.players, board, VICTORY_POINTS_TO_WIN);
+        }
     }
 
     /**
