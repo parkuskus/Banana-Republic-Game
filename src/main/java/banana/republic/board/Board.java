@@ -146,6 +146,10 @@ public class Board {
         return Collections.unmodifiableList(hexTiles);
     }
 
+    public List<Harbor> getHarbors() {
+        return Collections.unmodifiableList(harbors);
+    }
+
     public java.util.Optional<HexTile> getRobberTile() {
         for (HexTile tile : hexTiles) {
             if (tile.hasRobber()) {
