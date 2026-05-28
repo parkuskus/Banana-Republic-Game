@@ -99,6 +99,13 @@ public class CardDeck {
     }
 
     /**
+     * Dapatkan draw pile dalam urutan top-first (atas ke bawah).
+     */
+    public List<ExperimentCard> getDrawPile() {
+        return new ArrayList<>(drawPile);
+    }
+
+    /**
      * Tambahkan kartu ke discard pile (ketika kartu sudah dimainkan).
      */
     public void addToDiscardPile(ExperimentCard card) {
