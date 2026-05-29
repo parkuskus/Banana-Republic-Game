@@ -85,21 +85,30 @@ public class GameSaveManager {
             throw new IllegalArgumentException("File path cannot be null or blank");
         }
 
-        Gson gson = buildGson();
         java.nio.file.Path path = Paths.get(filePath);
         if (!Files.exists(path)) {
             throw new IllegalArgumentException("Save file does not exist: " + filePath);
         }
 
+        Gson gson = buildGson();
+        GameSaveData data;
         try (Reader reader = Files.newBufferedReader(path)) {
-            GameSaveData data = gson.fromJson(reader, GameSaveData.class);
-            if (data == null) {
-                throw new IllegalStateException("Save file is empty or invalid");
-            }
-            return fromSaveData(data);
+            data = gson.fromJson(reader, GameSaveData.class);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to load game: " + e.getMessage(), e);
+            throw new IllegalStateException(
+                "Failed to read save file '" + filePath + "': " + e.getMessage(), e);
+        } catch (com.google.gson.JsonSyntaxException e) {
+            throw new IllegalStateException(
+                "Save file '" + filePath + "' contains malformed JSON — it may have been "
+                + "corrupted or manually edited incorrectly. Details: " + e.getMessage(), e);
         }
+
+        if (data == null) {
+            throw new IllegalStateException(
+                "Save file '" + filePath + "' is empty or does not contain valid JSON");
+        }
+
+        return fromSaveData(data);
     }
 
     private static Gson buildGson() {
