@@ -149,6 +149,18 @@ public class GameSaveManager {
                 + " which is out of bounds for " + data.players.size() + " player(s)"
                 + " (valid range: 0\u2013" + (data.players.size() - 1) + ")");
         }
+        if (data.bank != null) {
+            validateBankSaveData(data.bank);
+        }
+        if (data.deck != null) {
+            validateDeckSaveData(data.deck);
+        }
+        if (data.lastDice != null) {
+            validateDiceSaveData(data.lastDice);
+        }
+        if (data.timer != null) {
+            validateTimerSaveData(data.timer);
+        }
     }
 
     // --- Players & cards ---
@@ -292,6 +304,69 @@ public class GameSaveManager {
             throw new IllegalStateException(
                 "Save file has invalid 'active_player_index' " + data.activePlayerIndex
                 + " — must be >= 0");
+        }
+    }
+
+    // --- Bank, deck, dice, timer ---
+
+    private static void validateBankSaveData(Map<String, Integer> bank) {
+        for (Map.Entry<String, Integer> entry : bank.entrySet()) {
+            try {
+                ResourceType.valueOf(entry.getKey());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                    "Bank has unknown resource key '" + entry.getKey()
+                    + "'. Valid values: " + validNames(ResourceType.values()), e);
+            }
+            if (entry.getValue() == null) {
+                throw new IllegalStateException(
+                    "Bank resource '" + entry.getKey() + "' has a null amount");
+            }
+            if (entry.getValue() < 0 || entry.getValue() > MAX_BANK_RESOURCE) {
+                throw new IllegalStateException(
+                    "Bank resource '" + entry.getKey() + "' has amount " + entry.getValue()
+                    + " which is out of range [0, " + MAX_BANK_RESOURCE + "]");
+            }
+        }
+    }
+
+    private static void validateDeckSaveData(CardDeckSaveData deck) {
+        if (deck.drawPile != null) {
+            for (int i = 0; i < deck.drawPile.size(); i++) {
+                validateCardSaveData(deck.drawPile.get(i), "Deck draw pile card at index " + i);
+            }
+        }
+        if (deck.discardPile != null) {
+            for (int i = 0; i < deck.discardPile.size(); i++) {
+                validateCardSaveData(deck.discardPile.get(i),
+                    "Deck discard pile card at index " + i);
+            }
+        }
+    }
+
+    private static void validateDiceSaveData(DiceSaveData dice) {
+        if (dice.die1 < MIN_DIE || dice.die1 > MAX_DIE) {
+            throw new IllegalStateException(
+                "Last dice result 'die1' value " + dice.die1
+                + " is out of range [" + MIN_DIE + ", " + MAX_DIE + "]");
+        }
+        if (dice.die2 < MIN_DIE || dice.die2 > MAX_DIE) {
+            throw new IllegalStateException(
+                "Last dice result 'die2' value " + dice.die2
+                + " is out of range [" + MIN_DIE + ", " + MAX_DIE + "]");
+        }
+    }
+
+    private static void validateTimerSaveData(TimerSaveData timer) {
+        if (timer.remainingSeconds < 0) {
+            throw new IllegalStateException(
+                "Timer 'remaining_seconds' " + timer.remainingSeconds
+                + " is negative — must be >= 0");
+        }
+        if (timer.paused && !timer.running) {
+            throw new IllegalStateException(
+                "Timer state is invalid: 'paused' is true but 'running' is false"
+                + " — a paused timer must also have 'running' set to true");
         }
     }
 
