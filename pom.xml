@@ -25,6 +25,12 @@
     </properties>
 
     <dependencies>
+        <!-- Gson for JSON save/load -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
         <!-- JavaFX Modules -->
         <dependency>
             <groupId>org.openjfx</groupId>

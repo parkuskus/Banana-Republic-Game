@@ -5,5 +5,10 @@ package banana.republic.save;
  * Refer to class-diagram/Module5_UI_Plugin_Save.puml for full specification.
  */
 public class HexTileSaveData {
-    // TODO: Implement
+    public int id;
+    public String terrain;
+    public Integer token;
+    public boolean hasRobber;
+    public int column;
+    public int row;
 }

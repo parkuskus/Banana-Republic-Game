@@ -180,6 +180,28 @@ public class TurnTimer implements Runnable {
         }
     }
 
+    /**
+     * Mulai timer dengan sisa waktu tertentu (untuk restore dari save).
+     */
+    public synchronized void startWithRemaining(int secondsRemaining) {
+        if (running.get()) {
+            return;
+        }
+        int clamped = Math.max(0, Math.min(TURN_DURATION_SECONDS, secondsRemaining));
+        remaining.set(clamped);
+        if (clamped <= 0) {
+            running.set(false);
+            return;
+        }
+        cancelled.set(false);
+        paused = false;
+        running.set(true);
+
+        timerThread = new Thread(this, "TurnTimer-" + System.nanoTime());
+        timerThread.setDaemon(true);
+        timerThread.start();
+    }
+
     /** Reset sisa waktu ke {@link #TURN_DURATION_SECONDS} tanpa stop/start. */
     public void reset() {
         remaining.set(TURN_DURATION_SECONDS);
@@ -192,6 +214,12 @@ public class TurnTimer implements Runnable {
     /** Sisa waktu dalam detik (snapshot). */
     public int getRemainingSeconds() {
         return remaining.get();
+    }
+
+    /** Set sisa waktu tanpa memulai ulang thread. */
+    public void setRemainingSeconds(int secondsRemaining) {
+        int clamped = Math.max(0, Math.min(TURN_DURATION_SECONDS, secondsRemaining));
+        remaining.set(clamped);
     }
 
     /** {@code true} jika timer sedang berjalan (belum stop/cancel). */
