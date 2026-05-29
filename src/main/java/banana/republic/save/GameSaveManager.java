@@ -46,13 +46,19 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Game save/load manager (JSON format).
  * Refer to class-diagram/Module5_UI_Plugin_Save.puml for full specification.
+ *
+ * <p>All fields in a loaded save file are validated via {@link #validateSaveData(GameSaveData)}
+ * before any object construction begins, so manually edited or corrupted files produce
+ * descriptive errors instead of silent data corruption or obscure exceptions.
  */
 public class GameSaveManager {
 
@@ -60,6 +66,18 @@ public class GameSaveManager {
     private static final String DEFAULT_DIR = "./saves";
     private static final DateTimeFormatter FILE_TS_FORMAT =
         DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
+    /** Maximum resource tokens in the bank per resource type (standard Catan). */
+    private static final int MAX_BANK_RESOURCE = 19;
+    /** Valid face values for a standard six-sided die. */
+    private static final int MIN_DIE = 1;
+    private static final int MAX_DIE = 6;
+    /** Valid number token range printed on hex tiles. */
+    private static final int MIN_TOKEN = 2;
+    private static final int MAX_TOKEN = 12;
+    /** Minimum and maximum number of players allowed by game rules. */
+    private static final int MIN_PLAYERS = 3;
+    private static final int MAX_PLAYERS = 4;
 
     public static void saveGame(Game game, String filePath) {
         if (game == null) {
@@ -108,7 +126,61 @@ public class GameSaveManager {
                 "Save file '" + filePath + "' is empty or does not contain valid JSON");
         }
 
+        validateSaveData(data);
         return fromSaveData(data);
+    }
+
+    // =========================================================================
+    // Validation — runs entirely before any game-object construction
+    // =========================================================================
+
+    /**
+     * Validates every field in a parsed {@link GameSaveData}.
+     * Throws {@link IllegalStateException} with a descriptive, actionable message for any
+     * field that is missing, out of range, or contains an unknown enum value.
+     */
+    private static void validateSaveData(GameSaveData data) {
+        validateRootFields(data);
+    }
+
+    private static void validateRootFields(GameSaveData data) {
+        if (data.currentPhase == null || data.currentPhase.isBlank()) {
+            throw new IllegalStateException(
+                "Save file is missing required field 'current_phase'");
+        }
+        try {
+            GamePhase.valueOf(data.currentPhase);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                "Save file has unknown game phase '" + data.currentPhase
+                + "'. Valid values: " + validNames(GamePhase.values()), e);
+        }
+
+        if (data.turnNumber < 0) {
+            throw new IllegalStateException(
+                "Save file has invalid 'turn_number' " + data.turnNumber + " — must be >= 0");
+        }
+        if (data.setupSettlementCount < 0) {
+            throw new IllegalStateException(
+                "Save file has invalid 'setup_settlement_count' " + data.setupSettlementCount
+                + " — must be >= 0");
+        }
+        if (data.activePlayerIndex < 0) {
+            throw new IllegalStateException(
+                "Save file has invalid 'active_player_index' " + data.activePlayerIndex
+                + " — must be >= 0");
+        }
+    }
+
+    /** Returns a comma-separated bracket-enclosed list of enum names for error messages. */
+    private static String validNames(Enum<?>[] values) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < values.length; i++) {
+            sb.append(values[i].name());
+            if (i < values.length - 1) sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     private static Gson buildGson() {
