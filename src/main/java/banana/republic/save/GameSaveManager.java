@@ -141,6 +141,129 @@ public class GameSaveManager {
      */
     private static void validateSaveData(GameSaveData data) {
         validateRootFields(data);
+        validatePlayers(data.players);
+        // Upper-bound check requires knowing the player count, so it happens after validatePlayers.
+        if (data.activePlayerIndex >= data.players.size()) {
+            throw new IllegalStateException(
+                "Save file has 'active_player_index' " + data.activePlayerIndex
+                + " which is out of bounds for " + data.players.size() + " player(s)"
+                + " (valid range: 0\u2013" + (data.players.size() - 1) + ")");
+        }
+    }
+
+    // --- Players & cards ---
+
+    private static void validatePlayers(List<PlayerSaveData> players) {
+        if (players == null || players.isEmpty()) {
+            throw new IllegalStateException("Save file has no 'players' list");
+        }
+        if (players.size() < MIN_PLAYERS || players.size() > MAX_PLAYERS) {
+            throw new IllegalStateException(
+                "Save file has " + players.size() + " player(s) but the game requires "
+                + MIN_PLAYERS + "\u2013" + MAX_PLAYERS + " players");
+        }
+        Set<String> usedColors = new HashSet<>();
+        for (int i = 0; i < players.size(); i++) {
+            PlayerSaveData p = players.get(i);
+            validatePlayerSaveData(p, i);
+            if (!usedColors.add(p.color)) {
+                throw new IllegalStateException(
+                    "Player at index " + i + " shares color '" + p.color
+                    + "' with another player \u2014 each player must have a unique color");
+            }
+        }
+    }
+
+    private static void validatePlayerSaveData(PlayerSaveData p, int index) {
+        String ctx = "Player at index " + index;
+        if (p.name == null || p.name.isBlank()) {
+            throw new IllegalStateException(ctx + " has a blank or missing 'name'");
+        }
+        ctx = ctx + " ('" + p.name + "')";
+        if (p.color == null || p.color.isBlank()) {
+            throw new IllegalStateException(ctx + " has a blank or missing 'color'");
+        }
+        try {
+            PlayerColor.valueOf(p.color);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                ctx + " has unknown color '" + p.color
+                + "'. Valid values: " + validNames(PlayerColor.values()), e);
+        }
+        if (p.knightsPlayed < 0) {
+            throw new IllegalStateException(
+                ctx + " has invalid 'knights_played' " + p.knightsPlayed + " \u2014 must be >= 0");
+        }
+        if (p.longestRoadLength < 0) {
+            throw new IllegalStateException(
+                ctx + " has invalid 'longest_road_length' " + p.longestRoadLength
+                + " \u2014 must be >= 0");
+        }
+        if (p.resources != null) {
+            for (Map.Entry<String, Integer> entry : p.resources.entrySet()) {
+                try {
+                    ResourceType.valueOf(entry.getKey());
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalStateException(
+                        ctx + " has unknown resource key '" + entry.getKey()
+                        + "'. Valid values: " + validNames(ResourceType.values()), e);
+                }
+                if (entry.getValue() == null || entry.getValue() < 0) {
+                    throw new IllegalStateException(
+                        ctx + " has invalid resource amount " + entry.getValue()
+                        + " for '" + entry.getKey() + "' \u2014 must be >= 0");
+                }
+            }
+        }
+        if (p.specialCards != null) {
+            for (String key : p.specialCards.keySet()) {
+                try {
+                    SpecialCardType.valueOf(key);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalStateException(
+                        ctx + " has unknown special card key '" + key
+                        + "'. Valid values: " + validNames(SpecialCardType.values()), e);
+                }
+            }
+        }
+        if (p.handCards != null) {
+            for (int j = 0; j < p.handCards.size(); j++) {
+                validateCardSaveData(p.handCards.get(j),
+                    ctx + " hand card at index " + j);
+            }
+        }
+    }
+
+    private static void validateCardSaveData(CardSaveData card, String ctx) {
+        if (card == null) {
+            throw new IllegalStateException(
+                ctx + " is null \u2014 remove the entry or provide a valid card object");
+        }
+        if (card.cardType == null || card.cardType.isBlank()) {
+            throw new IllegalStateException(ctx + " is missing 'card_type'");
+        }
+        CardType type;
+        try {
+            type = CardType.valueOf(card.cardType);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                ctx + " has unknown 'card_type' '" + card.cardType
+                + "'. Valid values: " + validNames(CardType.values()), e);
+        }
+        if (card.monopolyTarget != null && !card.monopolyTarget.isBlank()) {
+            if (type != CardType.MONOPOLY) {
+                throw new IllegalStateException(
+                    ctx + " has 'monopoly_target' set but card type is '" + card.cardType
+                    + "' \u2014 'monopoly_target' is only valid for MONOPOLY cards");
+            }
+            try {
+                ResourceType.valueOf(card.monopolyTarget);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                    ctx + " has unknown 'monopoly_target' '" + card.monopolyTarget
+                    + "'. Valid values: " + validNames(ResourceType.values()), e);
+            }
+        }
     }
 
     private static void validateRootFields(GameSaveData data) {
