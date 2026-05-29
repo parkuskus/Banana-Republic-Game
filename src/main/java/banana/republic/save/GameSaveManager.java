@@ -161,6 +161,7 @@ public class GameSaveManager {
         if (data.timer != null) {
             validateTimerSaveData(data.timer);
         }
+        validateBoardSaveData(data.board, data.players.size());
     }
 
     // --- Players & cards ---
@@ -367,6 +368,203 @@ public class GameSaveManager {
             throw new IllegalStateException(
                 "Timer state is invalid: 'paused' is true but 'running' is false"
                 + " — a paused timer must also have 'running' set to true");
+        }
+    }
+
+    // --- Board ---
+
+    private static void validateBoardSaveData(BoardSaveData board, int playerCount) {
+        if (board == null) {
+            throw new IllegalStateException("Save file is missing required field 'board'");
+        }
+        if (board.hexTiles == null || board.hexTiles.isEmpty()) {
+            throw new IllegalStateException("Board 'hex_tiles' list is missing or empty");
+        }
+        if (board.intersections == null || board.intersections.isEmpty()) {
+            throw new IllegalStateException("Board 'intersections' list is missing or empty");
+        }
+        if (board.paths == null || board.paths.isEmpty()) {
+            throw new IllegalStateException("Board 'paths' list is missing or empty");
+        }
+        Set<Integer> tileIds = validateHexTiles(board.hexTiles);
+        Set<Integer> intersectionIds = validateIntersections(
+            board.intersections, tileIds, playerCount);
+        validatePaths(board.paths, intersectionIds, playerCount);
+        if (board.harbors != null) {
+            validateHarbors(board.harbors, intersectionIds);
+        }
+    }
+
+    private static Set<Integer> validateHexTiles(List<HexTileSaveData> hexTiles) {
+        Set<Integer> ids = new HashSet<>();
+        int robberCount = 0;
+        for (int i = 0; i < hexTiles.size(); i++) {
+            HexTileSaveData tile = hexTiles.get(i);
+            String ctx = "Hex tile at index " + i + " (id=" + tile.id + ")";
+            if (!ids.add(tile.id)) {
+                throw new IllegalStateException(
+                    ctx + " has duplicate id " + tile.id
+                    + " \u2014 all hex tile ids must be unique");
+            }
+            if (tile.terrain == null || tile.terrain.isBlank()) {
+                throw new IllegalStateException(ctx + " is missing 'terrain'");
+            }
+            TerrainType terrain;
+            try {
+                terrain = TerrainType.valueOf(tile.terrain);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                    ctx + " has unknown terrain '" + tile.terrain
+                    + "'. Valid values: " + validNames(TerrainType.values()), e);
+            }
+            if (terrain == TerrainType.DESERT) {
+                if (tile.token != null) {
+                    throw new IllegalStateException(
+                        ctx + " has terrain DESERT but also has number token " + tile.token
+                        + " \u2014 desert tiles must not have a number token");
+                }
+            } else if (tile.token != null) {
+                if (tile.token < MIN_TOKEN || tile.token > MAX_TOKEN) {
+                    throw new IllegalStateException(
+                        ctx + " has number token " + tile.token
+                        + " which is out of range [" + MIN_TOKEN + ", " + MAX_TOKEN + "]");
+                }
+            }
+            if (tile.hasRobber) {
+                robberCount++;
+            }
+        }
+        if (robberCount > 1) {
+            throw new IllegalStateException(
+                "Board has " + robberCount + " hex tiles with 'has_robber' = true"
+                + " \u2014 only one tile may hold the robber at a time");
+        }
+        return ids;
+    }
+
+    private static Set<Integer> validateIntersections(List<IntersectionSaveData> intersections,
+                                                      Set<Integer> tileIds, int playerCount) {
+        Set<Integer> ids = new HashSet<>();
+        for (int i = 0; i < intersections.size(); i++) {
+            IntersectionSaveData inter = intersections.get(i);
+            String ctx = "Intersection at index " + i + " (id=" + inter.id + ")";
+            if (!ids.add(inter.id)) {
+                throw new IllegalStateException(
+                    ctx + " has duplicate id " + inter.id
+                    + " \u2014 all intersection ids must be unique");
+            }
+            if (inter.adjacentHexTileIds != null) {
+                for (Integer hexId : inter.adjacentHexTileIds) {
+                    if (hexId == null) {
+                        throw new IllegalStateException(
+                            ctx + " has a null entry in 'adjacent_hex_tile_ids'");
+                    }
+                    if (!tileIds.contains(hexId)) {
+                        throw new IllegalStateException(
+                            ctx + " references hex tile id " + hexId
+                            + " which does not exist in 'hex_tiles'");
+                    }
+                }
+            }
+            if (inter.building != null) {
+                validateBuildingSaveData(inter.building, ctx + " building", playerCount);
+            }
+        }
+        return ids;
+    }
+
+    private static void validatePaths(List<PathSaveData> paths, Set<Integer> intersectionIds,
+                                      int playerCount) {
+        Set<Integer> ids = new HashSet<>();
+        for (int i = 0; i < paths.size(); i++) {
+            PathSaveData path = paths.get(i);
+            String ctx = "Path at index " + i + " (id=" + path.id + ")";
+            if (!ids.add(path.id)) {
+                throw new IllegalStateException(
+                    ctx + " has duplicate id " + path.id
+                    + " \u2014 all path ids must be unique");
+            }
+            if (!intersectionIds.contains(path.intersectionAId)) {
+                throw new IllegalStateException(
+                    ctx + " references 'intersection_a_id' " + path.intersectionAId
+                    + " which does not exist in 'intersections'");
+            }
+            if (!intersectionIds.contains(path.intersectionBId)) {
+                throw new IllegalStateException(
+                    ctx + " references 'intersection_b_id' " + path.intersectionBId
+                    + " which does not exist in 'intersections'");
+            }
+            if (path.intersectionAId == path.intersectionBId) {
+                throw new IllegalStateException(
+                    ctx + " has 'intersection_a_id' == 'intersection_b_id' ("
+                    + path.intersectionAId
+                    + ") \u2014 a path must connect two different intersections");
+            }
+            if (path.road != null) {
+                if (path.road.ownerIndex < 0 || path.road.ownerIndex >= playerCount) {
+                    throw new IllegalStateException(
+                        ctx + " road has 'owner_index' " + path.road.ownerIndex
+                        + " which is out of bounds for " + playerCount + " player(s)"
+                        + " (valid range: 0\u2013" + (playerCount - 1) + ")");
+                }
+            }
+        }
+    }
+
+    private static void validateHarbors(List<HarborSaveData> harbors,
+                                        Set<Integer> intersectionIds) {
+        Set<Integer> ids = new HashSet<>();
+        for (int i = 0; i < harbors.size(); i++) {
+            HarborSaveData harbor = harbors.get(i);
+            String ctx = "Harbor at index " + i + " (id=" + harbor.id + ")";
+            if (!ids.add(harbor.id)) {
+                throw new IllegalStateException(
+                    ctx + " has duplicate id " + harbor.id
+                    + " \u2014 all harbor ids must be unique");
+            }
+            if (harbor.type == null || harbor.type.isBlank()) {
+                throw new IllegalStateException(ctx + " is missing 'type'");
+            }
+            try {
+                HarborType.valueOf(harbor.type);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException(
+                    ctx + " has unknown harbor type '" + harbor.type
+                    + "'. Valid values: " + validNames(HarborType.values()), e);
+            }
+            if (harbor.adjacentIntersectionIds != null) {
+                for (Integer interId : harbor.adjacentIntersectionIds) {
+                    if (interId == null) {
+                        throw new IllegalStateException(
+                            ctx + " has a null entry in 'adjacent_intersection_ids'");
+                    }
+                    if (!intersectionIds.contains(interId)) {
+                        throw new IllegalStateException(
+                            ctx + " references intersection id " + interId
+                            + " which does not exist in 'intersections'");
+                    }
+                }
+            }
+        }
+    }
+
+    private static void validateBuildingSaveData(BuildingSaveData building, String ctx,
+                                                 int playerCount) {
+        if (building.type == null || building.type.isBlank()) {
+            throw new IllegalStateException(ctx + " is missing 'type'");
+        }
+        try {
+            BuildingType.valueOf(building.type);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException(
+                ctx + " has unknown building type '" + building.type
+                + "'. Valid values: " + validNames(BuildingType.values()), e);
+        }
+        if (building.ownerIndex < 0 || building.ownerIndex >= playerCount) {
+            throw new IllegalStateException(
+                ctx + " has 'owner_index' " + building.ownerIndex
+                + " which is out of bounds for " + playerCount + " player(s)"
+                + " (valid range: 0\u2013" + (playerCount - 1) + ")");
         }
     }
 
