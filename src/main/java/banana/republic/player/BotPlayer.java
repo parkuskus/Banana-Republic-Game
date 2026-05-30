@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import banana.republic.building.PlayerSupply;
 import banana.republic.card.ExperimentCard;
 import banana.republic.core.GameState;
 import banana.republic.resource.ResourceType;
@@ -21,6 +22,7 @@ public class BotPlayer implements Player {
     private int longestRoadLength;
     private final Map<SpecialCardType, Boolean> specialCards;
     private PlayerStrategy strategy;
+    private final PlayerSupply supply;
 
     public BotPlayer(String name, PlayerColor color, PlayerStrategy strategy) {
         if (name == null || name.isBlank()) {
@@ -43,6 +45,7 @@ public class BotPlayer implements Player {
         this.knightsPlayed = 0;
         this.longestRoadLength = 0;
         this.specialCards = new EnumMap<>(SpecialCardType.class);
+        this.supply = new PlayerSupply(this);
         for (SpecialCardType type : SpecialCardType.values()) {
             this.specialCards.put(type, false);
         }
@@ -185,6 +188,11 @@ public class BotPlayer implements Player {
     @Override
     public boolean isBot() {
         return true;
+    }
+
+    @Override
+    public PlayerSupply getSupply() {
+        return supply;
     }
 
     private void validateAmount(int amount) {

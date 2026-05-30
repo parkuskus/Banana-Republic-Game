@@ -1,13 +1,26 @@
 package banana.republic.core;
 
-/**
- * Game phase enum.
- * Refer to class-diagram/Module4_Core_Trade.puml for full specification.
- */
+// Game phases
 public enum GamePhase {
+
+    // Pos pantau, clockwise rotation
     SETUP_FIRST_ROUND,
+
+    // taruh node, counter clockwise rotation
     SETUP_SECOND_ROUND,
+
+    // Lempar dadu + resource gathering (or Nimon Ungu if 7)
     RESOURCE_GATHERING,
+
+    // Dagang/bangun, timer start
     TRADE_BUILD,
-    GAME_OVER
+
+    // Game finished
+    GAME_OVER;
+
+    public boolean isSetupPhase() {
+        return this == SETUP_FIRST_ROUND || this == SETUP_SECOND_ROUND;
+    }
+
+    public boolean isActionPhase() { return this == TRADE_BUILD; }
 }

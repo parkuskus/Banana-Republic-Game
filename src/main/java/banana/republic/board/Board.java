@@ -1,11 +1,10 @@
 package banana.republic.board;
 
+import banana.republic.player.Player;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import banana.republic.player.Player;
 
 public class Board {
 
@@ -101,7 +100,8 @@ public class Board {
         if (intersection == null) {
             return false;
         }
-        for (Intersection neighbor : intersection.getNeighboringIntersections()) {
+        for (Intersection neighbor :
+             intersection.getNeighboringIntersections()) {
             if (neighbor.hasBuilding()) {
                 return false;
             }
@@ -142,10 +142,89 @@ public class Board {
         return Collections.unmodifiableList(paths);
     }
 
+    public List<HexTile> getAllHexTiles() {
+        return Collections.unmodifiableList(hexTiles);
+    }
+
+    public List<Harbor> getHarbors() {
+        return Collections.unmodifiableList(harbors);
+    }
+
+    public java.util.Optional<HexTile> getRobberTile() {
+        for (HexTile tile : hexTiles) {
+            if (tile.hasRobber()) {
+                return java.util.Optional.of(tile);
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    public void moveRobber(HexTile target) {
+        if (target == null) {
+            throw new IllegalArgumentException("Robber target cannot be null");
+        }
+
+        for (HexTile tile : hexTiles) {
+            if (tile.hasRobber()) {
+                tile.setRobber(false);
+            }
+        }
+
+        target.setRobber(true);
+    }
+
+    public List<Path> getBuildableRoadPaths(Player player) {
+        if (player == null) {
+            return List.of();
+        }
+
+        List<Path> result = new ArrayList<>();
+        for (Path path : paths) {
+            if (!path.isEmpty()) {
+                continue;
+            }
+            if (isPathConnectedToPlayerNetwork(path, player)) {
+                result.add(path);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Mengembalikan true jika path terhubung ke jaringan road/bangunan
+     * milik player.
+     *
+     * Dipakai untuk validasi buildRoad.
+     */
+    public boolean isPathConnectedToPlayer(Path path, Player player) {
+        return isPathConnectedToPlayerNetwork(path, player);
+    }
+
     private <T> List<T> copyList(List<T> source) {
         if (source == null) {
             return new ArrayList<>();
         }
         return new ArrayList<>(source);
+    }
+
+    private boolean isPathConnectedToPlayerNetwork(Path path, Player player) {
+        if (path == null || player == null) {
+            return false;
+        }
+
+        for (Intersection intersection : getAdjacentIntersections(path)) {
+            if (player.equals(intersection.getOwner())) {
+                return true;
+            }
+
+            for (Path adjacentPath : intersection.getAdjacentPaths()) {
+                if (adjacentPath.hasRoad() &&
+                    player.equals(adjacentPath.getOwner())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
