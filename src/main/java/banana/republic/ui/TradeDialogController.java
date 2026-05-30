@@ -6,6 +6,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+
 import java.net.URL;
 import java.util.ResourceBundle;
 /**
@@ -16,6 +18,8 @@ public class TradeDialogController implements Initializable {
     private Label tabDomestic;
     @FXML
     private Label tabMaritime;
+    @FXML
+    private VBox offerBox;
 
 
     @FXML
@@ -86,14 +90,14 @@ public class TradeDialogController implements Initializable {
     @FXML
     private void switchToDomestic() {
         ubahGayaTab(tabDomestic, tabMaritime);
-        System.out.println("Berpindah ke Domestic Trade");
+        offerBox.setVisible(true);
     }
 
     // pindah ke tab maritime trade
     @FXML
     private void switchToMaritime() {
         ubahGayaTab(tabMaritime, tabDomestic);
-        System.out.println("Berpindah ke Maritime Trade");
+        offerBox.setVisible(false);
     }
 
     // helper

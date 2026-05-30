@@ -337,7 +337,7 @@
         </VBox>
 
         <Region VBox.vgrow="ALWAYS" />
-      <VBox spacing="10">
+      <VBox fx:id="offerBox" spacing="10">
          <children>
             <Label styleClass="section-subtitle" text="OFFER TO" />
             <HBox spacing="20">
