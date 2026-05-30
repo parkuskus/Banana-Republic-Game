@@ -313,18 +313,18 @@
                                     </Group>
                                     <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
                                        <children>
-                                          <Label alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
+                                           <Label fx:id="currentPlayerLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
                                           <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
                                              <children>
-                                                <ImageView fitHeight="150.0" fitWidth="118.0" pickOnBounds="true" preserveRatio="true">
-                                                   <HBox.margin>
-                                                      <Insets right="20.0" />
-                                                   </HBox.margin>
-                                                   <image>
-                                                      <Image url="@../icons/dice_one.png" />
-                                                   </image>
-                                                </ImageView>
-                                                <ImageView fitHeight="150.0" fitWidth="118.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
+                                           <ImageView fx:id="diceImage1" fitHeight="150.0" fitWidth="118.0" pickOnBounds="true" preserveRatio="true">
+                                                    <HBox.margin>
+                                                       <Insets right="20.0" />
+                                                    </HBox.margin>
+                                                    <image>
+                                                       <Image url="@../icons/dice_one.png" />
+                                                    </image>
+                                                 </ImageView>
+                                                 <ImageView fx:id="diceImage2" fitHeight="150.0" fitWidth="118.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
                                                    <image>
                                                       <Image url="@../icons/dice_one.png" />
                                                    </image>
@@ -338,15 +338,15 @@
                            </children>
                         </VBox>
 
-                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="431.0" spacing="12.0" style="-fx-background-color: #f3f1eb; -fx-padding: 16;" styleClass="side-panel" HBox.hgrow="ALWAYS">
+                         <VBox fx:id="sidePanel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="431.0" spacing="12.0" style="-fx-background-color: #f3f1eb; -fx-padding: 16;" styleClass="side-panel" HBox.hgrow="ALWAYS">
                            <children>
 
                               <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #888;" text="PLAYERS" />
 
-                              <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
-                                 <children>
-                                    <Region minWidth="6.0" style="-fx-background-color: #c21a09; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                               <HBox fx:id="playerPanel1" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
+                                  <children>
+                                     <Region minWidth="6.0" style="-fx-background-color: #c21a09; -fx-background-radius: 8 0 0 8;" />
+                                     <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -379,10 +379,10 @@
                                  </children>
                               </HBox>
 
-                              <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
-                                 <children>
-                                    <Region minWidth="6.0" style="-fx-background-color: #305cde; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                               <HBox fx:id="playerPanel2" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                  <children>
+                                     <Region minWidth="6.0" style="-fx-background-color: #305cde; -fx-background-radius: 8 0 0 8;" />
+                                     <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -418,10 +418,10 @@
                                  </VBox.margin>
                               </HBox>
 
-                              <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
-                                 <children>
-                                    <Region minWidth="6.0" style="-fx-background-color: #4fc978; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                               <HBox fx:id="playerPanel3" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                  <children>
+                                     <Region minWidth="6.0" style="-fx-background-color: #4fc978; -fx-background-radius: 8 0 0 8;" />
+                                     <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -454,10 +454,10 @@
                                  </children>
                               </HBox>
 
-                              <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
-                                 <children>
-                                    <Region minWidth="6.0" style="-fx-background-color: #ff7f00; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                               <HBox fx:id="playerPanel4" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                  <children>
+                                     <Region minWidth="6.0" style="-fx-background-color: #ff7f00; -fx-background-radius: 8 0 0 8;" />
+                                     <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -490,18 +490,18 @@
                                  </children>
                               </HBox>
 
-                              <VBox spacing="8.0" style="-fx-background-color: #ebeae6; -fx-background-radius: 10; -fx-padding: 14;">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="LOGBOOK" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Gro rolled an 8!" wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Kebin received 2 Bananas and 1 Wood." wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Stewart traded 3 Bricks for 1 Ore at Gro's Trade Terminal." wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• You built a Transport Pipe on the coast." wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Toto used a Guardian Card! The Purple Nimon moved." wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• You stole 1 card from Stewart." wrapText="true" />
-                                    <Label style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Lorem ipsum." wrapText="true" />
-                                 </children>
-                              </VBox>
+                               <VBox fx:id="logbookContainer" spacing="8.0" style="-fx-background-color: #ebeae6; -fx-background-radius: 10; -fx-padding: 14;">
+                                  <children>
+                                     <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="LOGBOOK" />
+                                     <Label fx:id="logEntry1" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Game started." wrapText="true" />
+                                     <Label fx:id="logEntry2" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                     <Label fx:id="logEntry3" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                     <Label fx:id="logEntry4" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                     <Label fx:id="logEntry5" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                     <Label fx:id="logEntry6" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                     <Label fx:id="logEntry7" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                  </children>
+                               </VBox>
 
                               <VBox spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
                                  <children>
@@ -548,14 +548,14 @@
                               <Insets left="50.0" />
                            </HBox.margin>
                            <children>
-                              <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
-                              <Label styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
-                                 <children>
-                                    <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../icons/wood.png" />
-                                       </image>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblWoodCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/wood.png" />
+                                        </image>
                                        <VBox.margin>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                        </VBox.margin>
@@ -575,14 +575,14 @@
                         </StackPane>
                         <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-brick">
                            <children>
-                              <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
-                              <Label styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
-                                 <children>
-                                    <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../icons/brick.png" />
-                                       </image>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblBrickCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/brick.png" />
+                                        </image>
                                        <VBox.margin>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                        </VBox.margin>
@@ -605,14 +605,14 @@
                         </StackPane>
                         <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-wheat">
                            <children>
-                              <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
-                              <Label styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
-                                 <children>
-                                    <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../icons/wheat.png" />
-                                       </image>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblWheatCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/wheat.png" />
+                                        </image>
                                        <VBox.margin>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                        </VBox.margin>
@@ -635,14 +635,14 @@
                         </StackPane>
                         <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-ore">
                            <children>
-                              <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
-                              <Label styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
-                                 <children>
-                                    <ImageView fitHeight="43.0" fitWidth="37.0" pickOnBounds="true" preserveRatio="true" scaleX="-1.0">
-                                       <image>
-                                          <Image url="@../icons/ore.png" />
-                                       </image>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblOreCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="37.0" pickOnBounds="true" preserveRatio="true" scaleX="-1.0">
+                                        <image>
+                                           <Image url="@../icons/ore.png" />
+                                        </image>
                                        <VBox.margin>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                        </VBox.margin>
@@ -665,14 +665,14 @@
                         </StackPane>
                         <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-banana">
                            <children>
-                              <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
-                              <Label styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
-                              <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
-                                 <children>
-                                    <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
-                                       <image>
-                                          <Image url="@../icons/banana.png" />
-                                       </image>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblBananaCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/banana.png" />
+                                        </image>
                                        <VBox.margin>
                                           <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                                        </VBox.margin>
@@ -694,11 +694,11 @@
                            </HBox.margin>
                         </StackPane>
 
-                        <VBox alignment="CENTER" maxHeight="-Infinity" prefHeight="180.0" prefWidth="174.0" spacing="6.0" styleClass="rounded-card-wood" HBox.hgrow="ALWAYS">
-                           <children>
-                              <Label styleClass="marcellus-timer-title" text="Time remaining" />
-                              <Label styleClass="marcellus-timer-value" text="02:57" />
-                           </children>
+                         <VBox alignment="CENTER" maxHeight="-Infinity" prefHeight="180.0" prefWidth="174.0" spacing="6.0" styleClass="rounded-card-wood" HBox.hgrow="ALWAYS">
+                            <children>
+                               <Label styleClass="marcellus-timer-title" text="Time remaining" />
+                               <Label fx:id="timerLabel" styleClass="marcellus-timer-value" text="02:57" />
+                            </children>
                            <HBox.margin>
                               <Insets left="100.0" right="50.0" />
                            </HBox.margin>
@@ -708,16 +708,16 @@
                               <Insets left="25.0" />
                            </HBox.margin>
                            <children>
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Roll dice" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Set dice" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Build" />
+                               <Button fx:id="btnRollDice" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onRollDice" prefWidth="200.0" styleClass="game-bottom-button" text="Roll dice" />
+                               <Button fx:id="btnSetDice" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onSetDice" prefWidth="200.0" styleClass="game-bottom-button" text="Set dice" />
+                               <Button fx:id="btnBuild" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onBuild" prefWidth="200.0" styleClass="game-bottom-button" text="Build" />
                            </children>
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
+                               <Button fx:id="btnTrade" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
+                               <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onCard" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
+                               <Button fx:id="btnDeclareVictory" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onDeclareVictory" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
                            </children>
                            <HBox.margin>
                               <Insets left="25.0" />
@@ -725,8 +725,8 @@
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefHeight="99.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
+                               <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onSettings" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
+                               <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="99.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
                            </children>
                            <HBox.margin>
                               <Insets left="25.0" />

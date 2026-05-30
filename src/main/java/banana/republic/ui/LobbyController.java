@@ -1,20 +1,29 @@
 package banana.republic.ui;
 
 import banana.republic.App;
+import banana.republic.core.Game;
+import banana.republic.player.BotPlayer;
+import banana.republic.player.HumanPlayer;
+import banana.republic.player.Player;
+import banana.republic.player.PlayerColor;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.ComboBox;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import javafx.scene.shape.Circle;
-import javafx.scene.paint.Paint;
-import javafx.scene.paint.Color;
-import javafx.scene.effect.DropShadow;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main menu controller.
@@ -166,7 +175,19 @@ public class LobbyController {
 
     @FXML
     private void startGame() throws IOException {
-        App.setRoot("game");
+        // Create default players for now (3 human players)
+        List<Player> players = new ArrayList<>();
+        players.add(new HumanPlayer("Player1", PlayerColor.RED));
+        players.add(new HumanPlayer("Player2", PlayerColor.BLUE));
+        players.add(new HumanPlayer("Player3", PlayerColor.ORANGE));
+
+        Game game = new Game(players, null);
+
+        FXMLLoader loader = App.getLoader("game");
+        Parent root = loader.load();
+        GameController controller = loader.getController();
+        controller.initialize(game);
+        App.setRootFromLoader(root);
     }
 
     @FXML
