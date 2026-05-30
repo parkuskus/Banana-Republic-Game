@@ -1,21 +1,432 @@
-body {
-    -fx-background-color: #f0f0f0;
+@font-face {
+    font-family: 'RussoOne-Regular';
+    src: url('../fonts/RussoOne-Regular.ttf');
+}
+
+.root {
+}
+
+.main-menu-bg {
+    -fx-background-color: #ffd55e;
+}
+
+.lobby-bg {
+    -fx-background-color: #fffff0;
 }
 
 .button {
     -fx-background-color: #007bff;
     -fx-text-fill: white;
     -fx-padding: 10px 20px;
-    -fx-font-size: 14px;
+    -fx-font-size: 2em;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
 }
+
+.button-red {
+    -fx-background-color: #ff1a1a;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1.5em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
+.small-button {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
 
 .button:hover {
     -fx-background-color: #0056b3;
 }
 
+.dropzone-box {
+    -fx-border-color: #a27c5b;
+    -fx-border-style: dashed;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+
+    -fx-padding: 15px 20px;
+
+    -fx-cursor: hand;
+}
+
+.dropzone-box:hover {
+    -fx-background-color: #ffd56f;
+    -fx-border-color: #685139;
+}
+.hex-tile-ore {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #657f8c */
+    -fx-background-color: linear-gradient(to bottom right, #7a94a1, #516671);
+    -fx-border-color: #3b4b53;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-wood {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #808c65 */
+    -fx-background-color: linear-gradient(to bottom right, #95a377, #6c7755);
+    -fx-border-color: #4b543a;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-brick {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #683943 */
+    -fx-background-color: linear-gradient(to bottom right, #804753, #542d36);
+    -fx-border-color: #381e24;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-wheat {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #e3b591 */
+    -fx-background-color: linear-gradient(to bottom right, #f2c7a3, #cc9e7a);
+    -fx-border-color: #8c6a4f;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-banana {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #ded2a2 */
+    -fx-background-color: linear-gradient(to bottom right, #f0e4b4, #c9bc8f);
+    -fx-border-color: #8f855d;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-desert {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    /* Warna asli: #a19080 */
+    -fx-background-color: linear-gradient(to bottom right, #b5a492, #8f7f70);
+    -fx-border-color: #5c5147;
+    -fx-border-width: 2px;
+}
+
 .label {
     -fx-font-size: 16px;
     -fx-text-fill: #333;
+}
+
+.main-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 5em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.lobby-title {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 3em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.marcellus-text {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-h1 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2.5em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-text15 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.5em;
+    -fx-text-fill: #42200b;
+}
+
+
+.marcellus-text13 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.3em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-text09 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 0.9em;
+    -fx-text-fill: #42200b;
+}
+
+.russo-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 2em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.russo-text-small {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 1.5em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.main-vbox {
+    -fx-background-color: #3498db;
+}
+
+.vbox-shade {
+    -fx-background-color: #fff6e9;
+}
+
+.vbox-shade2 {
+    -fx-background-color: #fff6d6;
+}
+
+
+/* --- Styling Dasar Kartu --- */
+.resource-card {
+    -fx-padding: 10 15 10 15;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-min-width: 70;
+    -fx-min-height: 70;
+}
+
+/* --- Styling Dasar Teks & Badge --- */
+.resource-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+
+.badge {
+    -fx-min-width: 26;
+    -fx-min-height: 26;
+    -fx-background-radius: 50%; /* Membuat bentuknya bulat sempurna */
+    -fx-alignment: center;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* --- Kartu Resource Base --- */
+.resource-card {
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-border-width: 1.5;
+    -fx-min-width: 65;
+    -fx-min-height: 65;
+}
+
+.resource-label {
+    -fx-font-weight: bold;
+    -fx-font-size: 10px;
+}
+
+.badge {
+    -fx-min-width: 26;
+    -fx-min-height: 26;
+    -fx-background-radius: 50%;
+    -fx-alignment: center;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* --- Warna Spesifik Kartu --- */
+.card-wood { -fx-background-color: #e8f3ec; -fx-border-color: #d1e5d7; }
+.text-wood { -fx-text-fill: #196637; }
+.badge-wood { -fx-background-color: #0b6b33; }
+
+.card-brick { -fx-background-color: #fdf5e6; -fx-border-color: #f4e5c3; }
+.text-brick { -fx-text-fill: #7d5e2d; }
+.badge-brick { -fx-background-color: #7b5b2e; }
+
+.card-wheat { -fx-background-color: #fef2e1; -fx-border-color: #f3dfc2; }
+.text-wheat { -fx-text-fill: #85612c; }
+.badge-wheat { -fx-background-color: #77582b; }
+
+/* Tambahan: ORE */
+.card-ore { -fx-background-color: #f7f7f7; -fx-border-color: #e5e5e5; }
+.text-ore { -fx-text-fill: #54514c; }
+.badge-ore { -fx-background-color: #514b42; }
+
+/* Tambahan: BANANA */
+.card-banana { -fx-background-color: #fffde8; -fx-border-color: #fdf1b7; }
+.text-banana { -fx-text-fill: #f5b12a; }
+.badge-banana { -fx-background-color: #f2aa24; }
+
+
+/* ========================================== */
+/* BAGIAN KANAN: TIMER & BUTTONS              */
+/* ========================================== */
+
+/* --- Timer --- */
+.timer-digits {
+    -fx-font-family: "Monospaced"; /* Memberikan efek angka digital */
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
+}
+
+.timer-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #d36962; /* Merah pudar */
+}
+
+/* --- Action Buttons (Kotak Kecil) --- */
+.action-btn {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-cursor: hand;
+}
+.action-btn:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+/* --- End Turn Button --- */
+.end-turn-btn {
+    -fx-background-color: #826330; /* Cokelat khas kayu */
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 10 30 10 30; /* Atas/Bawah 10, Kiri/Kanan 30 */
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-min-height: 45;
+}
+.end-turn-btn:hover {
+    -fx-background-color: #6a4f25; /* Menggelap saat di-hover */
+}
+.end-turn-btn:pressed {
+    -fx-background-color: #523d1b;
+}
+
+
+
+/* Gaya untuk HBox di bagian bawah (Area Kartu Resource) */
+.bottom-panel {
+    /* 1. Gradasi warna dari terang (atas) ke agak gelap (bawah) */
+    -fx-background-color: linear-gradient(to bottom, #e1e8ed, #d2dce6);
+
+    -fx-padding: 15px 20px;
+    -fx-spacing: 15px;
+
+    /* 2. Garis batas tipis berwarna biru besi HANYA di bagian atas */
+    -fx-border-color: #9aaebf;
+    -fx-border-width: 2px 0 0 0;
+
+    /* 3. Efek bayangan halus yang jatuh ke arah atas (Y = -3) */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, -3);
+}
+
+/* Gaya untuk VBox di sebelah (Area Players, LogBook, Legend) */
+.side-panel {
+    /* 1. Gradasi warna dari terang (kiri) ke agak gelap (kanan) */
+    -fx-background-color: linear-gradient(to right, #f0f4f7, #e1e8ed);
+
+    -fx-padding: 20px;
+    -fx-spacing: 12px;
+
+    /* 2. Garis batas tipis HANYA di bagian kiri */
+    -fx-border-color: #9aaebf;
+    -fx-border-width: 0 0 0 2px;
+
+    /* 3. Efek bayangan halus yang jatuh ke arah kiri (X = -3) */
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, -3, 0);
+}
+.hexmap-bg {
+    /* Format JavaFX: radial-gradient([focus-angle, focus-distance, ] center-x, center-y, radius, proportional, color-stops) */
+    -fx-background-color: radial-gradient(center 50% 50%, radius 75%,
+    rgba(114, 174, 230, 1.0) 30%,   /* Warna asli pinggiran gambar lautan */
+    rgba(40, 116, 166, 1.0) 100%);  /* Biru gelap di pojok layar */
+}
+
+.coastline-border {
+    -fx-effect: dropshadow(gaussian, #d6c39a, 35, 0.95, 0, 0);
+}
+
+/* ========================================== */
+/* CUSTOM UPDATES (Bottom Buttons & Cards)    */
+/* ========================================== */
+
+/* Memberikan warna latar belakang kuning ke semua bottom buttons */
+.game-bottom-button {
+    -fx-background-color: #ffd55e;
+    -fx-text-fill: #1a1a1a;
+    -fx-font-family: 'Russo One', sans-serif;
+    -fx-font-size: 1.2em;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-color: #c9a74a;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+
+.game-bottom-button:hover {
+    -fx-background-color: #ffc31f; /* Warna saat mouse hover */
+}
+
+/* Tampilan background kayu seperti card-wood namun dengan ujung membulat */
+.rounded-card-wood {
+    -fx-background-color: #e8f3ec;
+    -fx-border-color: #d1e5d7;
+    -fx-background-radius: 25px; /* Radius diperbesar untuk membuat ujung lebih bundar */
+    -fx-border-radius: 25px;
+    -fx-border-width: 2px;
+    -fx-padding: 15px;
+    -fx-alignment: center;
+}
+
+/* ========================================== */
+/* CUSTOM UPDATES (Condition & Timer Panels)  */
+/* ========================================== */
+
+/* Latar belakang seperti card-wood dengan ujung lebih bundar */
+.rounded-card-wood {
+    -fx-background-color: #e8f3ec;
+    -fx-border-color: #d1e5d7;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-width: 2px;
+    -fx-padding: 15px;
+    -fx-alignment: center;
+    -fx-font-family: 'Marcellus';
+}
+
+/* Font Marcellus untuk teks Current Condition */
+.marcellus-condition {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 18px;
+    -fx-text-fill: #42200b;
+}
+
+/* Font Marcellus untuk Label Time Remaining (Diperbesar) */
+.marcellus-timer-title {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 18px; /* Ukuran diperbesar */
+    -fx-font-weight: bold;
+    -fx-text-fill: #42200b;
+}
+
+/* Font Marcellus untuk Angka Waktu (Diperbesar) */
+.marcellus-timer-value {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 36px; /* Ukuran angka diperbesar */
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
 }
