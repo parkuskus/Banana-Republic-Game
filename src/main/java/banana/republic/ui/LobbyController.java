@@ -1,7 +1,6 @@
 package banana.republic.ui;
 
 import banana.republic.App;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
@@ -9,13 +8,16 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import javafx.scene.shape.Circle;
+import javafx.scene.paint.Paint;
+import javafx.scene.paint.Color;
+import javafx.scene.effect.DropShadow;
 
 import java.io.File;
 import java.io.IOException;
 
 /**
  * Main menu controller.
- * Refer to class-diagram/Module5_UI_Plugin_Save.puml for full specification.
  */
 public class LobbyController {
 
@@ -30,70 +32,145 @@ public class LobbyController {
     @FXML
     private HBox player4Box;
 
+    private Paint[] selectedColors = new Paint[4];
+
     @FXML
     public void initialize() {
-        numPlayersBox.getItems().addAll("2 Players", "3 Players", "4 Players");
-        // 2. Pasang Listener untuk mendeteksi perubahan secara real-time
+        numPlayersBox.getItems().addAll("3 Players", "4 Players");
         numPlayersBox.valueProperty().addListener((observable, nilaiLama, nilaiBaru) -> {
             if (nilaiBaru != null) {
-                // Mengambil angka depan dari teks (Misal: "3 Players" diubah jadi angka 3)
                 int jumlahPemain = Integer.parseInt(nilaiBaru.split(" ")[0]);
                 changePlayerBox(jumlahPemain);
             }
         });
-        numPlayersBox.setValue("2 Players");
+        numPlayersBox.setValue("3 Players");
+
+        setupColorPickers();
     }
 
-    // Fungsi khusus untuk mengatur visibilitas baris HBox
     private void changePlayerBox(int jumlah) {
-        player1Box.setVisible(true);
-        player1Box.setManaged(true);
-
-        player2Box.setVisible(true);
-        player2Box.setManaged(true);
-
-        boolean showP3 = (jumlah >= 3);
-        player3Box.setVisible(showP3);
-        player3Box.setManaged(showP3);
+        player1Box.setVisible(true); player1Box.setManaged(true);
+        player2Box.setVisible(true); player2Box.setManaged(true);
 
         boolean showP4 = (jumlah >= 4);
-        player4Box.setVisible(showP4);
-        player4Box.setManaged(showP4);
+        player4Box.setVisible(showP4); player4Box.setManaged(showP4);
+
+        // Reset warna jika pemain dikurangi
+        for (int i = jumlah; i < 4; i++) {
+            selectedColors[i] = null;
+        }
+        updateColorVisuals();
+    }
+
+    private void setupColorPickers() {
+        HBox[] playerBoxes = {player1Box, player2Box, player3Box, player4Box};
+
+        for (int i = 0; i < 4; i++) {
+            final int playerIndex = i;
+            if (playerBoxes[i] == null) continue;
+
+            for (Node child : playerBoxes[i].getChildren()) {
+                if (child instanceof HBox) {
+                    HBox innerHBox = (HBox) child;
+
+                    for (Node circleNode : innerHBox.getChildren()) {
+                        if (circleNode instanceof Circle) {
+                            Circle circle = (Circle) circleNode;
+                            circle.setOnMouseClicked(event -> handleColorClick(playerIndex, circle));
+                            circle.setStyle("-fx-cursor: hand;");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleColorClick(int playerIndex, Circle clickedCircle) {
+        Paint chosenColor = clickedCircle.getFill();
+        if (chosenColor.equals(selectedColors[playerIndex])) { // kalau klik warna sama maka direset, ibarat cancel
+            selectedColors[playerIndex] = null;
+            updateColorVisuals();
+            return;
+        }
+        for (int i = 0; i < 4; i++) {
+            if (i != playerIndex && chosenColor.equals(selectedColors[i])) {
+                return;
+            }
+        }
+
+        selectedColors[playerIndex] = chosenColor;
+        updateColorVisuals();
+    }
+
+    private void updateColorVisuals() {
+        HBox[] playerBoxes = {player1Box, player2Box, player3Box, player4Box};
+
+        for (int pIndex = 0; pIndex < 4; pIndex++) { // cek semua player
+            if (playerBoxes[pIndex] == null) continue;
+
+            for (Node child : playerBoxes[pIndex].getChildren()) { // cek elemen dalam hbox utama
+                if (child instanceof HBox) {
+                    HBox innerHBox = (HBox) child;
+
+                    for (Node circleNode : innerHBox.getChildren()) { // lingkaran warna
+                        if (circleNode instanceof Circle) {
+                            Circle circle = (Circle) circleNode;
+                            Paint circleColor = circle.getFill();
+
+                            boolean isTakenByOther = false;
+                            boolean isSelectedByMe = false;
+
+                            for (int i = 0; i < 4; i++) {
+                                if (circleColor.equals(selectedColors[i])) {
+                                    if (i == pIndex) isSelectedByMe = true;
+                                    else isTakenByOther = true;
+                                }
+                            }
+
+                            // Efek visual
+                            if (isTakenByOther) {
+                                circle.setOpacity(0.2); // redupkan warna yang sama untuk player lain
+                                circle.setDisable(true); // disable untuk player lain karena udah dipilih
+                                circle.setEffect(null);
+                            } else if (isSelectedByMe) {
+                                circle.setOpacity(1.0);
+                                circle.setDisable(false); // tidak disable biar bisa cancel
+                                circle.setEffect(new DropShadow(20, Color.BLACK)); // efek terpilih
+                            } else {
+                                // kondisi default
+                                circle.setOpacity(1.0);
+                                circle.setDisable(false);
+                                circle.setEffect(null);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @FXML
     private void handleLoadMap(MouseEvent event) {
-        // Membuat objek FileChooser
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Load Map Plugin");
-
-        // mengatur format file input
-        FileChooser.ExtensionFilter extFilterJAR = new FileChooser.ExtensionFilter(".jar files (*.jar)", "*.json");
-
-        // Memasukkan filter ke dalam FileChooser
+        FileChooser.ExtensionFilter extFilterJAR = new FileChooser.ExtensionFilter("JAR files (*.jar)", "*.jar");
         fileChooser.getExtensionFilters().addAll(extFilterJAR);
 
-        // Bikin popup window
         Window window = ((Node) event.getSource()).getScene().getWindow();
-
-        // munculkan dialog box ketika file baru dipilih
         File fileYangDipilih = fileChooser.showOpenDialog(window);
 
-        // Mengecek apakah pemain benar-benar memilih file atau batal
         if (fileYangDipilih != null) {
             System.out.println("File dipilih: " + fileYangDipilih.getAbsolutePath());
-
-            // TODO: load game
-
-        } else {
-            System.out.println("Pemain membatalkan pemilihan file.");
         }
     }
 
+    @FXML
+    private void startGame() throws IOException {
+        App.setRoot("game");
+    }
 
     @FXML
     private void exit() throws IOException {
-        // Memanggil metode global di App.java untuk pindah ke lobby.fxml
         App.setRoot("main");
     }
 }

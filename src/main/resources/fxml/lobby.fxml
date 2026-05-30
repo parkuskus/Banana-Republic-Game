@@ -113,7 +113,7 @@
                               <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
                               <ImageView fitHeight="32.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@../icons/file_upload_gfont.png" />
+                                    <Image url="@../icons/file_upload.png" />
                                  </image>
                                  <HBox.margin>
                                     <Insets right="30.0" />
@@ -134,7 +134,7 @@
                               <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
                               <ImageView fitHeight="32.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
-                                    <Image url="@../icons/file_upload_gfont.png" />
+                                    <Image url="@../icons/file_upload.png" />
                                  </image>
                                  <HBox.margin>
                                     <Insets right="30.0" />
@@ -145,7 +145,7 @@
                         <HBox alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0" />
                         <HBox alignment="CENTER_RIGHT" prefHeight="74.0" prefWidth="318.0">
                            <children>
-                              <Button alignment="BOTTOM_LEFT" mnemonicParsing="false" onAction="#exit" styleClass="button-red" text="Start Game" />
+                              <Button alignment="BOTTOM_LEFT" mnemonicParsing="false" onAction="#startGame" styleClass="button-red" text="Start Game" />
                            </children>
                         </HBox>
                      </children>
