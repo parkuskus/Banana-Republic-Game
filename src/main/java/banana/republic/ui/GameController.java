@@ -1,7 +1,10 @@
 package banana.republic.ui;
 
+import banana.republic.App;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
@@ -11,11 +14,16 @@ import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.paint.Color;
 import javafx.scene.layout.StackPane;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 public class GameController implements Initializable {
 
+    @FXML
+    private StackPane mainGameRoot;
+    @FXML
+    private StackPane tradeDialogOverlay;
     @FXML
     private StackPane hexdesert;
     @FXML
@@ -40,6 +48,8 @@ public class GameController implements Initializable {
     private boolean canAddRoad = true;
 
     private Image gambarAnchorGlobal = null;
+
+    private GaussianBlur blurEffect = new GaussianBlur(10);
 
     // helpers
     public void setCanAddRoad(boolean canAddRoad) {
@@ -289,5 +299,48 @@ public class GameController implements Initializable {
 
         // Letakkan HBox di Group Utama
         parentMap.getChildren().add(tokoBox);
+    }
+
+    @FXML
+    private void openDialog(String fxmlName, StackPane dialogOverlay) throws IOException {
+        if (dialogOverlay != null) {
+            // bersihkan overlay sebelumnya jika ada
+            dialogOverlay.getChildren().clear();
+
+            String pathFxml = "/fxml/" + fxmlName + ".fxml";
+            URL fxmlLocation = getClass().getResource(pathFxml);
+
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            javafx.scene.Parent dialogUI = loader.load();
+
+            TradeDialogController tradeController = loader.getController();
+
+            // Titipkan perintah apa yang harus dilakukan saat tombol Cancel/X ditekan
+            tradeController.setCloseHandler(() -> {
+                dialogOverlay.setVisible(false); // Sembunyikan dialog
+                if (mainGameRoot != null) {
+                    mainGameRoot.setEffect(null); // Hilangkan blur dari papan
+                }
+            });
+
+            // Masukkan dialog ke dalam overlay
+            dialogOverlay.getChildren().add(dialogUI);
+
+            // Tampilkan overlay
+            dialogOverlay.setVisible(true);
+            dialogOverlay.toFront();
+
+            // Beri efek blur
+            if (mainGameRoot != null) {
+                mainGameRoot.setEffect(blurEffect);
+            }
+        } else {
+            System.out.println("ERROR: dialogOverlay bernilai null!");
+        }
+    }
+
+    @FXML
+    private void toTrade() throws IOException {
+        openDialog("trade", tradeDialogOverlay);
     }
 }

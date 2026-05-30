@@ -15,7 +15,8 @@
 
 <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1136.0" prefWidth="1825.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
    <children>
-      <StackPane alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="365.0" prefWidth="565.0" styleClass="vbox-shade">
+      <StackPane fx:id="tradeDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="365.0" prefWidth="565.0" styleClass="vbox-shade">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
@@ -312,7 +313,7 @@
                                     </Group>
                                     <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
                                        <children>
-                                          <Label alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current condition" />
+                                          <Label alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
                                           <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
                                              <children>
                                                 <ImageView fitHeight="150.0" fitWidth="118.0" pickOnBounds="true" preserveRatio="true">
@@ -714,7 +715,7 @@
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
+                              <Button maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
                               <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
                               <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
                            </children>
