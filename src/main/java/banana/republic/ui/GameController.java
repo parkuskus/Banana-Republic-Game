@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import banana.republic.App;
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.core.Game;
@@ -45,7 +46,13 @@ public class GameController implements Initializable {
     @FXML
     private StackPane cardDialogOverlay;
     @FXML
+    private StackPane stealDialogOverlay;
+    @FXML
     private StackPane settingsDialogOverlay;
+    @FXML
+    private StackPane victoryDialogOverlay;
+    @FXML
+    private StackPane discardDialogOverlay;
     @FXML
     private StackPane hexdesert;
     @FXML
@@ -796,8 +803,12 @@ public class GameController implements Initializable {
                 refreshAllUI();
             });
         }
+<<<<<<< HEAD
         if (controller instanceof GameAwareController gameAware) {
             gameAware.setGame(game);
+        }
+        if (controller instanceof StealDialogController stealDialogController) {
+            stealDialogController.setStealHandler(idx -> System.out.println("steal player " + idx));
         }
 
         dialogOverlay.getChildren().add(dialogUI);
@@ -887,5 +898,24 @@ public class GameController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void toSteal() throws IOException {
+        openDialog("steal", stealDialogOverlay);
+    }
+
+    @FXML
+    private void toVictory() throws IOException {
+        openDialog("victory", victoryDialogOverlay);
+    }
+    @FXML
+    private void toDiscard() throws IOException {
+        openDialog("discard", discardDialogOverlay);
+    }
+
+    @FXML
+    private void endGame() throws IOException {
+        App.setRoot("result");
     }
 }
