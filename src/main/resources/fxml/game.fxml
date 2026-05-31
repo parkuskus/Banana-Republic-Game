@@ -17,6 +17,7 @@
    <children>
       <StackPane fx:id="tradeDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="cardDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="stealDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="settingsDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="victoryDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="365.0" prefWidth="565.0" styleClass="vbox-shade">
@@ -316,7 +317,7 @@
                                     </Group>
                                     <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
                                        <children>
-                                          <Button mnemonicParsing="false" text="steal" />
+                                           <Button mnemonicParsing="false" onAction="#toSteal" text="steal" />
                                           <Label alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
                                           <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
                                              <children>
@@ -350,7 +351,7 @@
                               <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
                                  <children>
                                     <Region minWidth="6.0" style="-fx-background-color: #c21a09; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-red" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -386,7 +387,7 @@
                               <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
                                  <children>
                                     <Region minWidth="6.0" style="-fx-background-color: #305cde; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-blue" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -425,7 +426,7 @@
                               <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
                                  <children>
                                     <Region minWidth="6.0" style="-fx-background-color: #4fc978; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-green" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>
@@ -461,7 +462,7 @@
                               <HBox style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
                                  <children>
                                     <Region minWidth="6.0" style="-fx-background-color: #ff7f00; -fx-background-radius: 8 0 0 8;" />
-                                    <VBox spacing="8.0" style="-fx-padding: 12;" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-orange" HBox.hgrow="ALWAYS">
                                        <children>
                                           <HBox alignment="CENTER_LEFT" spacing="8.0">
                                              <children>

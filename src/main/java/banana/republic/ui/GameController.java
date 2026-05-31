@@ -28,6 +28,8 @@ public class GameController implements Initializable {
     @FXML
     private StackPane cardDialogOverlay;
     @FXML
+    private StackPane stealDialogOverlay;
+    @FXML
     private StackPane settingsDialogOverlay;
     @FXML
     private StackPane victoryDialogOverlay;
@@ -336,6 +338,9 @@ public class GameController implements Initializable {
                 }
             });
         }
+        if (controller instanceof StealDialogController stealDialogController) {
+            stealDialogController.setStealHandler(idx -> System.out.println("steal player " + idx));
+        }
 
         dialogOverlay.getChildren().add(dialogUI);
         dialogOverlay.setVisible(true);
@@ -354,6 +359,11 @@ public class GameController implements Initializable {
     @FXML
     private void toCard() throws IOException {
         openDialog("card", cardDialogOverlay);
+    }
+
+    @FXML
+    private void toSteal() throws IOException {
+        openDialog("steal", stealDialogOverlay);
     }
 
     @FXML

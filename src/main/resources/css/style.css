@@ -263,7 +263,7 @@
 }
 
 .dialog-overlay {
-    -fx-background-color: rgba(0, 0, 0, 0.4);
+    -fx-background-color: transparent;
     -fx-alignment: center;
     -fx-padding: 40px;
 }
@@ -395,6 +395,7 @@
     -fx-font-weight: bold;
     -fx-font-size: 20px;
     -fx-font-family: 'Russo One';
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 8, 0, 0, 3);
 }
 
 .avatar-red {
@@ -415,6 +416,34 @@
 .avatar-orange {
     -fx-background-color: #ff7f00;
     -fx-text-fill: white;
+}
+
+/* Player 1 (Merah) */
+.side-card-red {
+    -fx-background-color: #fae8e6; /* Merah sangat terang/pastel */
+    -fx-border-color: #c21a09;
+    -fx-border-width: 0 0 0 8px;   /* Hanya garis di kiri (Tebal 8px) */
+}
+
+/* Player 2 (Biru) */
+.side-card-blue {
+    -fx-background-color: #eaeffc; /* Biru sangat terang/pastel */
+    -fx-border-color: #305cde;
+    -fx-border-width: 0 0 0 8px;
+}
+
+/* Player 3 (Hijau) */
+.side-card-green {
+    -fx-background-color: #edf9f1; /* Hijau sangat terang/pastel */
+    -fx-border-color: #4fc978;
+    -fx-border-width: 0 0 0 8px;
+}
+
+/* Player 4 (Oranye) */
+.side-card-orange {
+    -fx-background-color: #fff2e6; /* Oranye sangat terang/pastel */
+    -fx-border-color: #ff7f00;
+    -fx-border-width: 0 0 0 8px;
 }
 
 .dialog-title-gold {
@@ -451,21 +480,21 @@
     -fx-font-size: 40px;
 }
 
-.dev-card-purple { -fx-border-color: #d1b3ff; -fx-border-width: 1px; }
-.dev-card-purple .dev-card-top { -fx-background-color: #f3ebff; }
-.dev-card-purple .dev-card-icon { -fx-text-fill: #6a0dad; }
+    .dev-card-purple { -fx-border-color: #d1b3ff; -fx-border-width: 1px; }
+    .dev-card-purple .dev-card-top { -fx-background-color: #f3ebff; }
+    .dev-card-purple .dev-card-icon { -fx-text-fill: #6a0dad; }
 
-.dev-card-green { -fx-border-color: #a3e4b7; -fx-border-width: 1px; }
-.dev-card-green .dev-card-top { -fx-background-color: #e6f9ec; }
-.dev-card-green .dev-card-icon { -fx-text-fill: #1e8449; }
+    .dev-card-green { -fx-border-color: #a3e4b7; -fx-border-width: 1px; }
+    .dev-card-green .dev-card-top { -fx-background-color: #e6f9ec; }
+    .dev-card-green .dev-card-icon { -fx-text-fill: #1e8449; }
 
-.dev-card-orange { -fx-border-color: #f5cba7; -fx-border-width: 1px; }
-.dev-card-orange .dev-card-top { -fx-background-color: #fdf2e9; }
-.dev-card-orange .dev-card-icon { -fx-text-fill: #d35400; }
+    .dev-card-orange { -fx-border-color: #f5cba7; -fx-border-width: 1px; }
+    .dev-card-orange .dev-card-top { -fx-background-color: #fdf2e9; }
+    .dev-card-orange .dev-card-icon { -fx-text-fill: #d35400; }
 
-.dev-card-darkgray { -fx-border-color: #666666; -fx-border-width: 1px; }
-.dev-card-darkgray .dev-card-top { -fx-background-color: #555555; }
-.dev-card-darkgray .dev-card-icon { -fx-text-fill: #ffffff; }
+    .dev-card-darkgray { -fx-border-color: #666666; -fx-border-width: 1px; }
+    .dev-card-darkgray .dev-card-top { -fx-background-color: #555555; }
+    .dev-card-darkgray .dev-card-icon { -fx-text-fill: #ffffff; }
 
 .card-selected {
     -fx-border-color: #2b43e2;
@@ -716,4 +745,39 @@
 }
 .btn-win-game:hover {
     -fx-background-color: #5c4320;
+}
+
+.theft-icon-box {
+    -fx-background-color: #ffe6e6;
+    -fx-text-fill: #b30000;
+    -fx-background-radius: 8px;
+    -fx-alignment: center;
+    -fx-font-size: 20px;
+}
+
+.theft-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+    -fx-letter-spacing: 2px;
+}
+
+.theft-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+    -fx-text-alignment: center;
+}
+
+.theft-resource-count {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-font-family: 'Courier New', monospace;
+}
+
+.theft-random-item {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a6327;
+    -fx-text-alignment: center;
 }
