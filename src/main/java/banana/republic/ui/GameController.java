@@ -34,6 +34,8 @@ public class GameController implements Initializable {
     @FXML
     private StackPane victoryDialogOverlay;
     @FXML
+    private StackPane discardDialogOverlay;
+    @FXML
     private StackPane hexdesert;
     @FXML
     private StackPane harborLV1; //left vertical (upper)
@@ -373,5 +375,9 @@ public class GameController implements Initializable {
     @FXML
     private void toVictory() throws IOException {
         openDialog("victory", victoryDialogOverlay);
+    }
+    @FXML
+    private void toDiscard() throws IOException {
+        openDialog("discard", discardDialogOverlay);
     }
 }

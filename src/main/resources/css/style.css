@@ -281,6 +281,11 @@
     -fx-text-fill: #333333;
 }
 
+.dialog-subtitle {
+    -fx-font-size: 15px;
+    -fx-font-family: 'Marcellus';
+}
+
 .section-subtitle {
     -fx-font-size: 1.8em;
     -fx-font-weight: bold;
