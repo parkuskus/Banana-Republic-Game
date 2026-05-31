@@ -43,7 +43,9 @@ public class HexTile {
 
     public ResourceType getResourceType() {
         if (terrainType == null) {
-            return null;
+            throw new IllegalStateException(
+                "HexTile id=" + id + " tidak memiliki terrainType"
+            );
         }
         return terrainType.getResourceType();
     }

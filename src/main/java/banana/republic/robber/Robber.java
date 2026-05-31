@@ -132,8 +132,10 @@ public class Robber {
             currentIndex += count;
         }
 
-        // Fallback (seharusnya tidak terjadi)
-        return null;
+        // Seharusnya unreachable karena victim punya resource
+        throw new IllegalStateException(
+            "Failed to steal resource: random index out of bounds despite valid total count"
+        );
     }
 
     /**

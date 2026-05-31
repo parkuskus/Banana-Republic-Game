@@ -117,6 +117,7 @@ public class Game {
         this.players = new ArrayList<>(players);
         this.bank = new BankImpl();
         this.cardDeck = new CardDeck();
+        this.cardDeck.buildDefaultDeck();
         this.dice = new Dice();
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
