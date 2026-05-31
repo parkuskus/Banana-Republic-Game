@@ -380,4 +380,8 @@ public class GameController implements Initializable {
     private void toDiscard() throws IOException {
         openDialog("discard", discardDialogOverlay);
     }
+    @FXML
+    private void endTurn() throws IOException {
+        App.setRoot("transition");
+    }
 }

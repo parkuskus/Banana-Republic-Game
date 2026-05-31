@@ -1,9 +1,20 @@
 package banana.republic.ui;
 
-/**
- * Transition screen controller between turns.
- * Refer to class-diagram/Module5_UI_Plugin_Save.puml for full specification.
- */
+import banana.republic.App;
+import javafx.fxml.FXML;
+
+import java.io.IOException;
+
 public class TransitionScreenController {
-    // TODO: Implement
+
+    private Runnable startTurnHandler;
+
+    public void setStartTurnHandler(Runnable startTurnHandler) {
+        this.startTurnHandler = startTurnHandler;
+    }
+
+    @FXML
+    private void handleStartTurn() throws IOException {
+        App.setRoot("game");
+    }
 }

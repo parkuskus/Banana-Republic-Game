@@ -786,3 +786,82 @@
     -fx-text-fill: #8a6327;
     -fx-text-alignment: center;
 }
+
+.dark-button {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffd55e;
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 3em;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+
+.turn-screen-bg {
+    -fx-background-color: #333333;
+    -fx-alignment: center;
+}
+
+.turn-game-title {
+    -fx-font-size: 44px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #d9d9d9;
+    -fx-letter-spacing: 4px;
+}
+
+.turn-icon-box {
+    -fx-background-color: #5c5243;
+    -fx-text-fill: #ffd55e;
+    -fx-min-width: 120px;
+    -fx-min-height: 120px;
+    -fx-max-width: 120px;
+    -fx-max-height: 120px;
+    -fx-background-radius: 8px;
+    -fx-alignment: center;
+    -fx-font-size: 26px;
+}
+
+.turn-heading {
+    -fx-font-size: 40px;
+    -fx-text-fill: white;
+}
+
+.turn-subheading {
+    -fx-font-size: 24px;
+    -fx-text-fill: #999999;
+}
+
+.turn-subheading-bold {
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.btn-ready {
+    -fx-background-color: #ffd55e;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+    -fx-padding: 15px 35px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-letter-spacing: 1px;
+}
+.btn-ready:hover {
+    -fx-background-color: #e3c174;
+}
+
+.turn-divider {
+    -fx-background-color: #4a4a4a;
+    -fx-min-height: 1px;
+    -fx-max-height: 1px;
+}
+
+.turn-footer {
+    -fx-font-size: 20px;
+    -fx-text-fill: #777777;
+    -fx-font-weight: bold;
+}
