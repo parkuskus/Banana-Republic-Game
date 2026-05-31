@@ -18,6 +18,7 @@
       <StackPane fx:id="tradeDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="cardDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="settingsDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="victoryDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="365.0" prefWidth="565.0" styleClass="vbox-shade">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0">
@@ -315,6 +316,7 @@
                                     </Group>
                                     <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
                                        <children>
+                                          <Button mnemonicParsing="false" text="steal" />
                                           <Label alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
                                           <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
                                              <children>
@@ -719,7 +721,7 @@
                            <children>
                               <Button maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
                               <Button maxWidth="-Infinity" mnemonicParsing="false" onAction="#toCard" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
-                              <Button maxWidth="-Infinity" mnemonicParsing="false" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
+                              <Button maxWidth="-Infinity" mnemonicParsing="false" onAction="#toVictory" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
                            </children>
                            <HBox.margin>
                               <Insets left="25.0" />
