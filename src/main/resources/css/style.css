@@ -526,3 +526,84 @@
 .btn-play-card:hover {
     -fx-background-color: #5c4320;
 }
+
+
+.settings-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+}
+
+
+.settings-card {
+    -fx-background-color: #f8f8f8;
+    -fx-background-radius: 8px;
+    -fx-padding: 30px 20px;
+    -fx-min-width: 250px;
+    -fx-min-height: 250px;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
+}
+
+.settings-card-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-text-alignment: center;
+}
+
+.settings-icon-box {
+    -fx-min-width: 50px;
+    -fx-min-height: 50px;
+    -fx-max-width: 50px;
+    -fx-max-height: 50px;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
+    -fx-font-size: 24px;
+}
+.icon-yellow {
+    -fx-background-color: #ffd166;
+    -fx-text-fill: #855a00;
+}
+.icon-blue {
+    -fx-background-color: #3399ff;
+    -fx-text-fill: white;
+}
+
+.btn-outline-dark {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-min-width: 150px;
+    -fx-cursor: hand;
+}
+
+.black-text{
+    -fx-background-color: white;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.btn-solid-blue {
+    -fx-background-color: #005a9c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-min-width: 150px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.white-text{
+    -fx-background-color: #005a9c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}

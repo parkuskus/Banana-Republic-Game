@@ -28,6 +28,8 @@ public class GameController implements Initializable {
     @FXML
     private StackPane cardDialogOverlay;
     @FXML
+    private StackPane settingsDialogOverlay;
+    @FXML
     private StackPane hexdesert;
     @FXML
     private StackPane harborLV1; //left vertical (upper)
@@ -350,5 +352,10 @@ public class GameController implements Initializable {
     @FXML
     private void toCard() throws IOException {
         openDialog("card", cardDialogOverlay);
+    }
+
+    @FXML
+    private void toSettings() throws IOException {
+        openDialog("settings", settingsDialogOverlay);
     }
 }
