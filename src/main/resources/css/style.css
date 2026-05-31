@@ -865,3 +865,128 @@
     -fx-text-fill: #777777;
     -fx-font-weight: bold;
 }
+
+.game-over-bg {
+    -fx-background-color: #ffffff;
+}
+
+.go-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-playtime-box {
+    -fx-background-color: #f4f4f4;
+    -fx-padding: 50px 150px;
+    -fx-alignment: center;
+    -fx-background-radius: 4px;
+}
+
+.go-playtime-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-letter-spacing: 2px;
+}
+
+.go-playtime-value {
+    -fx-font-size: 42px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+    -fx-font-family: 'Courier New', monospace;
+    -fx-letter-spacing: 5px;
+}
+
+.go-section-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-padding: 0 0 10px 0;
+}
+
+.go-table-container {
+    -fx-background-color: white;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.go-table-header {
+    -fx-background-color: #eaeaea;
+    -fx-padding: 15px 20px;
+    -fx-background-radius: 4px 4px 0 0;
+}
+
+.go-table-header-text {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+.go-table-row {
+    -fx-background-color: white;
+    -fx-padding: 20px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.go-table-row-winner {
+    -fx-background-color: #fdf6e7;
+    -fx-padding: 20px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.go-table-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+}
+
+.go-table-text-winner {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-table-total {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
+}
+
+.go-table-total-winner {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-footer-text {
+    -fx-font-size: 10px;
+    -fx-text-fill: #999999;
+    -fx-font-family: 'Courier New', monospace;
+    -fx-padding: 15px 0 0 0;
+}
+
+.go-bottom-bar {
+    -fx-background-color: #f7f7f7;
+    -fx-padding: 30px;
+}
+
+.btn-outline-gold {
+    -fx-background-color: white;
+    -fx-border-color: #dddddd;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-text-fill: #666666;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 15px 30px;
+    -fx-cursor: hand;
+}
+
+.btn-outline-gold:hover {
+    -fx-text-fill: #222222;
+    -fx-border-color: #aaaaaa;
+}

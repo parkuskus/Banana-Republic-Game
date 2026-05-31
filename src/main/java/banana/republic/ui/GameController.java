@@ -384,4 +384,9 @@ public class GameController implements Initializable {
     private void endTurn() throws IOException {
         App.setRoot("transition");
     }
+
+    @FXML
+    private void endGame() throws IOException {
+        App.setRoot("result");
+    }
 }
