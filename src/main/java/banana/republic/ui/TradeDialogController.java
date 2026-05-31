@@ -13,7 +13,7 @@ import java.util.ResourceBundle;
 /**
  * Trade dialog controller.
  * */
-public class TradeDialogController implements Initializable {
+public class TradeDialogController implements Initializable, DialogController {
     @FXML
     private Label tabDomestic;
     @FXML
@@ -74,6 +74,7 @@ public class TradeDialogController implements Initializable {
     }
 
     // untuk titip perintah close dialog
+    @Override
     public void setCloseHandler(Runnable closeHandler) {
         this.closeHandler = closeHandler;
     }

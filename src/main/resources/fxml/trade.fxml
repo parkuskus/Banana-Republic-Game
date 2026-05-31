@@ -12,9 +12,9 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="616.0" prefWidth="855.0" styleClass="dialog-overlay" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.TradeDialogController">
+<StackPane prefHeight="883.0" prefWidth="813.0" styleClass="dialog-overlay" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.TradeDialogController">
 
-    <VBox alignment="CENTER" maxHeight="1000.0" maxWidth="900.0" prefHeight="557.0" prefWidth="735.0" spacing="20" styleClass="dialog-box" StackPane.alignment="CENTER">
+    <VBox alignment="CENTER" maxHeight="1000.0" maxWidth="900.0" prefHeight="803.0" prefWidth="747.0" spacing="20" styleClass="dialog-box" StackPane.alignment="CENTER">
 
         <BorderPane>
             <left><Label styleClass="dialog-title" text="Trade Resources" /></left>

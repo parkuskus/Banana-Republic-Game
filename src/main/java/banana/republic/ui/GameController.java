@@ -23,6 +23,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.effect.GaussianBlur;
+import javafx.scene.Parent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -37,10 +38,34 @@ import javafx.scene.shape.StrokeLineCap;
 
 public class GameController implements Initializable {
 
-    @FXML private StackPane mainGameRoot;
-    @FXML private StackPane tradeDialogOverlay;
-    @FXML private StackPane hexdesert;
-    @FXML private StackPane harborLV1, harborLV2, harborLU, harborLD, harborRV, harborRU1, harborRU2, harborRD1, harborRD2;
+    @FXML
+    private StackPane mainGameRoot;
+    @FXML
+    private StackPane tradeDialogOverlay;
+    @FXML
+    private StackPane cardDialogOverlay;
+    @FXML
+    private StackPane settingsDialogOverlay;
+    @FXML
+    private StackPane hexdesert;
+    @FXML
+    private StackPane harborLV1; //left vertical (upper)
+    @FXML
+    private StackPane harborLV2; //left vertical (lower)
+    @FXML
+    private StackPane harborLU;  //left up
+    @FXML
+    private StackPane harborLD;  //left down
+    @FXML
+    private StackPane harborRV;  //right vertical
+    @FXML
+    private StackPane harborRU1; //right up
+    @FXML
+    private StackPane harborRU2; //right up (lower)
+    @FXML
+    private StackPane harborRD1; //right down (inner)
+    @FXML
+    private StackPane harborRD2; //right down (outer)
 
     @FXML private VBox sidePanel;
     @FXML private HBox playerPanel1, playerPanel2, playerPanel3, playerPanel4;
@@ -218,12 +243,16 @@ public class GameController implements Initializable {
     @FXML
     private void onCard() {
         if (game == null) return;
-        // Card dialog stub - open but keep card logic minimal
         try {
-            openDialog("card", tradeDialogOverlay); // reuse overlay or create new
+            openDialog("card", cardDialogOverlay);
         } catch (IOException e) {
             showError("Gagal membuka dialog kartu.");
         }
+    }
+
+    @FXML
+    private void toCard() throws IOException {
+        openDialog("card", cardDialogOverlay);
     }
 
     @FXML
@@ -243,10 +272,15 @@ public class GameController implements Initializable {
     private void onSettings() {
         if (game == null) return;
         try {
-            openDialog("settings", tradeDialogOverlay);
+            openDialog("settings", settingsDialogOverlay);
         } catch (IOException e) {
             showError("Gagal membuka dialog pengaturan.");
         }
+    }
+
+    @FXML
+    private void toSettings() throws IOException {
+        openDialog("settings", settingsDialogOverlay);
     }
 
     @FXML
@@ -612,26 +646,39 @@ public class GameController implements Initializable {
     // ============================================================
     @FXML
     private void openDialog(String fxmlName, StackPane dialogOverlay) throws IOException {
-        if (dialogOverlay != null) {
-            dialogOverlay.getChildren().clear();
-            String pathFxml = "/fxml/" + fxmlName + ".fxml";
-            URL fxmlLocation = getClass().getResource(pathFxml);
-            FXMLLoader loader = new FXMLLoader(fxmlLocation);
-            javafx.scene.Parent dialogUI = loader.load();
-
-            Object controller = loader.getController();
-            if (controller instanceof TradeDialogController) {
-                ((TradeDialogController) controller).setCloseHandler(() -> closeOverlay(dialogOverlay));
-            }
-
-            dialogOverlay.getChildren().add(dialogUI);
-            dialogOverlay.setVisible(true);
-            dialogOverlay.toFront();
-            if (mainGameRoot != null) {
-                mainGameRoot.setEffect(blurEffect);
-            }
-        } else {
+        if (dialogOverlay == null) {
             System.out.println("ERROR: dialogOverlay bernilai null!");
+            return;
+        }
+
+        dialogOverlay.getChildren().clear();
+
+        String pathFxml = "/fxml/" + fxmlName + ".fxml";
+        URL fxmlLocation = getClass().getResource(pathFxml);
+        if (fxmlLocation == null) {
+            System.out.println("ERROR KRITIS: File tidak ditemukan: " + pathFxml);
+            return;
+        }
+
+        FXMLLoader loader = new FXMLLoader(fxmlLocation);
+        Parent dialogUI = loader.load();
+
+        Object controller = loader.getController();
+        if (controller instanceof DialogController dialogController) {
+            dialogController.setCloseHandler(() -> {
+                dialogOverlay.setVisible(false);
+                if (mainGameRoot != null) {
+                    mainGameRoot.setEffect(null);
+                }
+            });
+        }
+
+        dialogOverlay.getChildren().add(dialogUI);
+        dialogOverlay.setVisible(true);
+        dialogOverlay.toFront();
+
+        if (mainGameRoot != null) {
+            mainGameRoot.setEffect(blurEffect);
         }
     }
 

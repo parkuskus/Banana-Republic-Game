@@ -16,6 +16,8 @@
 <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1136.0" prefWidth="1825.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
    <children>
       <StackPane fx:id="tradeDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="cardDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
+      <StackPane fx:id="settingsDialogOverlay" prefHeight="150.0" prefWidth="200.0" />
       <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="365.0" prefWidth="565.0" styleClass="vbox-shade">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0">
@@ -716,7 +718,7 @@
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
                                <Button fx:id="btnTrade" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
-                               <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onCard" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
+                               <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toCard" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
                                <Button fx:id="btnDeclareVictory" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onDeclareVictory" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
                            </children>
                            <HBox.margin>
@@ -725,7 +727,7 @@
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
-                               <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onSettings" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
+                               <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="99.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
                            </children>
                            <HBox.margin>
