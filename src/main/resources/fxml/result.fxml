@@ -14,7 +14,7 @@
     <center>
         <VBox alignment="TOP_CENTER" maxWidth="887.0" prefHeight="854.0" prefWidth="887.0" spacing="45.0" style="-fx-padding: 60px 20px;">
 
-            <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="go-title" text="Player1 has founded the Banana Republic!" />
+            <Label fx:id="titleLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="go-title" text="Player1 has founded the Banana Republic!" />
 
             <VBox spacing="10" styleClass="go-playtime-box">
                 <Label styleClass="go-playtime-label" text="TOTAL PLAYTIME" />
@@ -24,59 +24,7 @@
             <VBox spacing="5.0">
                 <Label styleClass="go-section-title" text="FINAL POINT BREAKDOWN" />
 
-                <VBox styleClass="go-table-container">
-
-                    <HBox alignment="CENTER_LEFT" styleClass="go-table-header">
-                        <Label prefWidth="180.0" styleClass="go-table-header-text" text="PLAYER" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-header-text" text="POS&#10;PANTAU" textAlignment="CENTER" />
-                        <Label alignment="CENTER" prefWidth="120.0" styleClass="go-table-header-text" text="LABORATORIUM" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-header-text" text="KARTU&#10;SPESIAL" textAlignment="CENTER" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-header-text" text="POIN&#10;RAHASIA" textAlignment="CENTER" />
-                        <Label alignment="CENTER_RIGHT" prefWidth="90.0" styleClass="go-table-header-text" text="TOTAL" />
-                    </HBox>
-
-                    <HBox alignment="CENTER_LEFT" styleClass="go-table-row-winner">
-                        <HBox alignment="CENTER_LEFT" prefWidth="180.0" spacing="8.0">
-                     <ImageView fitHeight="30.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
-                        <image>
-                           <Image url="@../icons/achievement.png" />
-                        </image>
-                     </ImageView>
-                            <Label style="-fx-text-fill: #990a14;" styleClass="go-table-text-winner" text="Player1&#10;(Winner)" />
-                        </HBox>
-                        <Label alignment="CENTER" prefWidth="110.0" style="-fx-text-fill: #990a14;" styleClass="go-table-text" text="4" />
-                        <Label alignment="CENTER" prefWidth="120.0" style="-fx-text-fill: #990a14;" styleClass="go-table-text" text="2" />
-                        <Label alignment="CENTER" prefWidth="110.0" style="-fx-text-fill: #990a14;" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER" prefWidth="110.0" style="-fx-text-fill: #990a14;" styleClass="go-table-text" text="0" />
-                        <Label alignment="CENTER_RIGHT" prefWidth="90.0" style="-fx-text-fill: #990a14;" styleClass="go-table-total-winner" text="10" />
-                    </HBox>
-
-                    <HBox alignment="CENTER_LEFT" styleClass="go-table-row">
-                        <Label prefWidth="180.0" styleClass="go-table-text" text="Player2" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="3" />
-                        <Label alignment="CENTER" prefWidth="120.0" styleClass="go-table-text" text="2" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="0" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="0" />
-                        <Label alignment="CENTER_RIGHT" prefWidth="90.0" styleClass="go-table-total" text="7" />
-                    </HBox>
-
-                    <HBox alignment="CENTER_LEFT" styleClass="go-table-row">
-                        <Label prefWidth="180.0" styleClass="go-table-text" text="Player3" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="2" />
-                        <Label alignment="CENTER" prefWidth="120.0" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER_RIGHT" prefWidth="90.0" styleClass="go-table-total" text="6" />
-                    </HBox>
-
-                    <HBox alignment="CENTER_LEFT" style="-fx-border-width: 0;" styleClass="go-table-row">
-                        <Label prefWidth="180.0" styleClass="go-table-text" text="Player4" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="2" />
-                        <Label alignment="CENTER" prefWidth="120.0" styleClass="go-table-text" text="0" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER" prefWidth="110.0" styleClass="go-table-text" text="1" />
-                        <Label alignment="CENTER_RIGHT" prefWidth="90.0" styleClass="go-table-total" text="4" />
-                    </HBox>
+                <VBox fx:id="resultTableContainer" styleClass="go-table-container">
                 </VBox>
 
                 <HBox alignment="CENTER_RIGHT">

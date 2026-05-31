@@ -1,107 +1,176 @@
 package banana.republic.ui;
 
-
-import banana.republic.App;
+import banana.republic.core.Game;
+import banana.republic.player.Player;
+import banana.republic.resource.ResourceType;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
 
 import java.net.URL;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.ResourceBundle;
-/**
- * Discard dialog controller.
- * */
-public class DiscardDialogController implements Initializable, DialogController {
-    @FXML
-    private Label tabDomestic;
-    @FXML
-    private Label tabMaritime;
-    @FXML
-    private VBox offerBox;
 
+public class DiscardDialogController implements Initializable, DialogController, GameAwareController {
 
     @FXML
-    private Button btnGiveWoodMinus, btnGiveBrickMinus, btnGiveWheatMinus,btnGiveOreMinus, btnGiveBananaMinus;
+    private Label lblHandCount;
+    @FXML
+    private Label lblMustDiscardCount;
+    @FXML
+    private Label lblSelectedCount;
+    @FXML
+    private Label lblRequiredCount;
+    @FXML
+    private Label lblWoodOwned, lblBrickOwned, lblWheatOwned, lblOreOwned, lblBananaOwned;
+
     @FXML
     private Label lblGiveWoodVal, lblGiveBrickVal, lblGiveWheatVal, lblGiveOreVal, lblGiveBananaVal;
     @FXML
-    private Button btnGiveWoodPlus, btnGiveBrickPlus, btnGiveWheatPlus,btnGiveOrePlus, btnGiveBananaPlus;
+    private Button btnGiveWoodMinus, btnGiveWoodPlus;
+    @FXML
+    private Button btnGiveBrickMinus, btnGiveBrickPlus;
+    @FXML
+    private Button btnGiveWheatMinus, btnGiveWheatPlus;
+    @FXML
+    private Button btnGiveOreMinus, btnGiveOrePlus;
+    @FXML
+    private Button btnGiveBananaMinus, btnGiveBananaPlus;
 
     private Runnable closeHandler;
-
-
+    private Game game;
+    private int requiredDiscard = 0;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         int maxItems = 20;
-        setupStepper(btnGiveWoodMinus, btnGiveWoodPlus, lblGiveWoodVal, 0, maxItems);
-        setupStepper(btnGiveWheatMinus, btnGiveWheatPlus, lblGiveWheatVal, 0, maxItems);
-        setupStepper(btnGiveBrickMinus, btnGiveBrickPlus, lblGiveBrickVal, 0, maxItems);
-        setupStepper(btnGiveOreMinus, btnGiveOrePlus, lblGiveOreVal, 0, maxItems);
-        setupStepper(btnGiveBananaMinus, btnGiveBananaPlus, lblGiveBananaVal, 0, maxItems);
+        setupStepper(btnGiveWoodMinus, btnGiveWoodPlus, lblGiveWoodVal, 0, maxItems, this::updateSelectedCount);
+        setupStepper(btnGiveBrickMinus, btnGiveBrickPlus, lblGiveBrickVal, 0, maxItems, this::updateSelectedCount);
+        setupStepper(btnGiveWheatMinus, btnGiveWheatPlus, lblGiveWheatVal, 0, maxItems, this::updateSelectedCount);
+        setupStepper(btnGiveOreMinus, btnGiveOrePlus, lblGiveOreVal, 0, maxItems, this::updateSelectedCount);
+        setupStepper(btnGiveBananaMinus, btnGiveBananaPlus, lblGiveBananaVal, 0, maxItems, this::updateSelectedCount);
     }
 
-    // untuk handle plus minus resource
-    private void setupStepper(Button btnMinus, Button btnPlus, Label lblValue, int min, int max) {
-        // Untuk tombol plus
-        btnPlus.setOnAction(event -> {
-            int currentValue = Integer.parseInt(lblValue.getText());
-            if (currentValue < max) {
-                lblValue.setText(String.valueOf(currentValue + 1));
-            }
-        });
-
-        // Untuk tombol minus
-        btnMinus.setOnAction(event -> {
-            int currentValue = Integer.parseInt(lblValue.getText());
-            if (currentValue > min) {
-                lblValue.setText(String.valueOf(currentValue - 1));
-            }
-        });
+    @Override
+    public void setGame(Game game) {
+        this.game = game;
+        populatePlayerData();
     }
 
-    // untuk titip perintah close dialog
     @Override
     public void setCloseHandler(Runnable closeHandler) {
         this.closeHandler = closeHandler;
     }
 
-    // tutup dialog
+    private void populatePlayerData() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+
+        int totalResources = active.getTotalResourceCount();
+        requiredDiscard = totalResources > Game.HAND_LIMIT ? totalResources / 2 : 0;
+
+        if (lblHandCount != null) lblHandCount.setText(String.valueOf(totalResources));
+        if (lblMustDiscardCount != null) lblMustDiscardCount.setText(String.valueOf(requiredDiscard));
+        if (lblRequiredCount != null) lblRequiredCount.setText(String.valueOf(requiredDiscard));
+        if (lblSelectedCount != null) lblSelectedCount.setText("0");
+
+        if (lblWoodOwned != null) lblWoodOwned.setText(String.valueOf(active.getResourceCount(ResourceType.WOOD)));
+        if (lblBrickOwned != null) lblBrickOwned.setText(String.valueOf(active.getResourceCount(ResourceType.BRICK)));
+        if (lblWheatOwned != null) lblWheatOwned.setText(String.valueOf(active.getResourceCount(ResourceType.WHEAT)));
+        if (lblOreOwned != null) lblOreOwned.setText(String.valueOf(active.getResourceCount(ResourceType.ORE)));
+        if (lblBananaOwned != null) lblBananaOwned.setText(String.valueOf(active.getResourceCount(ResourceType.BANANA)));
+    }
+
+    private void updateSelectedCount() {
+        if (lblSelectedCount == null) return;
+        int total = 0;
+        total += parseInt(lblGiveWoodVal);
+        total += parseInt(lblGiveBrickVal);
+        total += parseInt(lblGiveWheatVal);
+        total += parseInt(lblGiveOreVal);
+        total += parseInt(lblGiveBananaVal);
+        lblSelectedCount.setText(String.valueOf(total));
+    }
+
     @FXML
     private void closeDialog() {
         if (closeHandler != null) {
-            closeHandler.run(); // Jalankan perintah tutup!
+            closeHandler.run();
         }
     }
 
-    // pindah ke tab domestic trade
     @FXML
-    private void switchToDomestic() {
-        ubahGayaTab(tabDomestic, tabMaritime);
-        offerBox.setVisible(true);
-    }
+    private void handleDiscard() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
 
-    // pindah ke tab maritime trade
-    @FXML
-    private void switchToMaritime() {
-        ubahGayaTab(tabMaritime, tabDomestic);
-        offerBox.setVisible(false);
-    }
+        Map<ResourceType, Integer> toDiscard = new EnumMap<>(ResourceType.class);
+        toDiscard.put(ResourceType.WOOD, parseInt(lblGiveWoodVal));
+        toDiscard.put(ResourceType.BRICK, parseInt(lblGiveBrickVal));
+        toDiscard.put(ResourceType.WHEAT, parseInt(lblGiveWheatVal));
+        toDiscard.put(ResourceType.ORE, parseInt(lblGiveOreVal));
+        toDiscard.put(ResourceType.BANANA, parseInt(lblGiveBananaVal));
 
-    // helper
-    private void ubahGayaTab(Label tabAktif, Label tabInaktif) {
-        // Berikan aktif ke tab yang diklik
-        tabAktif.getStyleClass().remove("tab-inactive");
-        if (!tabAktif.getStyleClass().contains("tab-active")) {
-            tabAktif.getStyleClass().add("tab-active");
+        int totalSelected = toDiscard.values().stream().mapToInt(Integer::intValue).sum();
+
+        if (totalSelected != requiredDiscard) {
+            showError("Kamu harus membuang tepat " + requiredDiscard + " kartu (sekarang: " + totalSelected + ").");
+            return;
         }
 
-        // Kembalikan tab sebelahnya ke gaya inaktif
-        tabInaktif.getStyleClass().remove("tab-active");
-        if (!tabInaktif.getStyleClass().contains("tab-inactive")) {
-            tabInaktif.getStyleClass().add("tab-inactive");
+        for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
+            if (entry.getValue() > 0) {
+                if (!active.hasResource(entry.getKey(), entry.getValue())) {
+                    showError("Kamu tidak punya cukup " + entry.getKey().getDisplayName());
+                    return;
+                }
+            }
         }
+
+        for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
+            if (entry.getValue() > 0) {
+                game.discardResource(active, entry.getKey(), entry.getValue());
+            }
+        }
+
+        closeDialog();
+    }
+
+    private void setupStepper(Button btnMinus, Button btnPlus, Label lblValue, int min, int max, Runnable onUpdate) {
+        btnPlus.setOnAction(event -> {
+            int currentValue = parseInt(lblValue);
+            if (currentValue < max) {
+                lblValue.setText(String.valueOf(currentValue + 1));
+                if (onUpdate != null) onUpdate.run();
+            }
+        });
+        btnMinus.setOnAction(event -> {
+            int currentValue = parseInt(lblValue);
+            if (currentValue > min) {
+                lblValue.setText(String.valueOf(currentValue - 1));
+                if (onUpdate != null) onUpdate.run();
+            }
+        });
+    }
+
+    private int parseInt(Label lbl) {
+        try {
+            return Integer.parseInt(lbl.getText().trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

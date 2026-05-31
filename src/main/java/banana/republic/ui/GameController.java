@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 import banana.republic.App;
@@ -103,6 +104,9 @@ public class GameController implements Initializable {
     // Board visual → model mapping
     private final java.util.Map<StackPane, HexTile> visualToModelTile = new java.util.HashMap<>();
 
+    /** Static reference for cross-screen access (result, transition) */
+    private static Game currentGame;
+
     // Build / interaction modes
     private enum InteractionMode {
         NONE, SETTLEMENT, ROAD, CITY, ROBBER
@@ -165,6 +169,7 @@ public class GameController implements Initializable {
      */
     public void initialize(Game game) {
         this.game = game;
+        currentGame = game;
         if (game == null) return;
 
         buildVisualToModelMapping();
@@ -180,6 +185,10 @@ public class GameController implements Initializable {
 
     public void setGame(Game game) {
         initialize(game);
+    }
+
+    public static Game getCurrentGame() {
+        return currentGame;
     }
 
     public Game getGame() {
@@ -199,6 +208,20 @@ public class GameController implements Initializable {
             updateResourceCards();
 
             if (result.isSeven()) {
+                game.processDiscardPhase();
+                refreshAllUI();
+
+                boolean needHumanDiscard = game.getPlayers().stream()
+                    .anyMatch(p -> !p.isBot() && p.getTotalResourceCount() > Game.HAND_LIMIT);
+
+                if (needHumanDiscard) {
+                    try {
+                        openDialog("discard", discardDialogOverlay);
+                    } catch (IOException e) {
+                        showError("Gagal membuka dialog discard.");
+                    }
+                }
+
                 currentMode = InteractionMode.ROBBER;
                 showInfo("Dadu 7! Nimon Ungu aktif. Pilih petak untuk memindahkan Nimon Ungu.");
             } else {
@@ -236,6 +259,20 @@ public class GameController implements Initializable {
                 updateResourceCards();
 
                 if (result.isSeven()) {
+                    game.processDiscardPhase();
+                    refreshAllUI();
+
+                    boolean needHumanDiscard = game.getPlayers().stream()
+                        .anyMatch(p -> !p.isBot() && p.getTotalResourceCount() > Game.HAND_LIMIT);
+
+                    if (needHumanDiscard) {
+                        try {
+                            openDialog("discard", discardDialogOverlay);
+                        } catch (IOException e) {
+                            showError("Gagal membuka dialog discard.");
+                        }
+                    }
+
                     currentMode = InteractionMode.ROBBER;
                     showInfo("Dadu 7! Nimon Ungu aktif. Pilih petak untuk memindahkan Nimon Ungu.");
                 } else {
@@ -280,9 +317,34 @@ public class GameController implements Initializable {
 
             if (game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
                 handleBotTurn();
+            } else {
+                showTransitionScreen();
             }
         } catch (IllegalStateException | IllegalArgumentException e) {
             showError(e.getMessage());
+        }
+    }
+
+    private void showTransitionScreen() {
+        try {
+            FXMLLoader loader = App.getLoader("transition");
+            Parent root = loader.load();
+            TransitionScreenController controller = loader.getController();
+            controller.setGame(game);
+            controller.setStartTurnHandler(() -> {
+                try {
+                    FXMLLoader gameLoader = App.getLoader("game");
+                    Parent gameRoot = gameLoader.load();
+                    GameController gameCtrl = gameLoader.getController();
+                    gameCtrl.setGame(currentGame);
+                    App.setRootFromLoader(gameRoot);
+                } catch (IOException e) {
+                    showError("Gagal kembali ke game: " + e.getMessage());
+                }
+            });
+            App.setRootFromLoader(root);
+        } catch (IOException e) {
+            showError("Gagal membuka layar transisi: " + e.getMessage());
         }
     }
 
@@ -306,10 +368,21 @@ public class GameController implements Initializable {
         if (game == null) return;
         Player winner = game.checkVictory();
         if (winner != null) {
-            showInfo(winner.getName() + " MENANG!");
-            // TODO: Transition to GameResult
+            try {
+                FXMLLoader loader = App.getLoader("result");
+                Parent root = loader.load();
+                GameResultController controller = loader.getController();
+                controller.setGame(game);
+                App.setRootFromLoader(root);
+            } catch (IOException e) {
+                showError("Gagal membuka layar hasil: " + e.getMessage());
+            }
         } else {
-            showInfo("Belum ada pemain yang mencapai 10 Poin Prestasi.");
+            try {
+                openDialog("victory", victoryDialogOverlay);
+            } catch (IOException e) {
+                showError("Gagal membuka dialog kemenangan.");
+            }
         }
         refreshAllUI();
     }
@@ -635,11 +708,53 @@ public class GameController implements Initializable {
         try {
             game.activateRobber(target, null);
             currentMode = InteractionMode.NONE;
-            game.startTradeBuildTimer(this::updateTimer);
             refreshAllUI();
             updatePhaseUI();
+
+            List<Player> eligible = game.getRobber().getEligibleVictims(game.getActivePlayer(), game.getBoard());
+            eligible.remove(game.getActivePlayer());
+            if (!eligible.isEmpty()) {
+                openStealDialog(eligible);
+            } else {
+                game.startTradeBuildTimer(this::updateTimer);
+            }
         } catch (IllegalStateException | IllegalArgumentException e) {
             showError(e.getMessage());
+        }
+    }
+
+    private void openStealDialog(List<Player> eligibleVictims) {
+        if (stealDialogOverlay == null) return;
+        try {
+            stealDialogOverlay.getChildren().clear();
+            String path = "/fxml/steal.fxml";
+            URL fxmlLocation = getClass().getResource(path);
+            if (fxmlLocation == null) return;
+
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            Parent dialogUI = loader.load();
+
+            Object controller = loader.getController();
+            if (controller instanceof DialogController dc) {
+                dc.setCloseHandler(() -> {
+                    stealDialogOverlay.setVisible(false);
+                    if (mainGameRoot != null) mainGameRoot.setEffect(null);
+                    refreshAllUI();
+                });
+            }
+            if (controller instanceof GameAwareController ga) {
+                ga.setGame(game);
+            }
+            if (controller instanceof StealDialogController sdc) {
+                sdc.setEligibleVictims(eligibleVictims);
+            }
+
+            stealDialogOverlay.getChildren().add(dialogUI);
+            stealDialogOverlay.setVisible(true);
+            stealDialogOverlay.toFront();
+            if (mainGameRoot != null) mainGameRoot.setEffect(blurEffect);
+        } catch (IOException e) {
+            showError("Gagal membuka dialog steal.");
         }
     }
 
@@ -803,14 +918,9 @@ public class GameController implements Initializable {
                 refreshAllUI();
             });
         }
-<<<<<<< HEAD
         if (controller instanceof GameAwareController gameAware) {
             gameAware.setGame(game);
         }
-        if (controller instanceof StealDialogController stealDialogController) {
-            stealDialogController.setStealHandler(idx -> System.out.println("steal player " + idx));
-        }
-
         dialogOverlay.getChildren().add(dialogUI);
         dialogOverlay.setVisible(true);
         dialogOverlay.toFront();
@@ -846,6 +956,8 @@ public class GameController implements Initializable {
                 updateLogbook();
                 updateResourceCards();
                 if (result.isSeven()) {
+                    game.processDiscardPhase();
+                    refreshAllUI();
                     // Bot robber: choose first valid tile and first victim
                     HexTile target = null;
                     for (HexTile t : game.getBoard().getAllHexTiles()) {
@@ -916,6 +1028,14 @@ public class GameController implements Initializable {
 
     @FXML
     private void endGame() throws IOException {
-        App.setRoot("result");
+        if (game == null) {
+            App.setRoot("result");
+            return;
+        }
+        FXMLLoader loader = App.getLoader("result");
+        Parent root = loader.load();
+        GameResultController controller = loader.getController();
+        controller.setGame(game);
+        App.setRootFromLoader(root);
     }
 }

@@ -32,9 +32,9 @@
                                 <HBox alignment="CENTER_LEFT" spacing="4.0">
                                     <children>
                                         <Label style="-fx-text-fill: #990A14; -fx-font-size: 14px;" text="A 7 was rolled. You have" />
-                                        <Label style="-fx-text-fill: #990A14; -fx-font-weight: bold; -fx-font-size: 14px;" text="9" />
+                                        <Label fx:id="lblHandCount" style="-fx-text-fill: #990A14; -fx-font-weight: bold; -fx-font-size: 14px;" text="0" />
                                         <Label style="-fx-text-fill: #990A14; -fx-font-size: 14px;" text="cards. You must discard" />
-                                        <Label style="-fx-text-fill: #990A14; -fx-font-weight: bold; -fx-font-size: 14px;" text="4" />
+                                        <Label fx:id="lblMustDiscardCount" style="-fx-text-fill: #990A14; -fx-font-weight: bold; -fx-font-size: 14px;" text="0" />
                                         <Label style="-fx-text-fill: #990A14; -fx-font-size: 14px;" text="cards." />
                                     </children>
                                 </HBox>
@@ -78,12 +78,12 @@
                                 <Button fx:id="btnGiveWoodPlus" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="40.0" minWidth="40.0" prefHeight="40.0" prefWidth="40.0" styleClass="stepper-btn" text="+" />
                             </children>
                         </HBox>
-                        <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-wood">
-                            <children>
-                                <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
-                                <Label style="-fx-font-size: 13; -fx-font-weight: bold;" text="3" />
-                            </children>
-                        </HBox>
+                    <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-wood">
+                        <children>
+                            <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
+                            <Label fx:id="lblWoodOwned" style="-fx-font-size: 13; -fx-font-weight: bold;" text="0" />
+                        </children>
+                    </HBox>
                     </children>
                 </VBox>
 
@@ -117,7 +117,7 @@
                         <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-brick">
                             <children>
                                 <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
-                                <Label style="-fx-font-size: 13; -fx-font-weight: bold;" text="3" />
+                                <Label fx:id="lblBrickOwned" style="-fx-font-size: 13; -fx-font-weight: bold;" text="0" />
                             </children>
                         </HBox>
                     </children>
@@ -153,7 +153,7 @@
                         <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-wheat">
                             <children>
                                 <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
-                                <Label style="-fx-font-size: 13; -fx-font-weight: bold;" text="3" />
+                                <Label fx:id="lblWheatOwned" style="-fx-font-size: 13; -fx-font-weight: bold;" text="0" />
                             </children>
                         </HBox>
                     </children>
@@ -189,7 +189,7 @@
                         <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-ore">
                             <children>
                                 <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
-                                <Label style="-fx-font-size: 13; -fx-font-weight: bold;" text="3" />
+                                <Label fx:id="lblOreOwned" style="-fx-font-size: 13; -fx-font-weight: bold;" text="0" />
                             </children>
                         </HBox>
                     </children>
@@ -225,7 +225,7 @@
                         <HBox alignment="CENTER" maxHeight="20.0" prefHeight="100.0" prefWidth="200.0" styleClass="card-banana">
                             <children>
                                 <Label style="-fx-font-family: Marcellus; -fx-font-size: 12;" text="You have: " />
-                                <Label style="-fx-font-size: 13; -fx-font-weight: bold;" text="3" />
+                                <Label fx:id="lblBananaOwned" style="-fx-font-size: 13; -fx-font-weight: bold;" text="0" />
                             </children>
                         </HBox>
                     </children>
@@ -234,16 +234,16 @@
         </HBox>
       <HBox alignment="CENTER" maxWidth="-Infinity" prefHeight="73.0" prefWidth="200.0" styleClass="rounded-card-wood">
          <children>
-            <Label style="-fx-text-fill: #990A14; -fx-font-weight: bold;" text="0" />
+            <Label fx:id="lblSelectedCount" style="-fx-text-fill: #990A14; -fx-font-weight: bold;" text="0" />
             <Label text="/">
-               <HBox.margin>
-                  <Insets left="2.0" />
-               </HBox.margin>
+                <HBox.margin>
+                   <Insets left="2.0" />
+                </HBox.margin>
             </Label>
-            <Label style="-fx-font-weight: bold;" text="4">
-               <HBox.margin>
-                  <Insets left="2.0" />
-               </HBox.margin>
+            <Label fx:id="lblRequiredCount" style="-fx-font-weight: bold;" text="0">
+                <HBox.margin>
+                   <Insets left="2.0" />
+                </HBox.margin>
             </Label>
             <Label text="selected">
                <opaqueInsets>
@@ -257,7 +257,7 @@
       </HBox>
 
         <HBox alignment="BOTTOM_RIGHT" spacing="10">
-            <Button onAction="#closeDialog" styleClass="btn-submit" text="DISCARD" />
+            <Button onAction="#handleDiscard" styleClass="btn-submit" text="DISCARD" />
         </HBox>
 
     </VBox>

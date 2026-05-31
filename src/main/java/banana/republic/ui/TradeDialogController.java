@@ -149,7 +149,7 @@ public class TradeDialogController implements Initializable, DialogController, G
         // Validasi pemain punya resource
         for (Map.Entry<ResourceType, Integer> entry : give.entrySet()) {
             if (!active.hasResource(entry.getKey(), entry.getValue())) {
-                showError("Anda tidak punya cukup " + entry.getKey() + " untuk ditukar.");
+                showError("Anda tidak punya cukup " + entry.getKey().getDisplayName() + " untuk ditukar.");
                 return;
             }
         }

@@ -15,7 +15,7 @@
                <children>
                   <Label fx:id="messageLabel" alignment="TOP_CENTER" styleClass="main-text" text="Banana Republic" textAlignment="CENTER" />
                   <Button mnemonicParsing="false" onAction="#handleNewGame" styleClass="dark-button" text="New Game" />
-                  <Button mnemonicParsing="false" styleClass="dark-button" text="Load Game" />
+                   <Button mnemonicParsing="false" onAction="#handleLoadGame" styleClass="dark-button" text="Load Game" />
                   <Button mnemonicParsing="false" onAction="#handleExit" styleClass="dark-button" text="EXIT" />
                </children>
                <padding>

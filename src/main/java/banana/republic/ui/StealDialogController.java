@@ -1,14 +1,18 @@
 package banana.republic.ui;
 
+import banana.republic.core.Game;
+import banana.republic.player.Player;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
 import java.util.function.IntConsumer;
 
-public class StealDialogController implements DialogController{
+public class StealDialogController implements DialogController, GameAwareController {
 
     private Runnable closeHandler;
-    private IntConsumer stealHandler;
+    private Game game;
 
     @FXML
     private VBox player1;
@@ -19,30 +23,72 @@ public class StealDialogController implements DialogController{
     @FXML
     private VBox player4;
 
-    private int idxDipilih = 0;
-    private int idxPencuri = 1;
+    @FXML
+    private Label player1Name;
+    @FXML
+    private Label player2Name;
+    @FXML
+    private Label player3Name;
+    @FXML
+    private Label player4Name;
 
-    public void initialize(){
-        boolean isPencuriPlayer1 = (idxPencuri == 1);
-        boolean isPencuriPlayer2 = (idxPencuri == 2);
-        boolean isPencuriPlayer3 = (idxPencuri == 3);
-        boolean isPencuriPlayer4 = (idxPencuri == 4);
-        player1.setVisible(!isPencuriPlayer1);
-        player1.setManaged(!isPencuriPlayer1);
-        player2.setVisible(!isPencuriPlayer2);
-        player2.setManaged(!isPencuriPlayer2);
-        player3.setVisible(!isPencuriPlayer3);
-        player3.setManaged(!isPencuriPlayer3);
-        player4.setVisible(!isPencuriPlayer4);
-        player4.setManaged(!isPencuriPlayer4);
+    @FXML
+    private Label resCount1;
+    @FXML
+    private Label resCount2;
+    @FXML
+    private Label resCount3;
+    @FXML
+    private Label resCount4;
+
+    private List<Player> eligibleVictims;
+
+    private int selectedIndex = -1;
+
+    public void setEligibleVictims(List<Player> victims) {
+        this.eligibleVictims = victims;
+        populatePlayers();
     }
+
+    @Override
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
     @Override
     public void setCloseHandler(Runnable closeHandler) {
         this.closeHandler = closeHandler;
     }
 
-    public void setStealHandler(IntConsumer stealHandler) {
-        this.stealHandler = stealHandler;
+    private void populatePlayers() {
+        if (game == null) return;
+
+        VBox[] boxes = {player1, player2, player3, player4};
+        Label[] nameLabels = {player1Name, player2Name, player3Name, player4Name};
+        Label[] resLabels = {resCount1, resCount2, resCount3, resCount4};
+
+        for (VBox box : boxes) {
+            if (box != null) {
+                box.setVisible(false);
+                box.setManaged(false);
+            }
+        }
+
+        if (eligibleVictims == null) return;
+        for (int i = 0; i < eligibleVictims.size() && i < 4; i++) {
+            Player p = eligibleVictims.get(i);
+            boxes[i].setVisible(true);
+            boxes[i].setManaged(true);
+            boxes[i].setDisable(false);
+            if (nameLabels[i] != null) {
+                nameLabels[i].setText(p.getName());
+            }
+            if (resLabels[i] != null) {
+                resLabels[i].setText("Resources: " + p.getTotalResourceCount());
+            }
+        }
+
+        selectedIndex = -1;
     }
 
     @FXML
@@ -53,41 +99,46 @@ public class StealDialogController implements DialogController{
     }
 
     @FXML
-    private void selectPlayer1() {
-        pilihPlayer(player1, player2, player3, player4);
-        idxDipilih = 1;
-    }
+    private void selectPlayer1() { selectPlayer(0); }
     @FXML
-    private void selectPlayer2() {
-        pilihPlayer(player2, player1, player3, player4);
-        idxDipilih = 2;
-    }
+    private void selectPlayer2() { selectPlayer(1); }
     @FXML
-    private void selectPlayer3() {
-        pilihPlayer(player3, player1, player2, player4);
-        idxDipilih = 3;
-    }
+    private void selectPlayer3() { selectPlayer(2); }
+    @FXML
+    private void selectPlayer4() { selectPlayer(3); }
 
-    @FXML
-    private void selectPlayer4() {
-        pilihPlayer(player4, player1, player2, player3);
-        idxDipilih = 4;
+    private void selectPlayer(int idx) {
+        VBox[] boxes = {player1, player2, player3, player4};
+        for (VBox box : boxes) {
+            box.getStyleClass().remove("card-selected");
+        }
+        if (idx >= 0 && idx < boxes.length && boxes[idx] != null) {
+            boxes[idx].getStyleClass().add("card-selected");
+            selectedIndex = idx;
+        }
     }
 
     @FXML
     private void confirmSteal() {
-        if (stealHandler != null) {
-            stealHandler.accept(idxDipilih);
-        }
-        closeDialog();
-    }
+        if (game == null || selectedIndex < 0 || eligibleVictims == null) return;
+        if (selectedIndex >= eligibleVictims.size()) return;
 
-    private void pilihPlayer(VBox playerDipilih, VBox playerLain, VBox playerLain2, VBox playerLain3) {
-        playerLain.getStyleClass().remove("card-selected");
-        playerLain2.getStyleClass().remove("card-selected");
-        playerLain3.getStyleClass().remove("card-selected");
-        if (!playerDipilih.getStyleClass().contains("card-selected")) {
-            playerDipilih.getStyleClass().add("card-selected");
+        Player victim = eligibleVictims.get(selectedIndex);
+        Player thief = game.getActivePlayer();
+        if (victim.equals(thief)) return;
+
+        try {
+            if (victim.getTotalResourceCount() > 0) {
+                game.getRobber().stealRandomResource(thief, victim);
+                game.getGameLog().addEntry(
+                    banana.republic.core.LogEntry.EventType.STEAL,
+                    thief.getName(),
+                    thief.getName() + " mencuri resource dari " + victim.getName());
+            }
+        } catch (Exception e) {
+            // ignore
         }
+        game.startTradeBuildTimer(null);
+        closeDialog();
     }
 }

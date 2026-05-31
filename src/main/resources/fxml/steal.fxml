@@ -39,7 +39,7 @@
                            <Insets bottom="20.0" />
                         </VBox.margin></Label>
                             <Region prefHeight="10.0" />
-                            <Label styleClass="theft-resource-count" text="Resources: 7" />
+                            <Label fx:id="resCount1" styleClass="theft-resource-count" text="Resources: 0" />
                             <Label styleClass="theft-random-item" text="Random item" wrapText="true" />
                         </children>
                     </VBox>
@@ -57,7 +57,7 @@
                            <Insets bottom="20.0" />
                         </VBox.margin></Label>
                             <Region prefHeight="10.0" />
-                            <Label styleClass="theft-resource-count" text="Resources: 5" />
+                            <Label fx:id="resCount2" styleClass="theft-resource-count" text="Resources: 0" />
                             <Label styleClass="theft-random-item" text="Random item" wrapText="true" />
                         </children>
                     </VBox>
@@ -75,7 +75,7 @@
                            <Insets bottom="20.0" />
                         </VBox.margin></Label>
                             <Region prefHeight="10.0" />
-                            <Label styleClass="theft-resource-count" text="Resources: 4" />
+                            <Label fx:id="resCount3" styleClass="theft-resource-count" text="Resources: 0" />
                             <Label styleClass="theft-random-item" text="Random item" wrapText="true" />
                         </children>
                     </VBox>
@@ -93,8 +93,8 @@
                         </VBox.margin>
                      </Label>
                      <Region prefHeight="10.0" />
-                     <Label styleClass="theft-resource-count" text="Resources: 4" />
-                     <Label styleClass="theft-random-item" text="Random item" wrapText="true" />
+                      <Label fx:id="resCount4" styleClass="theft-resource-count" text="Resources: 0" />
+                      <Label styleClass="theft-random-item" text="Random item" wrapText="true" />
                   </children>
                </VBox>
                 </children>

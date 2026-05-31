@@ -30,7 +30,7 @@
 
             <HBox alignment="CENTER" spacing="4.0">
                 <Label styleClass="turn-subheading" text="Waiting for" />
-                <Label styleClass="turn-subheading-bold" text="Player2..." />
+                <Label fx:id="turnHeadingLabel" styleClass="turn-subheading-bold" text="Player2..." />
             </HBox>
         </VBox>
 
