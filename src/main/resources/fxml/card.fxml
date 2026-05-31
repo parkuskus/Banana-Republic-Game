@@ -125,7 +125,7 @@
 
         <HBox alignment="BOTTOM_RIGHT" spacing="20" style="-fx-padding: 20 0 0 0;">
             <Button onAction="#closeDialog" styleClass="btn-text-only" text="TUTUP" />
-            <Button onAction="#closeDialog" styleClass="btn-play-card" text="▶ MAINKAN KARTU TERPILIH" />
+            <Button onAction="#playSelectedCard" styleClass="btn-play-card" text="▶ MAINKAN KARTU TERPILIH" />
         </HBox>
 
     </VBox>

@@ -11,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -175,11 +176,21 @@ public class LobbyController {
 
     @FXML
     private void startGame() throws IOException {
-        // Create default players for now (3 human players)
+        int playerCount = Integer.parseInt(numPlayersBox.getValue().split(" ")[0]);
+        HBox[] playerBoxes = {player1Box, player2Box, player3Box, player4Box};
+
         List<Player> players = new ArrayList<>();
-        players.add(new HumanPlayer("Player1", PlayerColor.RED));
-        players.add(new HumanPlayer("Player2", PlayerColor.BLUE));
-        players.add(new HumanPlayer("Player3", PlayerColor.ORANGE));
+        for (int i = 0; i < playerCount; i++) {
+            String name = getPlayerNameFromBox(playerBoxes[i]);
+            if (name == null || name.isBlank()) {
+                name = "Player " + (i + 1);
+            }
+            PlayerColor color = paintToPlayerColor(selectedColors[i]);
+            if (color == null) {
+                color = PlayerColor.values()[i % PlayerColor.values().length];
+            }
+            players.add(new HumanPlayer(name, color));
+        }
 
         Game game = new Game(players, null);
 
@@ -188,6 +199,33 @@ public class LobbyController {
         GameController controller = loader.getController();
         controller.initialize(game);
         App.setRootFromLoader(root);
+    }
+
+    private String getPlayerNameFromBox(HBox box) {
+        if (box == null) return null;
+        for (Node child : box.getChildren()) {
+            if (child instanceof TextField tf) {
+                return tf.getText();
+            }
+        }
+        return null;
+    }
+
+    private PlayerColor paintToPlayerColor(Paint paint) {
+        if (paint instanceof Color c) {
+            String hex = String.format("#%02x%02x%02x",
+                (int) (c.getRed() * 255),
+                (int) (c.getGreen() * 255),
+                (int) (c.getBlue() * 255));
+            return switch (hex.toLowerCase()) {
+                case "#c21a09" -> PlayerColor.RED;
+                case "#305cde" -> PlayerColor.BLUE;
+                case "#4fc978" -> PlayerColor.WHITE;
+                case "#ff7f00" -> PlayerColor.ORANGE;
+                default -> null;
+            };
+        }
+        return null;
     }
 
     @FXML

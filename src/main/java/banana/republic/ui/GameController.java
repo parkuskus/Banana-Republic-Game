@@ -93,6 +93,9 @@ public class GameController implements Initializable {
     private GaussianBlur blurEffect = new GaussianBlur(10);
     private Image gambarAnchorGlobal = null;
 
+    // Board visual → model mapping
+    private final java.util.Map<StackPane, HexTile> visualToModelTile = new java.util.HashMap<>();
+
     // Build / interaction modes
     private enum InteractionMode {
         NONE, SETTLEMENT, ROAD, CITY, ROBBER
@@ -145,6 +148,9 @@ public class GameController implements Initializable {
             pasangAnchorSudut(harborLV2, 4, 5, "3:1");
             pasangAnchorSudut(harborLV1, 5, 0, "2:1 Wood");
         }
+
+        // Pasang event klik ke semua tile di board (dinamis)
+        setupAllTileClickHandlers();
     }
 
     /**
@@ -154,6 +160,7 @@ public class GameController implements Initializable {
         this.game = game;
         if (game == null) return;
 
+        buildVisualToModelMapping();
         game.startSetupPhase();
         refreshAllUI();
         updatePhaseUI();
@@ -198,8 +205,40 @@ public class GameController implements Initializable {
 
     @FXML
     private void onSetDice() {
-        // Placeholder for dice setting (debug/manual dice) if needed in future
-        showInfo("Set dice belum diimplementasikan.");
+        if (game == null) return;
+        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("1,1");
+        dialog.setTitle("Set Dice Manual");
+        dialog.setHeaderText("Masukkan nilai dadu (1-6)");
+        dialog.setContentText("Format: die1,die2 (contoh: 3,4)");
+
+        dialog.showAndWait().ifPresent(input -> {
+            try {
+                String[] parts = input.split(",");
+                int d1 = Integer.parseInt(parts[0].trim());
+                int d2 = Integer.parseInt(parts[1].trim());
+                if (d1 < 1 || d1 > 6 || d2 < 1 || d2 > 6) {
+                    showError("Nilai dadu harus antara 1 dan 6.");
+                    return;
+                }
+                game.getDice().setManualMode(true);
+                game.getDice().setManualValues(d1, d2);
+                DiceResult result = game.rollDice();
+                game.getDice().setManualMode(false); // reset setelah roll
+                showDiceResult(result);
+                updateLogbook();
+                updateResourceCards();
+
+                if (result.isSeven()) {
+                    currentMode = InteractionMode.ROBBER;
+                    showInfo("Dadu 7! Nimon Ungu aktif. Pilih petak untuk memindahkan Nimon Ungu.");
+                } else {
+                    game.startTradeBuildTimer(this::updateTimer);
+                }
+                updatePhaseUI();
+            } catch (Exception e) {
+                showError("Format tidak valid. Gunakan: die1,die2 (contoh: 3,4)");
+            }
+        });
     }
 
     @FXML
@@ -490,18 +529,104 @@ public class GameController implements Initializable {
         });
     }
 
+    private void setupAllTileClickHandlers() {
+        if (hexdesert == null) return;
+        javafx.scene.Group parentMap = (javafx.scene.Group) hexdesert.getParent();
+        if (parentMap == null) return;
+
+        for (javafx.scene.Node node : parentMap.getChildren()) {
+            if (node instanceof StackPane sp) {
+                String style = sp.getStyleClass().stream()
+                    .filter(s -> s.startsWith("hex-tile-"))
+                    .findFirst().orElse("");
+                if (!style.isEmpty() && sp != hexdesert) {
+                    pasangEventKlik(sp);
+                }
+            }
+        }
+    }
+
+    /**
+     * Build visual→model mapping saat game sudah di-set.
+     * Harus dipanggil setelah board tersedia.
+     */
+    private void buildVisualToModelMapping() {
+        if (game == null || hexdesert == null) return;
+        visualToModelTile.clear();
+        javafx.scene.Group parentMap = (javafx.scene.Group) hexdesert.getParent();
+        if (parentMap == null) return;
+
+        Board board = game.getBoard();
+        for (javafx.scene.Node node : parentMap.getChildren()) {
+            if (!(node instanceof StackPane sp)) continue;
+            String style = sp.getStyleClass().stream()
+                .filter(s -> s.startsWith("hex-tile-"))
+                .findFirst().orElse("");
+            if (style.isEmpty()) continue;
+
+            // Parse terrain dari styleClass
+            banana.republic.board.TerrainType terrain = parseTerrainFromStyle(style);
+            // Parse token number dari Label child
+            int tokenValue = parseTokenFromVisual(sp);
+
+            HexTile matched = findMatchingTile(board, terrain, tokenValue);
+            if (matched != null) {
+                visualToModelTile.put(sp, matched);
+            }
+        }
+    }
+
+    private banana.republic.board.TerrainType parseTerrainFromStyle(String style) {
+        return switch (style) {
+            case "hex-tile-desert" -> banana.republic.board.TerrainType.DESERT;
+            case "hex-tile-wood" -> banana.republic.board.TerrainType.FOREST;
+            case "hex-tile-brick" -> banana.republic.board.TerrainType.HILL;
+            case "hex-tile-wheat" -> banana.republic.board.TerrainType.FIELD;
+            case "hex-tile-ore" -> banana.republic.board.TerrainType.MOUNTAIN;
+            case "hex-tile-banana" -> banana.republic.board.TerrainType.BANANA_PLANTATION;
+            default -> null;
+        };
+    }
+
+    private int parseTokenFromVisual(StackPane sp) {
+        for (javafx.scene.Node child : sp.getChildren()) {
+            if (child instanceof Label lbl) {
+                try {
+                    return Integer.parseInt(lbl.getText().trim());
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+        }
+        return -1; // Desert atau tidak ada token
+    }
+
+    private HexTile findMatchingTile(Board board, banana.republic.board.TerrainType terrain, int tokenValue) {
+        if (terrain == null) return null;
+        for (HexTile tile : board.getAllHexTiles()) {
+            if (tile.getTerrainType() != terrain) continue;
+            if (terrain == banana.republic.board.TerrainType.DESERT) {
+                return tile;
+            }
+            if (tile.getNumberToken() != null && tile.getNumberToken().getValue() == tokenValue) {
+                return tile;
+            }
+        }
+        return null;
+    }
+
     private void handleRobberClick(StackPane hexTile) {
         if (game == null) return;
-        // Map visual hexTile to model HexTile via position or ID
-        // Since FXML hardcodes layout, we can try to find by matching coordinates roughly
-        // For now, a simplified approach: the desert tile is known.
-        HexTile target = findHexTileByVisual(hexTile);
+        HexTile target = visualToModelTile.get(hexTile);
+        if (target == null) {
+            target = findHexTileByVisualFallback(hexTile);
+        }
         if (target == null) {
             showError("Tidak dapat menemukan petak.");
             return;
         }
         try {
-            game.activateRobber(target, null); // victim selection can be added later
+            game.activateRobber(target, null);
             currentMode = InteractionMode.NONE;
             game.startTradeBuildTimer(this::updateTimer);
             refreshAllUI();
@@ -511,18 +636,16 @@ public class GameController implements Initializable {
         }
     }
 
-    private HexTile findHexTileByVisual(StackPane visual) {
+    private HexTile findHexTileByVisualFallback(StackPane visual) {
         if (game == null) return null;
         Board board = game.getBoard();
-        // Simple heuristic: if it's hexdesert, find desert tile
         if (visual == hexdesert) {
             for (HexTile t : board.getAllHexTiles()) {
-                if (t.getTerrainType().name().equalsIgnoreCase("DESERT")) {
+                if (t.getTerrainType() == banana.republic.board.TerrainType.DESERT) {
                     return t;
                 }
             }
         }
-        // Fallback: return first tile (not ideal, but stub)
         return board.getAllHexTiles().isEmpty() ? null : board.getAllHexTiles().get(0);
     }
 
@@ -670,7 +793,11 @@ public class GameController implements Initializable {
                 if (mainGameRoot != null) {
                     mainGameRoot.setEffect(null);
                 }
+                refreshAllUI();
             });
+        }
+        if (controller instanceof GameAwareController gameAware) {
+            gameAware.setGame(game);
         }
 
         dialogOverlay.getChildren().add(dialogUI);

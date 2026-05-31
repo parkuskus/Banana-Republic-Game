@@ -371,7 +371,7 @@
 
         <HBox alignment="BOTTOM_RIGHT" spacing="10">
             <Button onAction="#closeDialog" styleClass="btn-cancel" text="CANCEL" />
-            <Button onAction="#closeDialog" styleClass="btn-submit" text="SUBMIT OFFER" />
+            <Button onAction="#executeTrade" styleClass="btn-submit" text="SUBMIT OFFER" />
         </HBox>
 
     </VBox>
