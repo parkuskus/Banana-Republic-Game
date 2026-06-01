@@ -13,49 +13,58 @@ import banana.republic.player.Player;
 import banana.republic.player.SpecialCardType;
 
 /**
- * Longest Road special card (Jalan Terpanjang).
- * Jumlah: 1 kartu
- * Bonus: 2 Poin Prestasi
+ * Kartu Jalan Terpanjang (Longest Road Card).
  *
- * Syarat: Pemain harus memiliki jalan Pipa berurutan minimal 5 ruas tanpa percabangan.
+ * <p>Bonus: +2 Poin Prestasi.
  *
- * Aturan Seri:
- * - Seri Perebutan: Holder lama tetap memegang kartu sampai ada yang melampaui
- * - Seri Terputus: Jika jalan terputus dan ada seri, kartu disisihkan (holder = null)
+ * <p>Syarat: Pemain harus memiliki jalan Pipa berurutan minimal 5 ruas
+ * tanpa percabangan.
+ *
+ * <p>Aturan seri:
+ * <ul>
+ *   <li>Seri perebutan: Holder lama tetap memegang sampai ada yang melampaui</li>
+ *   <li>Seri terputus: Jika jalan terputus dan ada seri, kartu disisihkan</li>
+ * </ul>
  */
 public class LongestRoadCard extends SpecialCard {
     private static final int MINIMUM_LENGTH = 5;
     private int currentQualifyingLength;
 
     /**
-     * Constructor untuk Longest Road Card.
+     * Constructor default.
      */
     public LongestRoadCard() {
         super();
         this.currentQualifyingLength = 0;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SpecialCardType getCardType() {
         return SpecialCardType.LONGEST_ROAD;
     }
 
     /**
-     * Evaluasi dan tentukan siapa yang berhak memegang kartu ini.
-     * Harus dipanggil setiap kali ada pemain yang build road atau ketika jalan diputus.
+     * Mengevaluasi dan menentukan siapa yang berhak memegang kartu ini.
+     *
+     * <p>Harus dipanggil setiap kali ada pemain yang build road atau
+     * ketika jalan diputus.
+     *
+     * @param players daftar pemain
+     * @param board   papan permainan
      */
     public void evaluate(List<Player> players, Board board) {
         assert players != null : "Players list tidak boleh null";
         assert board != null : "Board tidak boleh null";
 
-        // Calculate longest road untuk setiap pemain
         Map<Player, Integer> roadLengths = new HashMap<>();
         for (Player player : players) {
             int length = calculateRoadLength(player, board);
             roadLengths.put(player, length);
         }
 
-        // Cari pemain(s) dengan road terpanjang yang >= MINIMUM_LENGTH
         int maxLength = 0;
         List<Player> qualifyingPlayers = new ArrayList<>();
 
@@ -72,7 +81,6 @@ public class LongestRoadCard extends SpecialCard {
             }
         }
 
-        // Tentukan hasil: transfer kartu, revoke, atau handle tie.
         if (qualifyingPlayers.isEmpty()) {
             this.revoke();
             this.currentQualifyingLength = 0;
@@ -91,34 +99,35 @@ public class LongestRoadCard extends SpecialCard {
         if (holder != null && qualifyingPlayers.contains(holder)) {
             Integer holderLength = roadLengths.get(holder);
             if (holderLength != null && holderLength == currentQualifyingLength && holderLength >= MINIMUM_LENGTH) {
-                // Tie karena perebutan: holder masih berada di posisi yang sama.
                 this.active = true;
                 this.currentQualifyingLength = holderLength;
                 return;
             }
         }
 
-        // Tie karena jaringan holder berubah/terputus: kartu disisihkan.
         this.revoke();
         this.currentQualifyingLength = 0;
     }
 
     /**
-     * Hitung panjang jalan terpanjang untuk pemain tertentu menggunakan DFS.
-     * Jangan hitung percabangan—hanya longest linear path.
+     * Menghitung panjang jalan terpanjang pemain menggunakan DFS.
+     *
+     * <p>Tidak menghitung percabangan — hanya longest linear path.
+     *
+     * @param player pemain yang dihitung
+     * @param board  papan permainan
+     * @return panjang jalan terpanjang dalam ruas pipa
      */
     public int calculateRoadLength(Player player, Board board) {
         assert player != null : "Player tidak boleh null";
         assert board != null : "Board tidak boleh null";
 
-        // Get semua paths dari pemain
         List<Path> playerPaths = board.getConnectedRoads(player);
 
         if (playerPaths.isEmpty()) {
             return 0;
         }
 
-        // Cari longest path dengan DFS dari setiap path sebagai starting point
         int maxLength = 0;
         for (Path startPath : playerPaths) {
             Set<Path> visited = new HashSet<>();
@@ -130,24 +139,25 @@ public class LongestRoadCard extends SpecialCard {
     }
 
     /**
-     * DFS helper untuk menemukan longest path dari current path.
-     * visited set untuk avoid cycles.
+     * Helper DFS untuk menemukan longest path dari {@code currentPath}.
+     *
+     * @param currentPath path saat ini
+     * @param visited     set path yang sudah dikunjungi
+     * @param player      pemain yang dicari jalannya
+     * @param board       papan permainan
+     * @return panjang path dari titik ini
      */
     private int findLongestPath(Path currentPath, Set<Path> visited, Player player, Board board) {
         visited.add(currentPath);
 
-        // Get endpoints (intersection) dari path
         var endpoints = board.getAdjacentIntersections(currentPath);
 
         int maxExtension = 0;
 
-        // Dari setiap endpoint, cari paths lain yang terhubung dan belum visited
         for (var endpoint : endpoints) {
-            // Get semua paths di intersection tersebut
             var connectedPaths = board.getAdjacentPaths(endpoint);
 
             for (Path connected : connectedPaths) {
-                // Cek apakah path sudah visited dan apakah owned oleh player
                 if (!visited.contains(connected) && connected.hasRoad() && player.equals(connected.getOwner())) {
                     int extension = findLongestPath(connected, visited, player, board);
                     maxExtension = Math.max(maxExtension, extension);
@@ -155,13 +165,16 @@ public class LongestRoadCard extends SpecialCard {
             }
         }
 
-        visited.remove(currentPath); // Backtrack untuk explore paths lain
+        visited.remove(currentPath);
 
-        return 1 + maxExtension; // 1 untuk current path + max extension
+        return 1 + maxExtension;
     }
 
     /**
-     * Handle kondisi seri (untuk future use jika perlu explicit handling).
+     * Menangani kondisi seri secara eksplisit.
+     *
+     * @param tied daftar pemain yang seri; {@code null} atau kosong
+     *             menyebabkan kartu dicabut
      */
     public void handleTie(List<Player> tied) {
         if (tied == null || tied.isEmpty()) {
