@@ -1,0 +1,37 @@
+@startuml Strategy-Pattern
+skinparam classAttributeIconSize 0
+
+title Strategy Pattern (Bot Player Strategy)
+
+interface PlayerStrategy {
+    +takeTurn(state)
+    +chooseRobberTarget(state, candidates)
+    +chooseRobberPlacement(state)
+}
+
+class BotPlayer {
+    -strategy : PlayerStrategy
+    +executeTurn(state)
+    +getStrategy()
+    +setStrategy(strategy)
+}
+
+interface GameState
+class Action
+class Player
+class HexTile
+
+BotPlayer --> PlayerStrategy : delegates to
+BotPlayer ..> GameState : uses
+PlayerStrategy ..> GameState : receives
+PlayerStrategy ..> Player
+PlayerStrategy ..> HexTile
+PlayerStrategy ..> Action
+
+note right of PlayerStrategy
+Strategy Pattern:
+algoritma pengambilan keputusan bot
+dapat diganti tanpa mengubah BotPlayer.
+end note
+
+@enduml
