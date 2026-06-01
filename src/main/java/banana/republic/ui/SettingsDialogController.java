@@ -14,8 +14,13 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class SettingsDialogController implements DialogController, GameAwareController {
+
+    private static final DateTimeFormatter SAVE_FILE_FORMAT =
+        DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     private Runnable closeHandler;
     private Game game;
@@ -39,7 +44,7 @@ public class SettingsDialogController implements DialogController, GameAwareCont
     }
 
     @FXML
-    private void handleSaveState() {
+    private void handleSaveState(MouseEvent event) {
         if (game == null) {
             showError("Game tidak tersedia untuk disimpan.");
             return;
@@ -49,7 +54,23 @@ public class SettingsDialogController implements DialogController, GameAwareCont
         fileChooser.getExtensionFilters().add(
             new FileChooser.ExtensionFilter("JSON files (*.json)", "*.json")
         );
-        File file = fileChooser.showSaveDialog(null);
+        fileChooser.setInitialFileName("banana-republic-" +
+            SAVE_FILE_FORMAT.format(LocalDateTime.now()) + ".json");
+
+        File savesDir = new File("saves");
+        if (!savesDir.exists()) {
+            savesDir.mkdirs();
+        }
+        if (savesDir.isDirectory()) {
+            fileChooser.setInitialDirectory(savesDir);
+        }
+
+        Window owner = null;
+        if (event != null && event.getSource() instanceof Node node && node.getScene() != null) {
+            owner = node.getScene().getWindow();
+        }
+
+        File file = fileChooser.showSaveDialog(owner);
         if (file != null) {
             try {
                 String path = file.getAbsolutePath();

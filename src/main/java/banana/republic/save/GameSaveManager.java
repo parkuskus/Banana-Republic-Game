@@ -89,7 +89,10 @@ public class GameSaveManager {
 
         java.nio.file.Path targetPath = resolveSavePath(filePath, data.timestamp);
         try {
-            Files.createDirectories(targetPath.getParent());
+            java.nio.file.Path parent = targetPath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             try (Writer writer = Files.newBufferedWriter(targetPath)) {
                 gson.toJson(data, writer);
             }

@@ -77,7 +77,9 @@ public class GameController implements Initializable {
     @FXML private Label currentPlayerLabel;
 
     @FXML private VBox logbookContainer;
-    @FXML private Label logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7;
+    @FXML private Label logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7, logEntry8;
+    @FXML private Label logEntry9, logEntry10, logEntry11, logEntry12, logEntry13, logEntry14, logEntry15, logEntry16;
+    @FXML private Label buildCostLeftLabel, buildCostRightLabel;
 
     @FXML private Button btnRollDice, btnSetDice, btnBuild, btnTrade, btnBuyCard, btnCard, btnDeclareVictory, btnSettings, btnEndTurn;
     @FXML private Button btnSteal, btnDiscard, btnEndGame;
@@ -141,7 +143,10 @@ public class GameController implements Initializable {
             System.out.println("Gagal memuat gambar jangkar: " + e.getMessage());
         }
 
-        logLabels = Arrays.asList(logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7);
+        logLabels = Arrays.asList(
+                logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7, logEntry8,
+                logEntry9, logEntry10, logEntry11, logEntry12, logEntry13, logEntry14, logEntry15, logEntry16
+        );
         playerPanels = Arrays.asList(playerPanel1, playerPanel2, playerPanel3, playerPanel4);
 
         if (hexdesert != null) {
@@ -1148,6 +1153,7 @@ public class GameController implements Initializable {
         updateResourceCards();
         updateLogbook();
         updateCurrentPlayer();
+        updateBuildCostLabel();
         updateTimer(game.getTurnManager().getRemainingTimerSeconds());
         renderExistingBuildings();
     }
@@ -1268,6 +1274,65 @@ public class GameController implements Initializable {
                 logLabels.get(i).setText("");
             }
         }
+    }
+
+    private void updateBuildCostLabel() {
+        if (buildCostLeftLabel == null || buildCostRightLabel == null) return;
+        if (game == null || game.getActivePlayer() == null) {
+            buildCostLeftLabel.setText("Tidak ada game aktif.");
+            buildCostRightLabel.setText("");
+            return;
+        }
+
+        Player active = game.getActivePlayer();
+        buildCostLeftLabel.setText(
+                costLine("Pos Pantau", active, Map.of(
+                        ResourceType.WOOD, 1,
+                        ResourceType.BRICK, 1,
+                        ResourceType.WHEAT, 1,
+                        ResourceType.BANANA, 1
+                )) + "\n" +
+                costLine("Pipa", active, Map.of(
+                        ResourceType.WOOD, 1,
+                        ResourceType.BRICK, 1
+                ))
+        );
+        buildCostRightLabel.setText(
+                costLine("Laboratorium", active, Map.of(
+                        ResourceType.WHEAT, 2,
+                        ResourceType.ORE, 3
+                )) + "\n" +
+                costLine("Kartu Temuan", active, Map.of(
+                        ResourceType.ORE, 1,
+                        ResourceType.WHEAT, 1,
+                        ResourceType.BANANA, 1
+                ))
+        );
+    }
+
+    private String costLine(String label, Player player, Map<ResourceType, Integer> cost) {
+        return label + ": " + formatResourceCost(cost) + " (" + (canPay(player, cost) ? "Bisa" : "Kurang") + ")";
+    }
+
+    private String formatResourceCost(Map<ResourceType, Integer> cost) {
+        List<String> parts = new ArrayList<>();
+        for (ResourceType type : ResourceType.values()) {
+            int amount = cost.getOrDefault(type, 0);
+            if (amount > 0) {
+                parts.add(amount + " " + type.getDisplayName());
+            }
+        }
+        return String.join(", ", parts);
+    }
+
+    private boolean canPay(Player player, Map<ResourceType, Integer> cost) {
+        if (player == null) return false;
+        for (Map.Entry<ResourceType, Integer> entry : cost.entrySet()) {
+            if (!player.hasResource(entry.getKey(), entry.getValue())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void updateTimer(int remainingSeconds) {
