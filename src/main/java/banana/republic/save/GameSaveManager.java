@@ -32,6 +32,7 @@ import banana.republic.player.SpecialCardType;
 import banana.republic.resource.Bank;
 import banana.republic.resource.BankImpl;
 import banana.republic.resource.ResourceType;
+import banana.republic.plugin.PluginLoader;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -252,31 +253,36 @@ public class GameSaveManager {
             throw new IllegalStateException(
                 ctx + " is null \u2014 remove the entry or provide a valid card object");
         }
-        if (card.cardType == null || card.cardType.isBlank()) {
-            throw new IllegalStateException(ctx + " is missing 'card_type'");
-        }
-        CardType type;
-        try {
-            type = CardType.valueOf(card.cardType);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalStateException(
-                ctx + " has unknown 'card_type' '" + card.cardType
-                + "'. Valid values: " + validNames(CardType.values()), e);
-        }
-        if (card.monopolyTarget != null && !card.monopolyTarget.isBlank()) {
-            if (type != CardType.MONOPOLY) {
-                throw new IllegalStateException(
-                    ctx + " has 'monopoly_target' set but card type is '" + card.cardType
-                    + "' \u2014 'monopoly_target' is only valid for MONOPOLY cards");
+        // Plugin cards store pluginClassName instead of cardType — both branches are valid
+        boolean isPlugin = card.pluginClassName != null && !card.pluginClassName.isBlank();
+        if (!isPlugin) {
+            if (card.cardType == null || card.cardType.isBlank()) {
+                throw new IllegalStateException(ctx + " is missing 'card_type'");
             }
+            CardType type;
             try {
-                ResourceType.valueOf(card.monopolyTarget);
+                type = CardType.valueOf(card.cardType);
             } catch (IllegalArgumentException e) {
                 throw new IllegalStateException(
-                    ctx + " has unknown 'monopoly_target' '" + card.monopolyTarget
-                    + "'. Valid values: " + validNames(ResourceType.values()), e);
+                    ctx + " has unknown 'card_type' '" + card.cardType
+                    + "'. Valid values: " + validNames(CardType.values()), e);
+            }
+            if (card.monopolyTarget != null && !card.monopolyTarget.isBlank()) {
+                if (type != CardType.MONOPOLY) {
+                    throw new IllegalStateException(
+                        ctx + " has 'monopoly_target' set but card type is '" + card.cardType
+                        + "' \u2014 'monopoly_target' is only valid for MONOPOLY cards");
+                }
+                try {
+                    ResourceType.valueOf(card.monopolyTarget);
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalStateException(
+                        ctx + " has unknown 'monopoly_target' '" + card.monopolyTarget
+                        + "'. Valid values: " + validNames(ResourceType.values()), e);
+                }
             }
         }
+        // Plugin card: pluginClassName present → no further structural validation needed
     }
 
     private static void validateRootFields(GameSaveData data) {
@@ -632,6 +638,17 @@ public class GameSaveManager {
         data.deck = buildDeckSaveData(game.getCardDeck());
         data.lastDice = buildDiceSaveData(game.getLastDiceResult());
 
+        // Collect FQCNs of all active plugin cards (deck + all player hands)
+        List<String> pluginClassNames = new ArrayList<>();
+        collectPluginClassNames(game.getCardDeck().getDrawPile(), pluginClassNames);
+        collectPluginClassNames(game.getCardDeck().getDiscardPile(), pluginClassNames);
+        for (banana.republic.player.Player p : game.getPlayers()) {
+            collectPluginClassNames(p.getHandCards(), pluginClassNames);
+        }
+        if (!pluginClassNames.isEmpty()) {
+            data.loadedPlugins = pluginClassNames;
+        }
+
         return data;
     }
 
@@ -734,8 +751,7 @@ public class GameSaveManager {
 
             data.handCards = new ArrayList<>();
             for (ExperimentCard card : player.getHandCards()) {
-                if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
-                data.handCards.add(toCardSaveData(card));
+                data.handCards.add(toCardSaveData(card));  // plugin cards stored via pluginClassName
             }
 
             result.add(data);
@@ -749,12 +765,10 @@ public class GameSaveManager {
         data.discardPile = new ArrayList<>();
 
         for (ExperimentCard card : deck.getDrawPile()) {
-            if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
-            data.drawPile.add(toCardSaveData(card));
+            data.drawPile.add(toCardSaveData(card));  // plugin cards stored via pluginClassName
         }
         for (ExperimentCard card : deck.getDiscardPile()) {
-            if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
-            data.discardPile.add(toCardSaveData(card));
+            data.discardPile.add(toCardSaveData(card));  // plugin cards stored via pluginClassName
         }
         return data;
     }
@@ -771,6 +785,14 @@ public class GameSaveManager {
 
     private static CardSaveData toCardSaveData(ExperimentCard card) {
         CardSaveData data = new CardSaveData();
+
+        // Plugin card — store FQCN; cardType not applicable
+        if (card.isPluginCard()) {
+            data.pluginClassName = card.getClass().getName();
+            return data;
+        }
+
+        // Built-in card
         data.cardType = card.getCardType().name();
 
         if (card instanceof DevelopmentCard dev) {
@@ -962,13 +984,14 @@ public class GameSaveManager {
         if (deckData.drawPile != null) {
             for (int i = deckData.drawPile.size() - 1; i >= 0; i--) {
                 ExperimentCard card = toCardFromSaveData(deckData.drawPile.get(i));
-                deck.addCard(card);
+                if (card != null) deck.addCard(card); // null = plugin card unavailable, skip
             }
         }
 
         if (deckData.discardPile != null) {
             for (CardSaveData cardData : deckData.discardPile) {
-                deck.addToDiscardPile(toCardFromSaveData(cardData));
+                ExperimentCard card = toCardFromSaveData(cardData);
+                if (card != null) deck.addToDiscardPile(card);
             }
         }
 
@@ -1006,7 +1029,8 @@ public class GameSaveManager {
 
             if (data.handCards != null) {
                 for (CardSaveData cardData : data.handCards) {
-                    player.addCard(toCardFromSaveData(cardData));
+                    ExperimentCard card = toCardFromSaveData(cardData);
+                    if (card != null) player.addCard(card); // null = plugin class unavailable
                 }
             }
         }
@@ -1069,18 +1093,46 @@ public class GameSaveManager {
     }
 
     private static ExperimentCard toCardFromSaveData(CardSaveData data) {
-        if (data == null || data.cardType == null) {
+        if (data == null) {
+            return new VictoryPointCard();
+        }
+
+        // ---- Plugin card reconstruction ----
+        if (data.pluginClassName != null && !data.pluginClassName.isBlank()) {
+            Class<?> clazz = PluginLoader.findPluginClass(data.pluginClassName);
+            if (clazz != null) {
+                try {
+                    Object instance = clazz.getDeclaredConstructor().newInstance();
+                    if (instance instanceof ExperimentCard card) {
+                        return card;
+                    }
+                } catch (Exception e) {
+                    System.err.println("[WARN] GameSaveManager: gagal merekonstruksi plugin card '"
+                        + data.pluginClassName + "': " + e.getMessage()
+                        + " — kartu ini akan dilewati.");
+                }
+            } else {
+                System.err.println("[WARN] GameSaveManager: class plugin '" + data.pluginClassName
+                    + "' tidak ditemukan di classloader manapun. "
+                    + "Silakan load plugin JAR yang bersesuaian sebelum memuat save ini.");
+            }
+            // Graceful degradation: kartu plugin tidak tersedia → skip (return null)
+            return null;
+        }
+
+        // ---- Built-in card reconstruction ----
+        if (data.cardType == null) {
             return new VictoryPointCard();
         }
 
         CardType type = CardType.valueOf(data.cardType);
         ExperimentCard card;
         switch (type) {
-            case KNIGHT -> card = new KnightCard();
+            case KNIGHT        -> card = new KnightCard();
             case ROAD_BUILDING -> card = new RoadBuildingCard();
-            case MONOPOLY -> card = new MonopolyCard();
+            case MONOPOLY      -> card = new MonopolyCard();
             case VICTORY_POINT -> card = new VictoryPointCard();
-            default -> card = new VictoryPointCard();
+            default            -> card = new VictoryPointCard();
         }
 
         if (card instanceof DevelopmentCard dev) {
@@ -1099,6 +1151,22 @@ public class GameSaveManager {
         }
 
         return card;
+    }
+
+    /**
+     * Mengumpulkan FQCN dari semua kartu plugin dalam list ke dalam result.
+     * Duplikat diperbolehkan untuk menunjukkan berapa banyak instance aktif.
+     */
+    private static void collectPluginClassNames(List<ExperimentCard> cards,
+                                                List<String> result) {
+        for (ExperimentCard card : cards) {
+            if (card != null && card.isPluginCard()) {
+                String fqcn = card.getClass().getName();
+                if (!result.contains(fqcn)) {
+                    result.add(fqcn);
+                }
+            }
+        }
     }
 
     private static Map<Player, Integer> indexPlayers(List<Player> players) {
