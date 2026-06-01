@@ -734,6 +734,7 @@ public class GameSaveManager {
 
             data.handCards = new ArrayList<>();
             for (ExperimentCard card : player.getHandCards()) {
+                if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
                 data.handCards.add(toCardSaveData(card));
             }
 
@@ -748,9 +749,11 @@ public class GameSaveManager {
         data.discardPile = new ArrayList<>();
 
         for (ExperimentCard card : deck.getDrawPile()) {
+            if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
             data.drawPile.add(toCardSaveData(card));
         }
         for (ExperimentCard card : deck.getDiscardPile()) {
+            if (card.isPluginCard()) continue; // Skip cards loaded from external plugins
             data.discardPile.add(toCardSaveData(card));
         }
         return data;

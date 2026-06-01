@@ -61,4 +61,15 @@ public interface ExperimentCard {
      * @return {@link CardType} milik kartu ini
      */
     CardType getCardType();
+
+    /**
+     * Mengecek apakah kartu ini berasal dari plugin eksternal.
+     * Default adalah false. Kartu plugin harus meng-override method ini dan
+     * mengembalikan true agar tidak menyebabkan error saat penyimpanan permainan.
+     *
+     * @return {@code true} jika kartu berasal dari plugin
+     */
+    default boolean isPluginCard() {
+        return false;
+    }
 }
