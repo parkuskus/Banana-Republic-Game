@@ -8,19 +8,19 @@ import banana.republic.resource.Bank;
 import java.util.List;
 
 /**
- * Interface read-only dari state permainan yang diekspor ke plugin dan lapisan
- * UI. Interface ini adalah titik Dependency Inversion utama sistem:
+ * Interface read-only dari state permainan yang diekspor ke plugin dan lapisan UI.
  *
- * Plugin ExperimentCard menggunakan GameState membaca/memodifikasi state saat
- * applyEffect() dipanggil
+ * <p>Interface ini adalah titik Dependency Inversion utama sistem:
+ * <ul>
+ *   <li>Plugin {@code ExperimentCard} menggunakan {@link GameState} untuk
+ *       membaca/memodifikasi state saat {@code applyEffect()} dipanggil</li>
+ *   <li>Plugin {@code PlayerStrategy} menggunakan untuk memutuskan aksi bot
+ *       di setiap giliran</li>
+ *   <li>Layer UI (M5) menggunakan {@link GameState} sebagai sumber data tampilan</li>
+ * </ul>
  *
- * Plugin PlayerStrategy menggunakan untuk memutuskan aksi bot di setiap
- * giliran.
- *
- * Layer UI (M5) menggunakan GameState sebagai sumber data tampilan.
- *
- * Note: Interface ini hanya boleh di-implement oleh GameStateAdapter, jangan
- * di-implement langsung oleh kelas lain.
+ * <p><strong>Note:</strong> Interface ini hanya boleh di-implement oleh
+ * {@link GameStateAdapter}, jangan di-implement langsung oleh kelas lain.
  */
 public interface GameState {
 

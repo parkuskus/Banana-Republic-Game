@@ -4,20 +4,21 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Bersifat immutable. Produced by GameLog, nanti ditampilkan di UI juga Setiap
- * entri memiliki:
+ * Entri log kejadian permainan yang bersifat immutable.
  *
- * EventType — kategori kejadian (untuk filtering / pewarnaan di UI)
- *
- * Nama pemain yang terlibat (opsional, null untuk kejadian sistem)
- *
- * Pesan deskriptif dalam format teks bebas
- *
- * Timestamp saat entri dibuat
+ * <p>Setiap entri memiliki:
+ * <ul>
+ *   <li>{@link EventType} — kategori kejadian (untuk filtering / pewarnaan di UI)</li>
+ *   <li>Nama pemain yang terlibat (opsional, {@code null} untuk kejadian sistem)</li>
+ *   <li>Pesan deskriptif dalam format teks bebas</li>
+ *   <li>Timestamp saat entri dibuat</li>
+ * </ul>
  */
 public class LogEntry {
 
-    // Kategori kejadian yang tercatat dalam log.
+    /**
+     * Kategori kejadian yang tercatat dalam log.
+     */
     public enum EventType {
         RESOURCE_PRODUCTION,
         BUILD,

@@ -1,21 +1,23 @@
 package banana.republic.core;
 
-// Game phases
+/**
+ * Fase-fase permainan Banana Republic.
+ */
 public enum GamePhase {
 
-    // Pos pantau, clockwise rotation
+    /** Penempatan Pos Pantau awal, arah clockwise. */
     SETUP_FIRST_ROUND,
 
-    // taruh node, counter clockwise rotation
+    /** Penempatan Pos Pantau kedua, arah counter-clockwise. */
     SETUP_SECOND_ROUND,
 
-    // Lempar dadu + resource gathering (or Nimon Ungu if 7)
+    /** Lempar dadu dan distribusi resource (atau Nimon Ungu jika dadu 7). */
     RESOURCE_GATHERING,
 
-    // Dagang/bangun, timer start
+    /** Fase dagang dan bangun dengan timer aktif. */
     TRADE_BUILD,
 
-    // Game finished
+    /** Permainan selesai. */
     GAME_OVER;
 
     public boolean isSetupPhase() {
