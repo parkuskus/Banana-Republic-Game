@@ -8,20 +8,38 @@ import banana.republic.core.GameState;
 import banana.republic.player.Player;
 
 /**
- * Road building progress card.
- * Refer to class-diagram/Module3_Cards_Robber_Timer.puml for full specification.
+ * Kartu Konstruksi Cepat (Road Building Progress Card).
+ *
+ * <p>Efek: Tempatkan 2 Pipa Transportasi baru secara GRATIS di mana pun
+ * sesuai aturan pembangunan.
+ *
+ * <p>Komposisi deck: 3 kartu.
  */
 public class RoadBuildingCard extends ProgressCard {
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCardName() {
         return "Kartu Konstruksi Cepat (Road Building)";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDescription() {
         return "Tempatkan 2 Pipa Transportasi baru secara GRATIS di mana pun sesuai aturan pembangunan.";
     }
 
+    /**
+     * Menerapkan efek Road Building: membangun hingga 2 pipa gratis
+     * di lokasi yang valid.
+     *
+     * @param state  state permainan saat ini
+     * @param player pemain yang memainkan kartu
+     */
     @Override
     public void applyEffect(GameState state, Player player) {
         assert player != null : "Player harus tidak null saat mainkan RoadBuildingCard";
@@ -66,6 +84,9 @@ public class RoadBuildingCard extends ProgressCard {
         this.consume();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CardType getCardType() {
         return CardType.ROAD_BUILDING;

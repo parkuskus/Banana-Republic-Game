@@ -4,29 +4,38 @@ import banana.republic.core.GameState;
 import banana.republic.player.Player;
 
 /**
- * Victory point development card (Kartu Poin Prestasi Rahasia).
- * Jumlah: 5 kartu
- * Nilai: 1 Poin Prestasi per kartu
- * Sifat: Tersembunyi sampai pemain memenangkan permainan.
+ * Kartu Poin Prestasi Rahasia (Victory Point Card).
  *
- * PENGECUALIAN: Jika kartu ini membuat total VP ≥ 10, pemain BOLEH langsung mengungkap & menang
- * meski baru saja dibeli pada giliran yang sama.
+ * <p>Bernilai 1 Poin Prestasi per kartu. Sifatnya selalu tersembunyi
+ * sampai pemain memenangkan permainan.
+ *
+ * <p><strong>Pengecualian:</strong> Jika kartu ini membuat total VP ≥ 10,
+ * pemain BOLEH langsung mengungkap dan menang meski baru saja dibeli
+ * pada giliran yang sama.
+ *
+ * <p>Komposisi deck: 5 kartu.
  */
 public class VictoryPointCard extends DevelopmentCard {
     private static final int POINT_VALUE = 1;
 
     /**
-     * Constructor untuk Victory Point Card.
+     * Constructor default.
      */
     public VictoryPointCard() {
         super();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCardName() {
         return "Kartu Poin Prestasi Rahasia (Victory Point)";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDescription() {
         return "Kartu rahasia bernilai 1 Poin Prestasi. Tetap tersembunyi sampai akhir permainan " +
@@ -34,35 +43,52 @@ public class VictoryPointCard extends DevelopmentCard {
     }
 
     /**
-     * Get nilai poin prestasi dari kartu ini.
+     * Mengembalikan nilai poin prestasi dari kartu ini.
+     *
+     * @return selalu {@value #POINT_VALUE}
      */
     public int getPointValue() {
         return POINT_VALUE;
     }
 
+    /**
+     * Victory Point Card tidak memiliki efek khusus yang diaplikasikan.
+     *
+     * <p>Nilai poin dihitung saat kalkulasi total Poin Prestasi
+     * (di {@code VictoryPointCalculator}). Kartu ini hanya disimpan
+     * tersembunyi di tangan pemain.
+     *
+     * @param state  state permainan saat ini
+     * @param player pemain yang memainkan kartu
+     */
     @Override
     public void applyEffect(GameState state, Player player) {
-        // Victory Point Card tidak memiliki efek khusus yang diaplikasikan.
-        // Nilai poin dihitung saat kalkulasi total Poin Prestasi (di VictoryPointCalculator).
-        // Kartu ini hanya disimpan tersembunyi di tangan pemain.
-
         assert player != null : "Player harus tidak null saat mainkan VictoryPointCard";
-        // Note: Tidak ada action yang perlu dilakukan di sini.
     }
 
+    /**
+     * Victory Point Card tidak bisa dimainkan jika baru saja diambil.
+     *
+     * @return {@code true} jika bukan newly-drawn
+     */
     @Override
     public boolean isPlayable() {
         return !isNewlyDrawn();
     }
 
+    /**
+     * Victory Point Card SELALU secret (tersembunyi).
+     *
+     * @return selalu {@code true}
+     */
     @Override
     public boolean isSecret() {
-        // Victory Point Card SELALU secret (tersembunyi) sampai:
-        // 1. Permainan berakhir (pemain lain sudah menang)
-        // 2. Atau pemain itu sendiri menang dengan mengungkap kartu ini
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CardType getCardType() {
         return CardType.VICTORY_POINT;
