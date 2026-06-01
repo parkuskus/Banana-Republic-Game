@@ -66,10 +66,6 @@ public class VictoryPointCalculator {
         return calculate(player, board).getTotal();
     }
 
-    // -------------------------------------------------------------------------
-    // Hitung VP semua pemain
-    // -------------------------------------------------------------------------
-
     /**
      * Menghitung VP semua pemain dan mengembalikan daftar breakdown.
      *
@@ -93,10 +89,6 @@ public class VictoryPointCalculator {
         results.sort((a, b) -> Integer.compare(b.getTotal(), a.getTotal()));
         return Collections.unmodifiableList(results);
     }
-
-    // -------------------------------------------------------------------------
-    // Cek pemenang
-    // -------------------------------------------------------------------------
 
     /**
      * Mencari pemain yang sudah mencapai atau melampaui victoryTarget PP.
@@ -126,10 +118,6 @@ public class VictoryPointCalculator {
 
         return winner;
     }
-
-    // -------------------------------------------------------------------------
-    // Longest Road management
-    // -------------------------------------------------------------------------
 
     /**
      * Memeriksa dan memperbarui kepemilikan Jalan Terpanjang (Longest Road).
@@ -192,9 +180,53 @@ public class VictoryPointCalculator {
         return newHolder;
     }
 
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
+    /**
+     * Memeriksa dan memperbarui kepemilikan Pasukan Terbesar (Largest Army).
+     *
+     * Dipanggil setelah setiap Knight Card dimainkan.
+     *
+     * Syarat:
+     *   - Minimal 3 knight dimainkan
+     *   - Lebih banyak dari pemegang saat ini
+     *
+     * Return: pemain yang sekarang memegang Largest Army,
+     *         atau null jika belum ada yang memenuhi syarat
+     */
+    public Player updateLargestArmy(List<Player> players) {
+        final int MIN_KNIGHTS = 3;
+
+        Player currentHolder = null;
+        int holderKnights = 0;
+        for (Player p : players) {
+            if (p.hasSpecialCard(SpecialCardType.LARGEST_ARMY)) {
+                currentHolder = p;
+                holderKnights = p.getKnightsPlayed();
+                break;
+            }
+        }
+
+        Player newHolder = null;
+        int newKnights = 0;
+        for (Player p : players) {
+            int knights = p.getKnightsPlayed();
+            if (knights < MIN_KNIGHTS) continue;
+            boolean qualifies = (currentHolder == null)
+                ? knights >= MIN_KNIGHTS
+                : knights > holderKnights;
+            if (qualifies && p != currentHolder && knights > newKnights) {
+                newHolder = p;
+                newKnights = knights;
+            }
+        }
+
+        if (newHolder == null) return currentHolder;
+
+        if (currentHolder != null) {
+            currentHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY, false);
+        }
+        newHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY, true);
+        return newHolder;
+    }
 
     /**
      * Hitung PP dari Pos Pantau yang sudah ditempatkan pemain di board.
