@@ -149,4 +149,32 @@ public class CardDeck {
         // Assertion: total kartu harus 25
         assert (drawPileSize() == 25) : "Default deck harus berisi 25 kartu";
     }
+    /**
+     * Menyuntikkan kartu-kartu dari plugin ke draw pile yang sudah ada, lalu shuffle ulang.
+     *
+     * <p>Dipanggil oleh {@code LobbyController} setelah {@link #buildDefaultDeck()}
+     * jika ada plugin kartu yang terdaftar di {@code PluginRegistry}.
+     *
+     * <p><strong>Urutan yang benar:</strong>
+     * <pre>
+     *     deck.buildDefaultDeck();
+     *     deck.injectPluginCards(registry.getLoadedCards());
+     * </pre>
+     *
+     * @param pluginCards daftar kartu dari {@code PluginRegistry.getLoadedCards()};
+     *                    boleh kosong (no-op), tidak boleh null
+     */
+    public void injectPluginCards(List<ExperimentCard> pluginCards) {
+        if (pluginCards == null) {
+            throw new IllegalArgumentException("pluginCards tidak boleh null");
+        }
+        if (pluginCards.isEmpty()) return; // no-op
+
+        for (ExperimentCard card : pluginCards) {
+            if (card != null) {
+                addCard(card);
+            }
+        }
+        shuffle(); // shuffle ulang setelah injeksi agar posisi kartu plugin acak
+    }
 }
