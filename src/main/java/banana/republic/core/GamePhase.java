@@ -12,6 +12,9 @@ public enum GamePhase {
     // Lempar dadu + resource gathering (or Nimon Ungu if 7)
     RESOURCE_GATHERING,
 
+    // Pindahkan Nimon Ungu (setelah dadu 7)
+    ROBBER_PLACEMENT,
+
     // Dagang/bangun, timer start
     TRADE_BUILD,
 

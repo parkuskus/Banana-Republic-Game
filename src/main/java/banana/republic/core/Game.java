@@ -371,18 +371,16 @@ public class Game {
                              lastDiceResult.getDie2() + " = " + total);
 
         if (lastDiceResult.isSeven()) {
-            // Nimon Ungu aktif — diproses di Fase 4; sementara set phase ke
-            // TRADE_BUILD
             gameLog.addEntry(LogEntry.EventType.ROBBER,
                              getActivePlayer().getName(),
                              "Dadu 7! Nimon Ungu aktif.");
+            currentPhase = GamePhase.ROBBER_PLACEMENT;
         } else {
             // Distribusi resource normal
             productionService.distributeForRoll(total, board, players, bank);
+            currentPhase = GamePhase.TRADE_BUILD;
         }
 
-        // Pindah ke fase Trade/Build dan mulai timer
-        currentPhase = GamePhase.TRADE_BUILD;
         cardPlayedThisTurn = null;
         cardBoughtThisTurn = null;
         return lastDiceResult;

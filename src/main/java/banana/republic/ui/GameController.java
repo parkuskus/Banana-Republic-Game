@@ -108,6 +108,7 @@ public class GameController implements Initializable {
     // LAYERING BEBAS CRISS-CROSS
     private Pane permanentBuildLayer;
     private Pane buildOverlayPane;
+    private Pane robberOverlayPane;
     private List<StackPane> mainHexesOnly = new ArrayList<>();
 
     // Menyimpan koordinat visual dari semua titik persimpangan
@@ -250,12 +251,7 @@ public class GameController implements Initializable {
                         humanDiscardQueue.offer(p);
                     }
                 }
-                if (!humanDiscardQueue.isEmpty()) {
-                    showNextDiscardDialog();
-                }
-
-                currentMode = InteractionMode.ROBBER;
-                showInfo("Dadu 7! Nimon Ungu aktif. Pilih petak untuk memindahkan Nimon Ungu.");
+                showNextDiscardDialog(); // mode ROBBER di-set di dalam sini setelah queue kosong
             } else {
                 game.startTradeBuildTimer(this::updateTimer);
             }
@@ -307,12 +303,7 @@ public class GameController implements Initializable {
                             humanDiscardQueue.offer(p);
                         }
                     }
-                    if (!humanDiscardQueue.isEmpty()) {
-                        showNextDiscardDialog();
-                    }
-
-                    currentMode = InteractionMode.ROBBER;
-                    showInfo("Dadu 7! Nimon Ungu aktif.");
+                    showNextDiscardDialog(); // mode ROBBER di-set di dalam sini setelah queue kosong
                 } else {
                     game.startTradeBuildTimer(this::updateTimer);
                 }
@@ -408,6 +399,93 @@ public class GameController implements Initializable {
             buildOverlayPane = null;
         }
         currentMode = InteractionMode.NONE;
+    }
+
+    private void showRobberOverlay() {
+        if (hexdesert == null) return;
+        Group parentMap = (Group) hexdesert.getParent();
+        if (parentMap == null) return;
+
+        // Mirror toggleBuildOverlay: allow clicks to pass through sibling overlays
+        StackPane hexmapBg = (StackPane) parentMap.getParent();
+        if (hexmapBg != null) {
+            for (javafx.scene.Node child : hexmapBg.getChildren()) {
+                if (child instanceof VBox) {
+                    child.setPickOnBounds(false);
+                }
+            }
+        }
+        if (tradeDialogOverlay != null) tradeDialogOverlay.setPickOnBounds(false);
+        if (cardDialogOverlay != null) cardDialogOverlay.setPickOnBounds(false);
+        if (stealDialogOverlay != null) stealDialogOverlay.setPickOnBounds(false);
+        if (settingsDialogOverlay != null) settingsDialogOverlay.setPickOnBounds(false);
+        if (victoryDialogOverlay != null) victoryDialogOverlay.setPickOnBounds(false);
+        if (discardDialogOverlay != null) discardDialogOverlay.setPickOnBounds(false);
+
+        removeRobberOverlay();
+
+        robberOverlayPane = new Pane();
+        robberOverlayPane.setPickOnBounds(false);
+
+        HexTile currentRobberTile = (game != null && game.getRobber() != null)
+                ? game.getRobber().getCurrentTile() : null;
+
+        for (Map.Entry<StackPane, HexTile> entry : visualToModelTile.entrySet()) {
+            StackPane sp = entry.getKey();
+            HexTile tile = entry.getValue();
+
+            double w = sp.getPrefWidth() > 0 ? sp.getPrefWidth() : 94.0;
+            double h = sp.getPrefHeight() > 0 ? sp.getPrefHeight() : 108.0;
+            double cx = sp.getLayoutX() + w / 2;
+            double cy = sp.getLayoutY() + h / 2;
+
+            Circle dot = new Circle(cx, cy, 20);
+            if (tile.equals(currentRobberTile)) {
+                // Current robber position — visually blocked, not moveable here
+                dot.setFill(Color.rgb(80, 0, 80, 0.25));
+                dot.setStroke(Color.rgb(160, 60, 160, 0.4));
+                dot.setStrokeWidth(1.5);
+                dot.setStyle("-fx-cursor: default;");
+                // Consume click so the error from activateRobber doesn't show
+                dot.setOnMouseClicked(e -> e.consume());
+            } else {
+                dot.setFill(Color.rgb(128, 0, 128, 0.45));
+                dot.setStroke(Color.rgb(210, 100, 210, 0.85));
+                dot.setStrokeWidth(2.0);
+                dot.setStyle("-fx-cursor: hand;");
+
+                DropShadow glow = new DropShadow(14, Color.PURPLE);
+                dot.setOnMouseEntered(e -> {
+                    dot.setFill(Color.rgb(200, 0, 220, 0.70));
+                    dot.setEffect(glow);
+                    dot.setRadius(23);
+                });
+                dot.setOnMouseExited(e -> {
+                    dot.setFill(Color.rgb(128, 0, 128, 0.45));
+                    dot.setEffect(null);
+                    dot.setRadius(20);
+                });
+                dot.setOnMouseClicked(e -> {
+                    handleRobberClick(sp);
+                    e.consume();
+                });
+            }
+
+            robberOverlayPane.getChildren().add(dot);
+        }
+
+        parentMap.getChildren().add(robberOverlayPane);
+        robberOverlayPane.toFront();
+    }
+
+    private void removeRobberOverlay() {
+        if (robberOverlayPane != null && hexdesert != null) {
+            Group parentMap = (Group) hexdesert.getParent();
+            if (parentMap != null) {
+                parentMap.getChildren().remove(robberOverlayPane);
+            }
+            robberOverlayPane = null;
+        }
     }
 
     private double[][] getHexCorners(StackPane sp) {
@@ -1191,6 +1269,7 @@ public class GameController implements Initializable {
         updateBuildCostLabel();
         updateTimer(game.getTurnManager().getRemainingTimerSeconds());
         renderExistingBuildings();
+        if (robberOverlayPane != null) robberOverlayPane.toFront();
     }
 
     private boolean isSetupOrderPending() {
@@ -1556,19 +1635,20 @@ public class GameController implements Initializable {
 
         boolean isSetup = phase.isSetupPhase();
         boolean isGathering = (phase == GamePhase.RESOURCE_GATHERING);
+        boolean isRobberPhase = (phase == GamePhase.ROBBER_PLACEMENT);
         boolean isGameOver = (phase == GamePhase.GAME_OVER);
 
-        btnRollDice.setDisable(setupOrderPending || isSetup || !isGathering || isGameOver);
-        btnSetDice.setDisable(setupOrderPending || isSetup || isGameOver);
-        btnBuild.setDisable(setupOrderPending || isGathering || isGameOver);
-        btnTrade.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
-        btnCard.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
-        btnDeclareVictory.setDisable(setupOrderPending || isSetup || isGameOver);
-        btnEndTurn.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
+        btnRollDice.setDisable(setupOrderPending || isSetup || !isGathering || isGameOver || isRobberPhase);
+        btnSetDice.setDisable(setupOrderPending || isSetup || isGameOver || isRobberPhase);
+        btnBuild.setDisable(setupOrderPending || isGathering || isGameOver || isRobberPhase);
+        btnTrade.setDisable(setupOrderPending || isSetup || isGathering || isGameOver || isRobberPhase);
+        btnCard.setDisable(setupOrderPending || isSetup || isGathering || isGameOver || isRobberPhase);
+        btnDeclareVictory.setDisable(setupOrderPending || isSetup || isGameOver || isRobberPhase);
+        btnEndTurn.setDisable(setupOrderPending || isSetup || isGathering || isGameOver || isRobberPhase);
         btnSettings.setDisable(isGameOver);
-        if (btnStartSetupOrder != null) btnStartSetupOrder.setDisable(!setupOrderPending);
 
-        if (btnSteal != null) btnSteal.setDisable(currentMode != InteractionMode.ROBBER);
+        if (btnStartSetupOrder != null) btnStartSetupOrder.setDisable(!setupOrderPending);
+        if (btnSteal != null) btnSteal.setDisable(currentMode != InteractionMode.ROBBER || isRobberPhase);
         if (btnDiscard != null) btnDiscard.setDisable(humanDiscardQueue.isEmpty());
         if (btnEndGame != null) btnEndGame.setDisable(isGameOver);
 
@@ -1597,6 +1677,7 @@ public class GameController implements Initializable {
             if (modelTile == null) modelTile = findHexTileByVisualFallback(hexTile);
             if (modelTile == null) return;
             if (currentMode == InteractionMode.ROBBER) {
+                if (game.getRobber() != null && modelTile.equals(game.getRobber().getCurrentTile())) return;
                 handleRobberClick(hexTile);
             }
         });
@@ -1660,7 +1741,7 @@ public class GameController implements Initializable {
             }
         }
 
-        // 2. Sort StackPanes by Y then X (with tolerance for minor alignment issues)
+        // 2. Sort StackPanes by Y then X (matches the axial r/q order of the model)
         mainHexesOnly.sort((a, b) -> {
             double ay = a.getLayoutY();
             double by = b.getLayoutY();
@@ -1668,14 +1749,15 @@ public class GameController implements Initializable {
             return Double.compare(a.getLayoutX(), b.getLayoutX());
         });
 
-        // 3. Sort Model HexTiles by R then Q (consistent with StandardMapGenerator axial order)
+        // 3. Sort Model HexTiles by R then Q (axial order from StandardMapGenerator)
         List<HexTile> modelTiles = new ArrayList<>(board.getAllHexTiles());
         modelTiles.sort((a, b) -> {
             if (a.getRow() != b.getRow()) return Integer.compare(a.getRow(), b.getRow());
             return Integer.compare(a.getColumn(), b.getColumn());
         });
 
-        // 4. Match visual tiles to model tiles by terrain + token first.
+        // 4. Map them one-to-one: visual Y/X position corresponds to model r/q position
+        int count = Math.min(mainHexesOnly.size(), modelTiles.size());
         Map<HexTile, StackPane> modelToVisualTile = new HashMap<>();
         Set<HexTile> usedTiles = new HashSet<>();
         for (StackPane sp : mainHexesOnly) {
@@ -1693,16 +1775,16 @@ public class GameController implements Initializable {
         }
 
         // Fallback for any unmatched tile; keeps older/custom maps from rendering blank.
-        int count = Math.min(mainHexesOnly.size(), modelTiles.size());
-        for (int i = 0; i < count && visualToModelTile.size() < count; i++) {
-            StackPane sp = mainHexesOnly.get(i);
-            if (visualToModelTile.containsKey(sp)) continue;
-            HexTile tile = modelTiles.get(i);
-            if (usedTiles.contains(tile)) continue;
-            visualToModelTile.put(sp, tile);
-            modelToVisualTile.put(tile, sp);
-            usedTiles.add(tile);
-        }
+        // int count = Math.min(mainHexesOnly.size(), modelTiles.size());
+        // for (int i = 0; i < count && visualToModelTile.size() < count; i++) {
+        //     StackPane sp = mainHexesOnly.get(i);
+        //     if (visualToModelTile.containsKey(sp)) continue;
+        //     HexTile tile = modelTiles.get(i);
+        //     if (usedTiles.contains(tile)) continue;
+        //     visualToModelTile.put(sp, tile);
+        //     modelToVisualTile.put(tile, sp);
+        //     usedTiles.add(tile);
+        // }
 
         // 5. Calculate precise intersection coordinates using mathematical mapping
         Map<String, double[]> cornerSum = new java.util.LinkedHashMap<>();
@@ -1788,6 +1870,7 @@ public class GameController implements Initializable {
         try {
             game.activateRobber(target, null);
             currentMode = InteractionMode.NONE;
+            removeRobberOverlay();
             refreshAllUI();
             updatePhaseUI();
 
@@ -1837,12 +1920,14 @@ public class GameController implements Initializable {
     private HexTile findHexTileByVisualFallback(StackPane visual) {
         if (game == null) return null;
         Board board = game.getBoard();
-        if (visual == hexdesert) {
-            for (HexTile t : board.getAllHexTiles()) {
-                if (t.getTerrainType() == banana.republic.board.TerrainType.DESERT) return t;
-            }
+        banana.republic.board.TerrainType terrain = null;
+        for (String style : visual.getStyleClass()) {
+            terrain = parseTerrainFromStyle(style);
+            if (terrain != null) break;
         }
-        return board.getAllHexTiles().isEmpty() ? null : board.getAllHexTiles().get(0);
+        int tokenValue = parseTokenFromVisual(visual);
+        Set<HexTile> empty = new java.util.HashSet<>();
+        return findMatchingTile(board, terrain, tokenValue, empty);
     }
 
     public void pasangAnchorSudut(StackPane hexTile, int idx1, int idx2, String teksToko) {
@@ -1952,7 +2037,12 @@ public class GameController implements Initializable {
     private java.util.Queue<Player> humanDiscardQueue = new java.util.LinkedList<>();
 
     private void showNextDiscardDialog() {
-        if (humanDiscardQueue.isEmpty()) return;
+        if (humanDiscardQueue.isEmpty()) {
+            currentMode = InteractionMode.ROBBER;
+            updatePhaseUI();
+            showRobberOverlay();
+            return;
+        }
         Player p = humanDiscardQueue.poll();
         try {
             if (discardDialogOverlay == null) return;
@@ -1977,6 +2067,7 @@ public class GameController implements Initializable {
 
             discardDialogOverlay.getChildren().add(dialogUI);
             discardDialogOverlay.setVisible(true);
+            discardDialogOverlay.toFront();
             if (mainGameRoot != null) {
                 javafx.scene.effect.BoxBlur blur = new javafx.scene.effect.BoxBlur(5, 5, 3);
                 mainGameRoot.setEffect(blur);
@@ -2183,6 +2274,7 @@ public class GameController implements Initializable {
                 if (phase == null) currentConditionLabel.setText("Menunggu...");
                 else if (phase.isSetupPhase()) currentConditionLabel.setText("Fase: Setup Awal");
                 else if (phase == GamePhase.RESOURCE_GATHERING) currentConditionLabel.setText("Fase: Roll Dadu");
+                else if (phase == GamePhase.ROBBER_PLACEMENT) currentConditionLabel.setText("Fase: Pindah Nimon");
                 else if (phase == GamePhase.TRADE_BUILD) currentConditionLabel.setText("Fase: Trade & Build");
                 else if (phase == GamePhase.GAME_OVER) currentConditionLabel.setText("Game Over!");
                 else currentConditionLabel.setText("Menunggu Giliran");

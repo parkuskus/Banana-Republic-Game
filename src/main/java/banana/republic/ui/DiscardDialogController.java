@@ -101,6 +101,10 @@ public class DiscardDialogController implements Initializable, DialogController,
 
     @FXML
     private void closeDialog() {
+        if (requiredDiscard > 0) {
+            showError("Kamu harus membuang tepat " + requiredDiscard + " kartu sebelum menutup.");
+            return;
+        }
         if (closeHandler != null) {
             closeHandler.run();
         }
@@ -139,6 +143,7 @@ public class DiscardDialogController implements Initializable, DialogController,
             }
         }
 
+        requiredDiscard = 0;
         closeDialog();
     }
 
