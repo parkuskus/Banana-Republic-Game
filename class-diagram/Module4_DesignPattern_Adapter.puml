@@ -1,0 +1,59 @@
+@startuml Design-Pattern
+skinparam classAttributeIconSize 0
+
+title Adapter Pattern (GameState Adapter)
+
+interface GameState {
+    +getAllPlayers()
+    +getBoard()
+    +getBank()
+    +getCardDeck()
+    +getCurrentPhase()
+    +getGameLog()
+    +getTurnNumber()
+    +chooseKnightTarget()
+    +chooseKnightVictim()
+    +chooseRoadBuildingPaths()
+}
+
+class Game {
+    +getState()
+    +getPlayers()
+    +getActivePlayer()
+    +getBoard()
+    +getBank()
+    +getCardDeck()
+    +getCurrentPhase()
+    +getGameLog()
+    +getTurnNumber()
+}
+
+class GameStateAdapter {
+    -game : Game
+    +getAllPlayers()
+    +getActivePlayer()
+    +getCurrentPlayer()
+    +getBoard()
+    +getBank()
+    +getCardDeck()
+    +getCurrentPhase()
+    +getRobberPosition()
+    +getGameLog()
+    +getTurnNumber()
+    +chooseKnightTarget()
+    +chooseKnightVictim()
+    +chooseRoadBuildingPaths()
+}
+
+GameStateAdapter ..|> GameState
+GameStateAdapter --> Game : wraps / delegates
+Game --> GameStateAdapter : getState()
+
+note right of GameStateAdapter
+Adapter Pattern:
+Game adalah adaptee,
+GameState adalah target interface,
+GameStateAdapter menjembatani keduanya.
+end note
+
+@enduml

@@ -1,0 +1,49 @@
+@startuml Facade-Pattern
+skinparam classAttributeIconSize 0
+
+title Facade Pattern (Game as Orchestrator)
+
+class Game {
+    +getPlayers()
+    +getActivePlayer()
+    +getBoard()
+    +getBank()
+    +getCardDeck()
+    +getDice()
+    +getRobber()
+    +getGameLog()
+    +getTurnManager()
+    +getCurrentPhase()
+    +getTurnNumber()
+    +getWinner()
+    +getState()
+}
+
+class Board
+class Bank
+class CardDeck
+class Dice
+class Robber
+class GameLog
+class TurnManager
+class TradeManager
+class VictoryPointCalculator
+
+Game *-- Board
+Game *-- Bank
+Game *-- CardDeck
+Game *-- Dice
+Game *-- Robber
+Game *-- GameLog
+Game *-- TurnManager
+Game *-- TradeManager
+Game *-- VictoryPointCalculator
+
+note right of Game
+Facade Pattern:
+Game menjadi pintu masuk utama
+untuk build, trade, play card,
+end turn, dan pengelolaan state.
+end note
+
+@enduml
