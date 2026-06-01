@@ -1083,6 +1083,17 @@ public class GameController implements Initializable {
         };
     }
 
+    private String getSideCardBackgroundHex(PlayerColor color) {
+        if (color == null) return "#e8f3ec";
+        return switch (color) {
+            case RED -> "#ff7e70";
+            case BLUE -> "#84a7ff";
+            case GREEN -> "#8cffb2";
+            case ORANGE -> "#f9a85c";
+            default -> "#e8f3ec";
+        };
+    }
+
     public void updateResourceCards() {
         if (game == null) return;
         Player active = game.getActivePlayer();
@@ -1118,6 +1129,7 @@ public class GameController implements Initializable {
         Player active = game.getActivePlayer();
         if (active != null) {
             currentPlayerLabel.setText(active.getName() + "'s Turn");
+            currentPlayerLabel.setStyle("-fx-background-color: " + getSideCardBackgroundHex(active.getColor()) + ";");
         }
     }
 
