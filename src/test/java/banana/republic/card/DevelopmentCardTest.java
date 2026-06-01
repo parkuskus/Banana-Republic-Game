@@ -147,6 +147,36 @@ public class DevelopmentCardTest {
         public int getTurnNumber() {
             return 1;
         }
+
+        @Override
+        public Player getCurrentPlayer() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.card.CardDeck getCardDeck() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.board.HexTile getRobberPosition() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.board.HexTile chooseKnightTarget(Player player, java.util.List<banana.republic.board.HexTile> candidates) {
+            return null;
+        }
+
+        @Override
+        public Player chooseKnightVictim(Player player, banana.republic.board.HexTile target, java.util.List<Player> candidates) {
+            return null;
+        }
+
+        @Override
+        public java.util.List<banana.republic.board.Path> chooseRoadBuildingPaths(Player player, java.util.List<banana.republic.board.Path> candidates, int maxPlacements) {
+            return List.of();
+        }
     }
 
     private static class MockPlayer implements Player {

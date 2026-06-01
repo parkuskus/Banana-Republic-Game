@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane pannable="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" fitToWidth="true" fitToHeight="true" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameResultController">
+
+    <content>
+        <BorderPane prefHeight="1080.0" prefWidth="1920.0" styleClass="game-over-bg" stylesheets="@../css/style.css">
+
+            <center>
+                <VBox alignment="TOP_CENTER" maxWidth="887.0" prefHeight="854.0" prefWidth="887.0" spacing="45.0" style="-fx-padding: 60px 20px;">
+
+                    <Label fx:id="titleLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="go-title" text="Player1 has founded the Banana Republic!" />
+
+                    <VBox spacing="10" styleClass="go-playtime-box">
+                        <Label styleClass="go-playtime-label" text="TOTAL PLAYTIME" />
+                        <Label styleClass="go-playtime-value" text="01 : 23 : 15" />
+                    </VBox>
+
+                    <VBox spacing="5.0">
+                        <Label styleClass="go-section-title" text="FINAL POINT BREAKDOWN" />
+
+                        <VBox fx:id="resultTableContainer" styleClass="go-table-container">
+                        </VBox>
+
+                        <HBox alignment="CENTER_RIGHT">
+                            <Label styleClass="go-footer-text" text="Pos Pantau: 1 VP | Laboratorium: 2 VP | Kartu Spesial: 2 VP | Poin Rahasia: 1 VP" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+            </center>
+
+            <bottom>
+                <HBox alignment="CENTER" spacing="20.0" styleClass="go-bottom-bar">
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#handleViewBoard" styleClass="btn-outline-gold" text="VIEW FINAL BOARD" />
+                    <Button onAction="#handleMainMenu" style="-fx-padding: 15px 40px; -fx-font-size: 13px;" styleClass="btn-win-game" text="MAIN MENU" />
+                    <Region HBox.hgrow="ALWAYS" />
+                </HBox>
+            </bottom>
+
+        </BorderPane>
+    </content>
+
+</ScrollPane>

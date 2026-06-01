@@ -1,21 +1,1030 @@
-body {
-    -fx-background-color: #f0f0f0;
+@font-face {
+    font-family: 'RussoOne-Regular';
+    src: url('../fonts/RussoOne-Regular.ttf');
+}
+
+.main-menu-bg {
+    -fx-background-color: #ffd55e;
+}
+
+.lobby-bg {
+    -fx-background-color: #fffff0;
 }
 
 .button {
     -fx-background-color: #007bff;
     -fx-text-fill: white;
     -fx-padding: 10px 20px;
-    -fx-font-size: 14px;
+    -fx-font-size: 2em;
     -fx-border-radius: 5px;
     -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
+.button-red {
+    -fx-background-color: #ff1a1a;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1.5em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
+.small-button {
+    -fx-background-color: #007bff;
+    -fx-text-fill: white;
+    -fx-padding: 10px 20px;
+    -fx-font-size: 1em;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
 }
 
 .button:hover {
     -fx-background-color: #0056b3;
 }
 
+.dropzone-box {
+    -fx-border-color: #a27c5b;
+    -fx-border-style: dashed;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px 20px;
+    -fx-cursor: hand;
+}
+
+.dropzone-box:hover {
+    -fx-background-color: #ffd56f;
+    -fx-border-color: #685139;
+}
+
+.hex-tile-ore {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #7a94a1, #516671);
+    -fx-border-color: #3b4b53;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-wood {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #95a377, #6c7755);
+    -fx-border-color: #4b543a;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-brick {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #804753, #542d36);
+    -fx-border-color: #381e24;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-wheat {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #f2c7a3, #cc9e7a);
+    -fx-border-color: #8c6a4f;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-banana {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #f0e4b4, #c9bc8f);
+    -fx-border-color: #8f855d;
+    -fx-border-width: 2px;
+}
+
+.hex-tile-desert {
+    -fx-shape: "M 50,0 100,25 100,75 50,100 0,75 0,25 z";
+    -fx-background-color: linear-gradient(to bottom right, #b5a492, #8f7f70);
+    -fx-border-color: #5c5147;
+    -fx-border-width: 2px;
+}
+
 .label {
     -fx-font-size: 16px;
     -fx-text-fill: #333;
+}
+
+.main-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 5em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.lobby-title {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 3em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.marcellus-text {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-h1 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 2.5em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-text15 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.5em;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-text13 {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 1.3em;
+    -fx-text-fill: #42200b;
+}
+
+.russo-text {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 2em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.russo-text-small {
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 1.5em;
+    -fx-text-fill: #1a1a1a;
+}
+
+.main-vbox {
+    -fx-background-color: #3498db;
+}
+
+.vbox-shade {
+    -fx-background-color: #fff6e9;
+}
+
+.vbox-shade2 {
+    -fx-background-color: #fff6d6;
+}
+
+.card-wood { -fx-background-color: #e8f3ec; -fx-border-color: #d1e5d7; }
+.text-wood { -fx-text-fill: #196637; }
+.badge-wood { -fx-background-color: #0b6b33; }
+
+.card-brick { -fx-background-color: #fdf5e6; -fx-border-color: #f4e5c3; }
+.text-brick { -fx-text-fill: #7d5e2d; }
+.badge-brick { -fx-background-color: #7b5b2e; }
+
+.card-wheat { -fx-background-color: #fef2e1; -fx-border-color: #f3dfc2; }
+.text-wheat { -fx-text-fill: #85612c; }
+.badge-wheat { -fx-background-color: #77582b; }
+
+.card-ore { -fx-background-color: #f7f7f7; -fx-border-color: #e5e5e5; }
+.text-ore { -fx-text-fill: #54514c; }
+.badge-ore { -fx-background-color: #514b42; }
+
+.card-banana { -fx-background-color: #fffde8; -fx-border-color: #fdf1b7; }
+.text-banana { -fx-text-fill: #f5b12a; }
+.badge-banana { -fx-background-color: #f2aa24; }
+
+.bottom-panel {
+    -fx-background-color: linear-gradient(to bottom, #e1e8ed, #d2dce6);
+    -fx-padding: 10px 20px;
+    -fx-spacing: 15px;
+    -fx-border-color: #9aaebf;
+    -fx-border-width: 2px 0 0 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, 0, -3);
+}
+
+.side-panel {
+    -fx-background-color: linear-gradient(to right, #f0f4f7, #e1e8ed);
+    -fx-padding: 20px;
+    -fx-spacing: 12px;
+    -fx-border-color: #9aaebf;
+    -fx-border-width: 0 0 0 2px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.15), 15, 0, -3, 0);
+}
+
+.hexmap-bg {
+    -fx-background-color: radial-gradient(center 50% 50%, radius 75%, rgba(114, 174, 230, 1.0) 30%, rgba(40, 116, 166, 1.0) 100%);
+}
+
+.coastline-border {
+    -fx-effect: dropshadow(gaussian, #d6c39a, 35, 0.95, 0, 0);
+}
+
+.game-bottom-button {
+    -fx-background-color: #ffd55e;
+    -fx-text-fill: #1a1a1a;
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 1.05em;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-color: #c9a74a;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+
+.game-bottom-button:hover {
+    -fx-background-color: #ffc31f;
+}
+
+.rounded-card-wood {
+    -fx-background-color: #ffca60;
+    -fx-border-color: #493a18;
+    -fx-background-radius: 25px;
+    -fx-border-radius: 25px;
+    -fx-border-width: 2px;
+    -fx-padding: 15px;
+    -fx-alignment: center;
+}
+
+.marcellus-condition {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 18px;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-timer-title {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #42200b;
+}
+
+.marcellus-timer-value {
+    -fx-font-family: 'Marcellus';
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
+}
+
+.dialog-overlay {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+    -fx-padding: 40px;
+}
+
+.dialog-box {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-padding: 30px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 20, 0, 0, 5);
+}
+
+.dialog-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+.dialog-subtitle {
+    -fx-font-size: 15px;
+    -fx-font-family: 'Marcellus';
+}
+
+.section-subtitle {
+    -fx-font-size: 1.8em;
+    -fx-font-weight: bold;
+    -fx-text-fill: #888888;
+    -fx-font-family: 'Marcellus';
+}
+
+.tab-active {
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a6327;
+    -fx-border-color: transparent transparent #8a6327 transparent;
+    -fx-border-width: 2px;
+    -fx-padding: 0 0 5 0;
+}
+
+.tab-inactive {
+    -fx-text-fill: #888888;
+    -fx-padding: 0 0 5 0;
+}
+
+.trade-card {
+    -fx-background-color: #fafafa;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px;
+    -fx-min-width: 90px;
+    -fx-min-height: 100px;
+}
+
+.trade-card-active {
+    -fx-background-color: #fdfaf5;
+    -fx-border-color: #cda36f;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px;
+    -fx-min-width: 90px;
+    -fx-min-height: 100px;
+}
+
+.trade-card-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+.stepper-box {
+    -fx-background-color: #f0f0f0;
+    -fx-background-radius: 5px;
+    -fx-font-family: 'Russo One';
+}
+
+.stepper-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #888888;
+    -fx-font-weight: bold;
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 16px;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.stepper-value {
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-font-family: 'Russo One';
+}
+
+.btn-cancel {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #555555;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 15px;
+    -fx-cursor: hand;
+}
+
+.btn-submit {
+    -fx-background-color: #7b5b2e;
+    -fx-text-fill: white;
+    -fx-background-radius: 4px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 20px;
+    -fx-cursor: hand;
+}
+
+.player-card {
+    -fx-cursor: hand;
+    -fx-padding: 2px;
+}
+
+.player-card:hover .avatar-icon {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
+}
+
+.player-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-text-fill: #333333;
+}
+
+.avatar-icon {
+    -fx-min-width: 45px;
+    -fx-min-height: 45px;
+    -fx-max-width: 45px;
+    -fx-max-height: 45px;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
+    -fx-font-weight: bold;
+    -fx-font-size: 20px;
+    -fx-font-family: 'Russo One';
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 8, 0, 0, 3);
+}
+
+.avatar-red {
+    -fx-background-color: #c21a09;
+    -fx-text-fill: white;
+}
+
+.avatar-blue {
+    -fx-background-color: #305cde;
+    -fx-text-fill: white;
+}
+
+.avatar-green {
+    -fx-background-color: #4fc978;
+    -fx-text-fill: white;
+}
+
+.avatar-orange {
+    -fx-background-color: #ff7f00;
+    -fx-text-fill: white;
+}
+
+/* Player 1 (Merah) */
+.side-card-red {
+    -fx-background-color: #fae8e6; /* Merah sangat terang/pastel */
+    -fx-border-color: #c21a09;
+    -fx-border-width: 0 0 0 8px;   /* Hanya garis di kiri (Tebal 8px) */
+}
+
+/* Player 2 (Biru) */
+.side-card-blue {
+    -fx-background-color: #eaeffc; /* Biru sangat terang/pastel */
+    -fx-border-color: #305cde;
+    -fx-border-width: 0 0 0 8px;
+}
+
+/* Player 3 (Hijau) */
+.side-card-green {
+    -fx-background-color: #edf9f1; /* Hijau sangat terang/pastel */
+    -fx-border-color: #4fc978;
+    -fx-border-width: 0 0 0 8px;
+}
+
+/* Player 4 (Oranye) */
+.side-card-orange {
+    -fx-background-color: #fff2e6; /* Oranye sangat terang/pastel */
+    -fx-border-color: #ff7f00;
+    -fx-border-width: 0 0 0 8px;
+}
+
+.dialog-title-gold {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8b6e43;
+    -fx-letter-spacing: 2px;
+}
+
+.card-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.card-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.dev-card {
+    -fx-background-color: white;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-min-width: 220px;
+    -fx-max-width: 220px;
+    -fx-min-height: 340px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0, 0, 5);
+}
+
+.dev-card-top {
+    -fx-min-height: 120px;
+    -fx-background-radius: 4px 4px 0 0;
+}
+.dev-card-icon {
+    -fx-font-size: 40px;
+}
+
+    .dev-card-purple { -fx-border-color: #d1b3ff; -fx-border-width: 1px; }
+    .dev-card-purple .dev-card-top { -fx-background-color: #f3ebff; }
+    .dev-card-purple .dev-card-icon { -fx-text-fill: #6a0dad; }
+
+    .dev-card-green { -fx-border-color: #a3e4b7; -fx-border-width: 1px; }
+    .dev-card-green .dev-card-top { -fx-background-color: #e6f9ec; }
+    .dev-card-green .dev-card-icon { -fx-text-fill: #1e8449; }
+
+    .dev-card-orange { -fx-border-color: #f5cba7; -fx-border-width: 1px; }
+    .dev-card-orange .dev-card-top { -fx-background-color: #fdf2e9; }
+    .dev-card-orange .dev-card-icon { -fx-text-fill: #d35400; }
+
+    .dev-card-darkgray { -fx-border-color: #666666; -fx-border-width: 1px; }
+    .dev-card-darkgray .dev-card-top { -fx-background-color: #555555; }
+    .dev-card-darkgray .dev-card-icon { -fx-text-fill: #ffffff; }
+
+.card-selected {
+    -fx-border-color: #2b43e2;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgb(131 160 255), 15, 0, 0, 5);
+}
+
+.dev-card-bottom {
+    -fx-padding: 20px 15px 10px 15px;
+    -fx-background-color: white;
+    -fx-background-radius: 0 0 4px 4px;
+}
+.dev-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+.dev-card-desc {
+    -fx-font-size: 12px;
+    -fx-text-fill: #666666;
+    -fx-line-spacing: 2px;
+}
+
+.dev-card-status {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
+    -fx-background-color: #f5f5f5;
+    -fx-padding: 8px;
+    -fx-pref-width: 220px;
+    -fx-alignment: center;
+}
+.status-passive {
+    -fx-text-fill: #888888;
+    -fx-background-color: #e8e8e8;
+}
+
+.btn-text-only {
+    -fx-background-color: transparent;
+    -fx-text-fill: #555555;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+.btn-text-only:hover {
+    -fx-text-fill: #000000;
+}
+
+.btn-play-card {
+    -fx-background-color: #7b5b2e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 2px;
+    -fx-cursor: hand;
+}
+.btn-play-card:hover {
+    -fx-background-color: #5c4320;
+}
+
+
+.settings-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+}
+
+
+.settings-card {
+    -fx-background-color: #f8f8f8;
+    -fx-background-radius: 8px;
+    -fx-padding: 30px 20px;
+    -fx-min-width: 250px;
+    -fx-min-height: 250px;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 10, 0, 0, 2);
+}
+
+.settings-card-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-text-alignment: center;
+}
+
+.settings-icon-box {
+    -fx-min-width: 50px;
+    -fx-min-height: 50px;
+    -fx-max-width: 50px;
+    -fx-max-height: 50px;
+    -fx-background-radius: 12px;
+    -fx-alignment: center;
+    -fx-font-size: 24px;
+}
+.icon-yellow {
+    -fx-background-color: #ffd166;
+    -fx-text-fill: #855a00;
+}
+.icon-blue {
+    -fx-background-color: #3399ff;
+    -fx-text-fill: white;
+}
+
+.btn-outline-dark {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-min-width: 150px;
+    -fx-cursor: hand;
+}
+
+.black-text{
+    -fx-background-color: white;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.btn-solid-blue {
+    -fx-background-color: #005a9c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-min-width: 150px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.white-text{
+    -fx-background-color: #005a9c;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* --- VICTORY DIALOG --- */
+.victory-subtitle {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+
+/* KOTAK SKOR */
+.score-box {
+    -fx-background-radius: 4px;
+    -fx-min-width: 250px;
+    -fx-min-height: 100px;
+    -fx-alignment: center;
+    -fx-padding: 15px;
+}
+.score-box-public {
+    -fx-background-color: #f5f5f5;
+}
+.score-box-secret {
+    -fx-background-color: #fdf6e7;
+    -fx-border-color: #f0e6d2;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+
+.score-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+.score-title-gold {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #a67c00;
+}
+.score-value {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-font-family: 'Russo One', sans-serif;
+}
+.score-value-gold {
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a6327;
+    -fx-font-family: 'Russo One', sans-serif;
+}
+
+.reveal-section-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #666666;
+    -fx-padding: 15px 0 5px 0;
+}
+
+.reveal-card-row {
+    -fx-background-color: #f9f9f9;
+    -fx-background-radius: 4px;
+    -fx-border-radius: 4px;
+    -fx-border-width: 1px;
+    -fx-padding: 10px 15px;
+    -fx-alignment: center-left;
+}
+.row-purple { -fx-border-color: #e6ccff; -fx-background-color: #faf5ff; }
+.row-green { -fx-border-color: #cce6cc; -fx-background-color: #f5faf5; }
+.row-orange { -fx-border-color: #ffe6cc; -fx-background-color: #fffaf5; }
+
+.reveal-icon-box {
+    -fx-min-width: 36px;
+    -fx-min-height: 36px;
+    -fx-max-width: 36px;
+    -fx-max-height: 36px;
+    -fx-background-radius: 4px;
+    -fx-alignment: center;
+    -fx-font-size: 16px;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+}
+.icon-box-purple { -fx-border-color: #d1b3ff; -fx-background-color: #f3ebff; -fx-text-fill: #8a2be2; }
+.icon-box-green { -fx-border-color: #a3e4b7; -fx-background-color: #e6f9ec; -fx-text-fill: #2ecc71; }
+.icon-box-orange { -fx-border-color: #f5cba7; -fx-background-color: #fdf2e9; -fx-text-fill: #e67e22; }
+
+.reveal-card-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+.reveal-card-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #888888;
+}
+.reveal-vp-text {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a6327;
+}
+
+.btn-win-game {
+    -fx-background-color: #7b5b2e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 2px;
+    -fx-cursor: hand;
+}
+.btn-win-game:hover {
+    -fx-background-color: #5c4320;
+}
+
+.theft-icon-box {
+    -fx-background-color: #ffe6e6;
+    -fx-text-fill: #b30000;
+    -fx-background-radius: 8px;
+    -fx-alignment: center;
+    -fx-font-size: 20px;
+}
+
+.theft-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+    -fx-letter-spacing: 2px;
+}
+
+.theft-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+    -fx-text-alignment: center;
+}
+
+.theft-resource-count {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-font-family: 'Courier New', monospace;
+}
+
+.theft-random-item {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #8a6327;
+    -fx-text-alignment: center;
+}
+
+.dark-button {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffd55e;
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 3em;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-background-radius: 5px;
+    -fx-border-radius: 5px;
+    -fx-border-width: 2px;
+    -fx-cursor: hand;
+}
+
+.turn-screen-bg {
+    -fx-background-color: #333333;
+    -fx-alignment: center;
+}
+
+.turn-game-title {
+    -fx-font-size: 44px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #d9d9d9;
+    -fx-letter-spacing: 4px;
+}
+
+.turn-icon-box {
+    -fx-background-color: #5c5243;
+    -fx-text-fill: #ffd55e;
+    -fx-min-width: 120px;
+    -fx-min-height: 120px;
+    -fx-max-width: 120px;
+    -fx-max-height: 120px;
+    -fx-background-radius: 8px;
+    -fx-alignment: center;
+    -fx-font-size: 26px;
+}
+
+.turn-heading {
+    -fx-font-size: 40px;
+    -fx-text-fill: white;
+}
+
+.turn-subheading {
+    -fx-font-size: 24px;
+    -fx-text-fill: #999999;
+}
+
+.turn-subheading-bold {
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.btn-ready {
+    -fx-background-color: #ffd55e;
+    -fx-text-fill: #333333;
+    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+    -fx-padding: 15px 35px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+    -fx-letter-spacing: 1px;
+}
+.btn-ready:hover {
+    -fx-background-color: #e3c174;
+}
+
+.turn-divider {
+    -fx-background-color: #4a4a4a;
+    -fx-min-height: 1px;
+    -fx-max-height: 1px;
+}
+
+.turn-footer {
+    -fx-font-size: 20px;
+    -fx-text-fill: #777777;
+    -fx-font-weight: bold;
+}
+
+.game-over-bg {
+    -fx-background-color: #ffffff;
+}
+
+.go-title {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-playtime-box {
+    -fx-background-color: #f4f4f4;
+    -fx-padding: 50px 150px;
+    -fx-alignment: center;
+    -fx-background-radius: 4px;
+}
+
+.go-playtime-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-letter-spacing: 2px;
+}
+
+.go-playtime-value {
+    -fx-font-size: 42px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #222222;
+    -fx-font-family: 'Courier New', monospace;
+    -fx-letter-spacing: 5px;
+}
+
+.go-section-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-padding: 0 0 10px 0;
+}
+
+.go-table-container {
+    -fx-background-color: white;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
+.go-table-header {
+    -fx-background-color: #eaeaea;
+    -fx-padding: 15px 20px;
+    -fx-background-radius: 4px 4px 0 0;
+}
+
+.go-table-header-text {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+}
+
+.go-table-row {
+    -fx-background-color: white;
+    -fx-padding: 20px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.go-table-row-winner {
+    -fx-background-color: #fdf6e7;
+    -fx-padding: 20px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.go-table-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+}
+
+.go-table-text-winner {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-table-total {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #444444;
+}
+
+.go-table-total-winner {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7b5b2e;
+}
+
+.go-footer-text {
+    -fx-font-size: 10px;
+    -fx-text-fill: #999999;
+    -fx-font-family: 'Courier New', monospace;
+    -fx-padding: 15px 0 0 0;
+}
+
+.go-bottom-bar {
+    -fx-background-color: #f7f7f7;
+    -fx-padding: 30px;
+}
+
+.btn-outline-gold {
+    -fx-background-color: white;
+    -fx-border-color: #dddddd;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+    -fx-text-fill: #666666;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 15px 30px;
+    -fx-cursor: hand;
+}
+
+.btn-outline-gold:hover {
+    -fx-text-fill: #222222;
+    -fx-border-color: #aaaaaa;
+}
+
+/* ===== RESPONSIVE FULLSCREEN FIX ===== */
+
+/* Root ScrollPane: transparent background so it doesn't show its own color */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical,
+.scroll-pane .scroll-bar:horizontal {
+    -fx-opacity: 0.6;
+}
+
+/* Dialog overlay that fills the screen with a dark blur-ready background */
+.dialog-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-alignment: center;
+    -fx-padding: 40px;
+}
+
+/* Ensure turn-screen-bg fills the full area it's given */
+.turn-screen-bg {
+    -fx-min-width: 100%;
+    -fx-min-height: 100%;
+}
+
+/* Ensure main-menu-bg fills the full area */
+.main-menu-bg {
+    -fx-min-width: 100%;
+    -fx-min-height: 100%;
 }

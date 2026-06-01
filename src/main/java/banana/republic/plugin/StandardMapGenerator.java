@@ -21,29 +21,38 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
     private static final double SQRT_3 = Math.sqrt(3.0);
 
     private static final TerrainType[] FIXED_HEX_LAYOUT = new TerrainType[] {
-        TerrainType.FOREST,
-        TerrainType.FOREST,
-        TerrainType.FOREST,
+        // Row -2: top row in game.fxml
         TerrainType.FOREST,
         TerrainType.HILL,
+        TerrainType.FOREST,
+        // Row -1
+        TerrainType.MOUNTAIN,
+        TerrainType.BANANA_PLANTATION,
+        TerrainType.FIELD,
+        TerrainType.FOREST,
+        // Row 0
+        TerrainType.FOREST,
         TerrainType.HILL,
+        TerrainType.DESERT,
+        TerrainType.FIELD,
+        TerrainType.MOUNTAIN,
+        // Row 1
+        TerrainType.FOREST,
         TerrainType.HILL,
-        TerrainType.FIELD,
-        TerrainType.FIELD,
-        TerrainType.FIELD,
+        TerrainType.FOREST,
+        TerrainType.BANANA_PLANTATION,
+        // Row 2
         TerrainType.FIELD,
         TerrainType.MOUNTAIN,
-        TerrainType.MOUNTAIN,
-        TerrainType.MOUNTAIN,
-        TerrainType.BANANA_PLANTATION,
-        TerrainType.BANANA_PLANTATION,
-        TerrainType.BANANA_PLANTATION,
-        TerrainType.BANANA_PLANTATION,
-        TerrainType.DESERT
+        TerrainType.FOREST
     };
 
     private static final int[] FIXED_TOKEN_LAYOUT = new int[] {
-        2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12
+        5, 2, 6,
+        3, 8, 10, 9,
+        12, 11, 4, 8,
+        10, 9, 4, 5,
+        6, 3, 11
     };
 
     private static final HarborType[] HARBOR_CONFIG = new HarborType[] {

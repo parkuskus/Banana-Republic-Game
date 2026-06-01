@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane pannable="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.VictoryDialogController">
+
+    <content>
+        <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="dialog-overlay" stylesheets="@../css/style.css">
+
+            <VBox maxHeight="650" maxWidth="600" spacing="20" style="-fx-padding: 30px;" styleClass="dialog-box">
+
+                <BorderPane>
+                    <left>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <ImageView fitHeight="39.0" fitWidth="38.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../icons/achievement.png" />
+                                </image>
+                            </ImageView>
+                            <Label styleClass="dialog-title-dark" text="DECLARE VICTORY?" />
+                        </HBox>
+                    </left>
+                    <right>
+                        <Button onAction="#closeDialog" styleClass="close-btn" text="✕" />
+                    </right>
+                </BorderPane>
+
+                <VBox alignment="CENTER" spacing="5" style="-fx-padding: 10px 0 20px 0;">
+                    <Label styleClass="victory-subtitle" text="You have reached 10 Victory Points!" />
+                </VBox>
+
+                <HBox alignment="CENTER" spacing="20">
+                    <VBox spacing="5" styleClass="score-box, score-box-public">
+                        <Label styleClass="score-title" text="PUBLIC POINTS" />
+                        <Label fx:id="publicPointsLabel" styleClass="score-value" text="0" />
+                    </VBox>
+                    <VBox spacing="5" styleClass="score-box, score-box-secret">
+                        <Label styleClass="score-title-gold" text="SECRET CARD POINTS" />
+                        <Label fx:id="secretPointsLabel" styleClass="score-value-gold" text="0" />
+                    </VBox>
+                </HBox>
+
+                <VBox fx:id="revealedCardsContainer" spacing="10">
+                    <Label styleClass="reveal-section-title" text="REVEAL SECRET CARDS" />
+
+                    <HBox fx:id="knightCardRow" spacing="15" styleClass="reveal-card-row, row-purple">
+                        <StackPane styleClass="reveal-icon-box, icon-box-purple">
+                            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../icons/shield.png" />
+                                </image>
+                            </ImageView>
+                        </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="2">
+                            <Label styleClass="reveal-card-title" text="Kartu Penjaga" />
+                            <Label styleClass="reveal-card-subtitle" text="Knight Card" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox fx:id="progressCardRow" spacing="15" styleClass="reveal-card-row, row-green">
+                        <StackPane styleClass="reveal-icon-box, icon-box-green">
+                            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../icons/farm-tractor.png" />
+                                </image>
+                            </ImageView>
+                        </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="2">
+                            <Label styleClass="reveal-card-title" text="Kartu Inovasi" />
+                            <Label styleClass="reveal-card-subtitle" text="Progress Card" />
+                        </VBox>
+                    </HBox>
+
+                    <HBox fx:id="vpCardRow" spacing="15" styleClass="reveal-card-row, row-orange">
+                        <StackPane styleClass="reveal-icon-box, icon-box-orange">
+                            <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                                <image>
+                                    <Image url="@../icons/medal.png" />
+                                </image>
+                            </ImageView>
+                        </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="2">
+                            <Label styleClass="reveal-card-title" text="Kartu Poin Prestasi Rahasia" />
+                            <Label styleClass="reveal-card-subtitle" text="Victory Point Card" />
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" /> <Label styleClass="reveal-vp-text" text="+2 VP" />
+                    </HBox>
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <HBox alignment="BOTTOM_RIGHT" spacing="15" style="-fx-padding: 20px 0 0 0;">
+                    <Button onAction="#closeDialog" styleClass="btn-cancel" text="CANCEL" />
+                    <Button onAction="#handleRevealAndWin" styleClass="btn-win-game" text="REVEAL SECRETS &amp; WIN GAME" />
+                </HBox>
+
+            </VBox>
+        </StackPane>
+    </content>
+
+</ScrollPane>

@@ -21,31 +21,31 @@ public class Board {
         this.harbors = copyList(harbors);
     }
 
-    public HexTile getHexTileById(int id) {
+    public Optional<HexTile> getHexTileById(int id) {
         for (HexTile tile : hexTiles) {
             if (tile.getId() == id) {
-                return tile;
+                return Optional.of(tile);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
-    public Intersection getIntersectionById(int id) {
+    public Optional<Intersection> getIntersectionById(int id) {
         for (Intersection intersection : intersections) {
             if (intersection.getId() == id) {
-                return intersection;
+                return Optional.of(intersection);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
-    public Path getPathById(int id) {
+    public Optional<Path> getPathById(int id) {
         for (Path path : paths) {
             if (path.getId() == id) {
-                return path;
+                return Optional.of(path);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public List<Intersection> getAdjacentIntersections(HexTile hex) {
@@ -188,6 +188,16 @@ public class Board {
             }
         }
         return Collections.unmodifiableList(result);
+    }
+
+    public Path findPathBetween(Intersection a, Intersection b) {
+        if (a == null || b == null) return null;
+        for (Path path : a.getAdjacentPaths()) {
+            if (path.getIntersectionA().equals(b) || path.getIntersectionB().equals(b)) {
+                return path;
+            }
+        }
+        return null;
     }
 
     /**

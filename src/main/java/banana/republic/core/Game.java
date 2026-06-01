@@ -1,5 +1,11 @@
 package banana.republic.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.board.Intersection;
@@ -23,16 +29,11 @@ import banana.republic.resource.BankImpl;
 import banana.republic.resource.ResourceProductionService;
 import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
-import banana.republic.timer.TurnTimer;
 import banana.republic.save.GameSaveManager;
+import banana.republic.timer.TurnTimer;
 import banana.republic.trade.TradeManager;
 import banana.republic.trade.TradeOffer;
 import banana.republic.trade.ValidationResult;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Orkestrator utama permainan Banana Republic.
@@ -117,6 +118,7 @@ public class Game {
         this.players = new ArrayList<>(players);
         this.bank = new BankImpl();
         this.cardDeck = new CardDeck();
+        this.cardDeck.buildDefaultDeck();
         this.dice = new Dice();
         this.gameLog = new GameLog();
         this.productionService = new ResourceProductionService();
@@ -219,28 +221,54 @@ public class Game {
             LogEntry.EventType.SYSTEM,
             "Fase Setup dimulai. Pemain menentukan urutan dengan dadu.");
 
-        // Tentukan pemain pertama: setiap pemain lempar dadu, yang tertinggi
-        // mulai
-        int highestRoll = -1;
-        int firstPlayerIndex = 0;
-        for (int i = 0; i < players.size(); i++) {
-            DiceResult roll = dice.roll();
-            int total = roll.getTotal();
-            gameLog.addEntry(
-                LogEntry.EventType.SYSTEM, players.get(i).getName(),
-                players.get(i).getName() + " melempar dadu: " + roll.getDie1() +
-                    " + " + roll.getDie2() + " = " + total);
-            if (total > highestRoll) {
-                highestRoll = total;
-                firstPlayerIndex = i;
+        // Tentukan pemain pertama: setiap pemain melempar dadu. Jika ada seri
+        // tertinggi, ulangi lemparan hanya di antara pemain yang seri sampai
+        // didapat satu pemenang.
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < players.size(); i++) candidates.add(i);
+
+        int firstPlayerIndex = -1;
+        int winningRoll = -1;
+
+        while (firstPlayerIndex == -1) {
+            // lakukan lemparan untuk kandidat saat ini
+            Map<Integer, Integer> rollTotals = new HashMap<>();
+            int highest = -1;
+            for (int idx : candidates) {
+                DiceResult roll = dice.roll();
+                int total = roll.getTotal();
+                rollTotals.put(idx, total);
+                gameLog.addEntry(
+                    LogEntry.EventType.SYSTEM, players.get(idx).getName(),
+                    players.get(idx).getName() + " melempar dadu: " + roll.getDie1() +
+                        " + " + roll.getDie2() + " = " + total);
+                if (total > highest) highest = total;
+            }
+
+            // Ambil semua kandidat yang mendapatkan nilai tertinggi
+            List<Integer> winners = new ArrayList<>();
+            for (var e : rollTotals.entrySet()) {
+                if (e.getValue() == highest) winners.add(e.getKey());
+            }
+
+            if (winners.size() == 1) {
+                firstPlayerIndex = winners.get(0);
+                winningRoll = highest;
+            } else {
+                // Seri: log dan ulangi hanya antara pemain yang seri
+                String names = String.join(", ", winners.stream().map(i -> players.get(i).getName()).toList());
+                gameLog.addEntry(LogEntry.EventType.SYSTEM,
+                                 "Tie: ulangi lemparan di antara: " + names);
+                candidates = winners;
             }
         }
+
         turnManager.setActiveIndex(firstPlayerIndex);
         gameLog.addEntry(
             LogEntry.EventType.TURN_CHANGE,
             players.get(firstPlayerIndex).getName(),
             players.get(firstPlayerIndex).getName() +
-                " memulai pertama (dadu tertinggi: " + highestRoll + ")");
+                " memulai pertama (dadu tertinggi: " + winningRoll + ")");
     }
 
     /**
@@ -343,18 +371,16 @@ public class Game {
                              lastDiceResult.getDie2() + " = " + total);
 
         if (lastDiceResult.isSeven()) {
-            // Nimon Ungu aktif — diproses di Fase 4; sementara set phase ke
-            // TRADE_BUILD
             gameLog.addEntry(LogEntry.EventType.ROBBER,
                              getActivePlayer().getName(),
                              "Dadu 7! Nimon Ungu aktif.");
+            currentPhase = GamePhase.ROBBER_PLACEMENT;
         } else {
             // Distribusi resource normal
             productionService.distributeForRoll(total, board, players, bank);
+            currentPhase = GamePhase.TRADE_BUILD;
         }
 
-        // Pindah ke fase Trade/Build dan mulai timer
-        currentPhase = GamePhase.TRADE_BUILD;
         cardPlayedThisTurn = null;
         cardBoughtThisTurn = null;
         return lastDiceResult;
@@ -371,7 +397,16 @@ public class Game {
 
         turnManager.stopTimer();
         tradeManager.reset(); // tutup semua negosiasi yang masih terbuka
+        
         Player prev = getActivePlayer();
+        
+        // Tandai bahwa kartu yang baru dibeli giliran ini sekarang bisa dimainkan
+        for (banana.republic.card.ExperimentCard card : prev.getHandCards()) {
+            if (card instanceof banana.republic.card.DevelopmentCard devCard) {
+                devCard.setNewlyDrawn(false);
+            }
+        }
+        
         turnManager.advanceTurn();
         currentPhase = GamePhase.RESOURCE_GATHERING;
         turnNumber++;
@@ -651,6 +686,9 @@ public class Game {
                          player.getName() +
                              " membangun Pos Pantau di intersection #" +
                              intersection.getId());
+
+        // Pos Pantau baru bisa memutus jalan terpanjang pemain lain
+        updateLongestRoad();
     }
 
     /**
@@ -914,7 +952,7 @@ public class Game {
                 "Hanya boleh memainkan 1 kartu per giliran");
         }
         if (!card.isPlayable()) {
-            throw new IllegalStateException("Kartu " + card.getCardName() +
+            throw new IllegalStateException("" + card.getCardName() +
                                             " tidak bisa dimainkan saat ini");
         }
 
@@ -1112,6 +1150,12 @@ public class Game {
      * Dipanggil secara internal oleh {@link #buildRoad} dan {@link #placeInitialRoad}.
      */
     private void updateLongestRoad() {
+        // Recompute longest road lengths from current board state
+        for (Player p : players) {
+            int length = vpCalculator.computeLongestRoadLength(p, board);
+            p.setLongestRoadLength(length);
+        }
+
         Player prev    = null;
         for (Player p : players) {
             if (p.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) { prev = p; break; }

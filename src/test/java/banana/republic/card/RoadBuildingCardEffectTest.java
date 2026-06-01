@@ -97,5 +97,32 @@ class RoadBuildingCardEffectTest {
         public List<Path> chooseRoadBuildingPaths(Player player, List<Path> candidates, int maxPlacements) {
             return selectedPaths;
         }
+
+        @Override
+        public Player getCurrentPlayer() {
+            return players.isEmpty() ? null : players.get(0);
+        }
+
+        @Override
+        public banana.republic.card.CardDeck getCardDeck() {
+            return null;
+        }
+
+        @Override
+        public banana.republic.board.HexTile getRobberPosition() {
+            return board != null
+                ? board.getRobberTile().orElse(null)
+                : null;
+        }
+
+        @Override
+        public banana.republic.board.HexTile chooseKnightTarget(Player player, List<banana.republic.board.HexTile> candidates) {
+            return null;
+        }
+
+        @Override
+        public Player chooseKnightVictim(Player player, banana.republic.board.HexTile target, List<Player> candidates) {
+            return null;
+        }
     }
 }

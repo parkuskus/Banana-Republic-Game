@@ -1,0 +1,808 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
+   <children>
+      <StackPane fx:id="tradeDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="cardDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="stealDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="settingsDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="victoryDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="discardDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
+      <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="vbox-shade">
+         <children>
+            <VBox prefHeight="1080.0" prefWidth="1920.0">
+               <children>
+
+                  <HBox prefHeight="830.0" prefWidth="1920.0">
+                     <children>
+                        <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="1270.0">
+                           <children>
+
+                              <StackPane maxHeight="-Infinity" prefHeight="500.0" prefWidth="1148.0" styleClass="hexmap-bg">
+                                 <children>
+                                    <ImageView fitHeight="875.0" fitWidth="1188.0" pickOnBounds="true" StackPane.alignment="CENTER">
+                                       <image>
+                                          <Image url="@../icons/ocean.png" />
+                                       </image>
+                                    </ImageView>
+                                    <Group scaleX="1.5" scaleY="1.5" styleClass="coastline-border">
+                                       <children>
+                                          <StackPane fx:id="hexdesert" layoutX="188.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-desert">
+                                             <children>
+                                                <Label styleClass="marcellus-text15" text="Desert" textAlignment="CENTER" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER">
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="235.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="4" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="282.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wheat">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="4" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane fx:id="harborRV" layoutX="376.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-ore">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="8" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="94.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-brick">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="11" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="12" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="282.0" layoutY="324.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="11" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane fx:id="harborRD2" layoutX="329.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-banana">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="5" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="282.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="6" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+
+                                          <StackPane layoutX="235.0" layoutY="81.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wheat">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="10" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane layoutX="141.0" layoutY="81.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-banana">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="8" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborLV1" layoutX="47.0" layoutY="81.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-ore">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="3" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborLU" layoutX="94.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="5" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborRU1" layoutX="188.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-brick">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="2" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane layoutX="141.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-brick">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="9" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborLV2" layoutX="47.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="10" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborRD1" layoutX="188.0" layoutY="324.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-ore">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="3" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborLD" layoutX="94.0" layoutY="324.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wheat">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="6" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                          <StackPane fx:id="harborRU2" layoutX="329.0" layoutY="81.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                             <children>
+                                                <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
+                                                <Label styleClass="russo-text-small" text="9" />
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
+                                                   <image>
+                                                      <Image url="@../icons/nimon_ungu.png" />
+                                                   </image>
+                                                   <StackPane.margin>
+                                                      <Insets top="10.0" />
+                                                   </StackPane.margin>
+                                                </ImageView>
+                                             </children>
+                                          </StackPane>
+                                       </children>
+                                    </Group>
+                                    <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
+                                       <children>
+                                           <Label fx:id="currentConditionLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Condition">
+                                              <VBox.margin>
+                                                 <Insets bottom="10.0" />
+                                              </VBox.margin>
+                                           </Label>
+                                             <Label fx:id="currentPlayerLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
+                                          <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
+                                             <children>
+                                           <ImageView fx:id="diceImage1" fitHeight="150.0" fitWidth="118.0" pickOnBounds="true" preserveRatio="true">
+                                                    <HBox.margin>
+                                                       <Insets right="20.0" />
+                                                    </HBox.margin>
+                                                    <image>
+                                                       <Image url="@../icons/dice_one.png" />
+                                                    </image>
+                                                 </ImageView>
+                                                 <ImageView fx:id="diceImage2" fitHeight="150.0" fitWidth="118.0" layoutX="10.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true">
+                                                   <image>
+                                                      <Image url="@../icons/dice_one.png" />
+                                                   </image>
+                                                </ImageView>
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </StackPane>
+                           </children>
+                        </VBox>
+
+                         <VBox fx:id="sidePanel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="431.0" spacing="12.0" style="-fx-background-color: #f3f1eb; -fx-padding: 16;" styleClass="side-panel" HBox.hgrow="ALWAYS">
+                           <children>
+
+                              <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #888;" text="PLAYERS" />
+
+                                <HBox fx:id="playerPanel1" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
+                                   <children>
+                                      <Region minWidth="6.0" style="-fx-background-color: #c21a09; -fx-background-radius: 8 0 0 8;" />
+                                      <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-red" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                             <children>
+                                                <StackPane>
+                                                   <children>
+                                                      <Circle fill="#c21a09" radius="16.0" />
+                                                      <Label style="-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="1" />
+                                                   </children>
+                                                </StackPane>
+                                                <Label style="-fx-font-weight: bold; -fx-font-size: 1.3em; -fx-text-fill: #444;" text="Player1" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Label style="-fx-background-color: #c21a09; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="10 VP" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="8.0">
+                                             <children>
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="PIPE: 12/15" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="POST: 3/5" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="LAB: 1/4" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="16.0">
+                                             <children>
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Resources: 7" />
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Dev Cards: 2" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+
+                                <HBox fx:id="playerPanel2" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                   <children>
+                                      <Region minWidth="6.0" style="-fx-background-color: #305cde; -fx-background-radius: 8 0 0 8;" />
+                                      <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-blue" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                             <children>
+                                                <StackPane>
+                                                   <children>
+                                                      <Circle fill="#305cde" radius="16.0" />
+                                                      <Label style="-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="2" />
+                                                   </children>
+                                                </StackPane>
+                                                <Label style="-fx-font-weight: bold; -fx-font-size: 1.3em; -fx-text-fill: #444;" text="Player2" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Label style="-fx-background-color: #305cde; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="8 VP" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="8.0">
+                                             <children>
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="PIPE: 10" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="POST: 4" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="LAB: 0" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="16.0">
+                                             <children>
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Resources: 4" />
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Dev Cards: 1" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </HBox>
+
+                                <HBox fx:id="playerPanel3" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                   <children>
+                                      <Region minWidth="6.0" style="-fx-background-color: #4fc978; -fx-background-radius: 8 0 0 8;" />
+                                      <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-green" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                             <children>
+                                                <StackPane>
+                                                   <children>
+                                                      <Circle fill="#4fc978" radius="16.0" />
+                                                      <Label style="-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="3" />
+                                                   </children>
+                                                </StackPane>
+                                                <Label style="-fx-font-weight: bold; -fx-font-size: 1.3em; -fx-text-fill: #444;" text="Player3" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Label style="-fx-background-color: #4fc978; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="6 VP" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="8.0">
+                                             <children>
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="PIPE: 9" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="POST: 2" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="LAB: 2" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="16.0">
+                                             <children>
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Resources: 9" />
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Dev Cards: 3" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+
+                                <HBox fx:id="playerPanel4" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                   <children>
+                                      <Region minWidth="6.0" style="-fx-background-color: #ff7f00; -fx-background-radius: 8 0 0 8;" />
+                                      <VBox spacing="8.0" style="-fx-padding: 12;" styleClass="side-card-orange" HBox.hgrow="ALWAYS">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                             <children>
+                                                <StackPane>
+                                                   <children>
+                                                      <Circle fill="#ff7f00" radius="16.0" />
+                                                      <Label style="-fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="4" />
+                                                   </children>
+                                                </StackPane>
+                                                <Label style="-fx-font-weight: bold; -fx-font-size: 1.3em; -fx-text-fill: #444;" text="Player4" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Label style="-fx-background-color: #ff7f00; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-size: 1.1em;" text="4 VP" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="8.0">
+                                             <children>
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="PIPE: 8" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="POST: 1" />
+                                                <Label style="-fx-background-color: #f4f4f4; -fx-padding: 4 8; -fx-background-radius: 4; -fx-font-size: 0.9em; -fx-font-weight: bold; -fx-text-fill: #888;" text="LAB: 0" />
+                                             </children>
+                                          </HBox>
+                                          <HBox spacing="16.0">
+                                             <children>
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Resources: 3" />
+                                                <Label style="-fx-font-size: 1.0em; -fx-text-fill: #666; -fx-font-weight: bold;" text="Dev Cards: 0" />
+                                             </children>
+                                          </HBox>
+                                       </children>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+
+                               <VBox spacing="8.0" style="-fx-background-color: #ebeae6; -fx-background-radius: 10; -fx-padding: 14;" VBox.vgrow="ALWAYS">
+                                  <children>
+                                     <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="LOGBOOK" />
+                                     <ScrollPane fitToWidth="true" hbarPolicy="NEVER" prefHeight="170.0" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                                        <content>
+                                           <VBox fx:id="logbookContainer" spacing="8.0">
+                                              <children>
+                                                 <Label fx:id="logEntry1" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="• Game started." wrapText="true" />
+                                                 <Label fx:id="logEntry2" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry3" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry4" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry5" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry6" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry7" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry8" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry9" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry10" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry11" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry12" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry13" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry14" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry15" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                                 <Label fx:id="logEntry16" style="-fx-text-fill: #666; -fx-font-size: 1.0em;" text="" wrapText="true" />
+                                              </children>
+                                           </VBox>
+                                        </content>
+                                     </ScrollPane>
+                                  </children>
+                               </VBox>
+
+                              <VBox spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                 <children>
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="MAP LEGEND" />
+                                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#758b5a" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Wood" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#6d2a33" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Brick" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#e3c596" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Wheat" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#697e8b" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Ore" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#b3c473" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Banana" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#9e8468" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Desert" />
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="8.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                                 <children>
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="BUILD COST" />
+                                    <HBox spacing="12.0">
+                                       <children>
+                                          <Label fx:id="buildCostLeftLabel" maxWidth="1.7976931348623157E308" style="-fx-text-fill: #555; -fx-font-size: 0.9em; -fx-line-spacing: 2;" text="Pos Pantau&#10;Pipa" wrapText="true" HBox.hgrow="ALWAYS" />
+                                          <Label fx:id="buildCostRightLabel" maxWidth="1.7976931348623157E308" style="-fx-text-fill: #555; -fx-font-size: 0.9em; -fx-line-spacing: 2;" text="Laboratorium&#10;Kartu Temuan" wrapText="true" HBox.hgrow="ALWAYS" />
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
+
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="250.0" prefWidth="1920.0" spacing="20.0" styleClass="bottom-panel">
+                     <children>
+                        <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-wood">
+                           <HBox.margin>
+                              <Insets left="50.0" />
+                           </HBox.margin>
+                           <children>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblWoodCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/wood.png" />
+                                        </image>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </VBox.margin>
+                                    </ImageView>
+                                    <Label text="Wood" textAlignment="CENTER">
+                                       <styleClass>
+                                          <String fx:value="text-wood" />
+                                          <String fx:value="marcellus-text13" />
+                                       </styleClass>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                        </StackPane>
+                        <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-brick">
+                           <children>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblBrickCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/brick.png" />
+                                        </image>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </VBox.margin>
+                                    </ImageView>
+                                    <Label text="Brick" textAlignment="CENTER">
+                                       <styleClass>
+                                          <String fx:value="text-brick" />
+                                          <String fx:value="marcellus-text13" />
+                                       </styleClass>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <HBox.margin>
+                              <Insets left="70.0" />
+                           </HBox.margin>
+                        </StackPane>
+                        <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-wheat">
+                           <children>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblWheatCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/wheat.png" />
+                                        </image>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </VBox.margin>
+                                    </ImageView>
+                                    <Label text="Wheat" textAlignment="CENTER">
+                                       <styleClass>
+                                          <String fx:value="text-wheat" />
+                                          <String fx:value="marcellus-text13" />
+                                       </styleClass>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <HBox.margin>
+                              <Insets left="70.0" />
+                           </HBox.margin>
+                        </StackPane>
+                        <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-ore">
+                           <children>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblOreCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="37.0" pickOnBounds="true" preserveRatio="true" scaleX="-1.0">
+                                        <image>
+                                           <Image url="@../icons/ore.png" />
+                                        </image>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </VBox.margin>
+                                    </ImageView>
+                                    <Label text="Ore" textAlignment="CENTER">
+                                       <styleClass>
+                                          <String fx:value="text-ore" />
+                                          <String fx:value="marcellus-text13" />
+                                       </styleClass>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <HBox.margin>
+                              <Insets left="70.0" />
+                           </HBox.margin>
+                        </StackPane>
+                        <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-banana">
+                           <children>
+                               <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="1.5" translateX="10.0" translateY="-10.0" />
+                               <Label fx:id="lblBananaCount" styleClass="russo-text-small" text="3" translateX="2.0" translateY="-10.0" />
+                               <VBox alignment="BOTTOM_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="90.0" prefWidth="65.0" StackPane.alignment="TOP_CENTER">
+                                  <children>
+                                     <ImageView fitHeight="43.0" fitWidth="43.0" pickOnBounds="true" preserveRatio="true">
+                                        <image>
+                                           <Image url="@../icons/banana.png" />
+                                        </image>
+                                       <VBox.margin>
+                                          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                       </VBox.margin>
+                                    </ImageView>
+                                    <Label text="Banana" textAlignment="CENTER">
+                                       <styleClass>
+                                          <String fx:value="text-banana" />
+                                          <String fx:value="marcellus-text13" />
+                                       </styleClass>
+                                    </Label>
+                                 </children>
+                              </VBox>
+                           </children>
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <HBox.margin>
+                              <Insets left="70.0" />
+                           </HBox.margin>
+                        </StackPane>
+
+                         <VBox alignment="CENTER" maxHeight="-Infinity" prefHeight="180.0" prefWidth="174.0" spacing="6.0" styleClass="rounded-card-wood" HBox.hgrow="ALWAYS">
+                            <children>
+                               <Label styleClass="marcellus-timer-title" text="Time remaining" />
+                               <Label fx:id="timerLabel" styleClass="marcellus-timer-value" text="02:57" />
+                            </children>
+                           <HBox.margin>
+                              <Insets left="100.0" right="50.0" />
+                           </HBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="8.0">
+                           <HBox.margin>
+                              <Insets left="25.0" />
+                           </HBox.margin>
+                           <children>
+                               <Button fx:id="btnRollDice" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onRollDice" prefWidth="200.0" styleClass="game-bottom-button" text="Roll dice" />
+                               <Button fx:id="btnSetDice" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onSetDice" prefWidth="200.0" styleClass="game-bottom-button" text="Set dice" />
+                               <Button fx:id="btnBuild" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onBuild" prefWidth="200.0" styleClass="game-bottom-button" text="Build" />
+                           </children>
+                        </VBox>
+                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
+                           <children>
+                                <Button fx:id="btnTrade" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
+                                <Button fx:id="btnBuyCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#buyCard" prefWidth="200.0" styleClass="game-bottom-button" text="Buy Card" />
+                                <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toCard" prefWidth="200.0" styleClass="game-bottom-button" text="Play Card" />
+                                <Button fx:id="btnDeclareVictory" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toVictory" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
+                           </children>
+                           <HBox.margin>
+                              <Insets left="25.0" />
+                           </HBox.margin>
+                        </VBox>
+                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="5.0">
+                           <children>
+                                <Button fx:id="btnSteal" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSteal" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Steal" />
+                                <Button fx:id="btnDiscard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toDiscard" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Discard" />
+                                <Button fx:id="btnEndGame" maxWidth="-Infinity" mnemonicParsing="false" onAction="#endGame" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End Game" />
+                                <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
+                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
+                           </children>
+                           <HBox.margin>
+                              <Insets left="25.0" />
+                           </HBox.margin>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+      <StackPane fx:id="setupOrderOverlay" alignment="CENTER" managed="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-background-color: rgba(20, 30, 40, 0.55);" visible="false">
+         <children>
+            <VBox alignment="CENTER" maxWidth="540.0" spacing="18.0" style="-fx-background-color: #fffaf0; -fx-background-radius: 12; -fx-border-color: #2d2d2d; -fx-border-width: 2; -fx-border-radius: 12; -fx-padding: 26; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.25), 18, 0, 0, 6);">
+               <children>
+                  <HBox alignment="CENTER" spacing="12.0">
+                     <children>
+                        <ImageView fitHeight="52.0" fitWidth="52.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../icons/dice_six.png" />
+                           </image>
+                        </ImageView>
+                        <Label style="-fx-font-family: 'Russo One'; -fx-font-size: 24px; -fx-text-fill: #2d2d2d;" text="Tentukan Urutan Pemain" />
+                     </children>
+                  </HBox>
+                  <Label alignment="CENTER" style="-fx-font-size: 15px; -fx-text-fill: #555;" text="Setiap pemain melempar dadu untuk bagiannya sendiri. Pemain dengan hasil tertinggi memulai setup awal." textAlignment="CENTER" wrapText="true" />
+                  <VBox fx:id="setupOrderPlayersBox" maxWidth="460.0" spacing="8.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 14;" />
+                  <Label fx:id="setupOrderStatusLabel" alignment="CENTER" style="-fx-font-size: 14px; -fx-text-fill: #555; -fx-font-weight: bold;" text="Menunggu roll pertama." wrapText="true" />
+                  <Button fx:id="btnStartSetupOrder" mnemonicParsing="false" onAction="#onStartSetupOrder" prefHeight="42.0" prefWidth="260.0" styleClass="game-bottom-button" text="Roll" />
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+   </children>
+</StackPane>

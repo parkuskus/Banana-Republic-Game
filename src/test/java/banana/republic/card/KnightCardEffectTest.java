@@ -111,5 +111,27 @@ class KnightCardEffectTest {
         public Player chooseKnightVictim(Player player, HexTile target, List<Player> candidates) {
             return selectedVictim;
         }
+
+        @Override
+        public Player getCurrentPlayer() {
+            return players.isEmpty() ? null : players.get(0);
+        }
+
+        @Override
+        public banana.republic.card.CardDeck getCardDeck() {
+            return null;
+        }
+
+        @Override
+        public HexTile getRobberPosition() {
+            return board != null
+                ? board.getRobberTile().orElse(null)
+                : null;
+        }
+
+        @Override
+        public List<banana.republic.board.Path> chooseRoadBuildingPaths(Player player, List<banana.republic.board.Path> candidates, int maxPlacements) {
+            return List.of();
+        }
     }
 }

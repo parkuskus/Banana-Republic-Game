@@ -89,7 +89,10 @@ public class GameSaveManager {
 
         java.nio.file.Path targetPath = resolveSavePath(filePath, data.timestamp);
         try {
-            Files.createDirectories(targetPath.getParent());
+            java.nio.file.Path parent = targetPath.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
             try (Writer writer = Files.newBufferedWriter(targetPath)) {
                 gson.toJson(data, writer);
             }
@@ -846,19 +849,59 @@ public class GameSaveManager {
     private static PlayerStrategy defaultBotStrategy() {
         return new PlayerStrategy() {
             @Override
-            public List<banana.republic.player.Action> takeTurn(banana.republic.core.GameState state) {
-                return Collections.emptyList();
+            public List<banana.republic.player.Action> takeTurn(
+                    banana.republic.core.GameState state) {
+                List<banana.republic.player.Action> actions = new ArrayList<>();
+                // Bot minimal: langsung end turn
+                actions.add(new banana.republic.player.Action(
+                    banana.republic.player.ActionType.END_TURN));
+                return actions;
             }
 
             @Override
-            public Player chooseRobberTarget(banana.republic.core.GameState state,
-                                             List<Player> candidates) {
-                return (candidates == null || candidates.isEmpty()) ? null : candidates.get(0);
+            public Player chooseRobberTarget(
+                    banana.republic.core.GameState state,
+                    List<Player> candidates) {
+                if (candidates == null || candidates.isEmpty()) {
+                    return null;
+                }
+                // Pilih korban dengan resource terbanyak
+                Player best = null;
+                int max = -1;
+                for (Player p : candidates) {
+                    int count = p.getTotalResourceCount();
+                    if (count > max) {
+                        max = count;
+                        best = p;
+                    }
+                }
+                return best;
             }
 
             @Override
-            public HexTile chooseRobberPlacement(banana.republic.core.GameState state) {
-                return null;
+            public HexTile chooseRobberPlacement(
+                    banana.republic.core.GameState state) {
+                // Pilih tile dengan token angka tinggi (8 atau 6) yang
+                // bukan posisi robber saat ini
+                HexTile current = state.getRobberPosition();
+                HexTile best = null;
+                int bestValue = -1;
+                for (HexTile tile : state.getBoard().getAllHexTiles()) {
+                    if (tile.equals(current)) {
+                        continue;
+                    }
+                    if (tile.getTerrainType() == banana.republic.board.TerrainType.DESERT) {
+                        continue;
+                    }
+                    int val = (tile.getNumberToken() != null)
+                        ? tile.getNumberToken().getValue()
+                        : 0;
+                    if (val > bestValue) {
+                        bestValue = val;
+                        best = tile;
+                    }
+                }
+                return best;
             }
         };
     }
