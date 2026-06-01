@@ -44,7 +44,7 @@
                                           <StackPane fx:id="hexdesert" layoutX="188.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-desert">
                                              <children>
                                                 <Label styleClass="marcellus-text15" text="Desert" textAlignment="CENTER" />
-                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" StackPane.alignment="TOP_CENTER">
+                                                <ImageView fitHeight="37.0" fitWidth="33.0" pickOnBounds="true" preserveRatio="true" visible="false" StackPane.alignment="TOP_CENTER">
                                                    <StackPane.margin>
                                                       <Insets top="10.0" />
                                                    </StackPane.margin>
