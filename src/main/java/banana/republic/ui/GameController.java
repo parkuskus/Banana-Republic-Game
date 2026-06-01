@@ -18,6 +18,7 @@ import banana.republic.board.HexTile;
 import banana.republic.core.Game;
 import banana.republic.core.GamePhase;
 import banana.republic.core.LogEntry;
+import banana.republic.core.TurnOrder;
 import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
@@ -57,6 +58,7 @@ public class GameController implements Initializable {
     @FXML private StackPane settingsDialogOverlay;
     @FXML private StackPane victoryDialogOverlay;
     @FXML private StackPane discardDialogOverlay;
+    @FXML private StackPane setupOrderOverlay;
     @FXML private StackPane hexdesert;
     @FXML private StackPane harborLV1;
     @FXML private StackPane harborLV2;
@@ -75,6 +77,8 @@ public class GameController implements Initializable {
     @FXML private Label timerLabel;
     @FXML private ImageView diceImage1, diceImage2;
     @FXML private Label currentPlayerLabel;
+    @FXML private Label setupOrderStatusLabel;
+    @FXML private VBox setupOrderPlayersBox;
 
     @FXML private VBox logbookContainer;
     @FXML private Label logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7, logEntry8;
@@ -83,6 +87,7 @@ public class GameController implements Initializable {
 
     @FXML private Button btnRollDice, btnSetDice, btnBuild, btnTrade, btnBuyCard, btnCard, btnDeclareVictory, btnSettings, btnEndTurn;
     @FXML private Button btnSteal, btnDiscard, btnEndGame;
+    @FXML private Button btnStartSetupOrder;
     @FXML private Label currentConditionLabel;
 
     // ============================================================
@@ -110,6 +115,10 @@ public class GameController implements Initializable {
     private final List<double[]> harborPoints = new ArrayList<>();
 
     private static Game currentGame;
+    private boolean setupOrderPending = false;
+    private List<Integer> setupOrderCandidates = new ArrayList<>();
+    private Map<Integer, DiceResult> setupOrderRolls = new HashMap<>();
+    private int setupOrderCursor = 0;
 
     private enum InteractionMode {
         NONE, SETTLEMENT, ROAD, CITY, ROBBER, BUILD_OVERLAY
@@ -172,6 +181,10 @@ public class GameController implements Initializable {
         if (game == null) return;
 
         buildVisualToModelMapping();
+        setupOrderPending = isSetupOrderPending();
+        if (setupOrderPending) {
+            resetSetupOrderCandidates();
+        }
 
         if (hexdesert != null) {
             Group parentMap = (Group) hexdesert.getParent();
@@ -185,9 +198,10 @@ public class GameController implements Initializable {
         }
 
         refreshAllUI();
+        updateSetupOrderOverlay();
         updatePhaseUI();
 
-        if (game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
+        if (!setupOrderPending && game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
             handleBotTurn();
         }
     }
@@ -203,6 +217,23 @@ public class GameController implements Initializable {
     // ============================================================
     // Action Handlers
     // ============================================================
+    @FXML
+    private void onStartSetupOrder() {
+        if (game == null || !setupOrderPending) return;
+        try {
+            rollCurrentSetupOrderPlayer();
+            updateSetupOrderOverlay();
+            refreshAllUI();
+            updatePhaseUI();
+
+            if (!setupOrderPending && game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
+                handleBotTurn();
+            }
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
     @FXML
     private void onRollDice() {
         if (game == null) return;
@@ -355,6 +386,10 @@ public class GameController implements Initializable {
     @FXML
     private void onBuild() {
         if (game == null) return;
+        if (setupOrderPending) {
+            showError("Tentukan urutan pemain terlebih dahulu.");
+            return;
+        }
         GamePhase phase = game.getCurrentPhase();
         if (phase.isSetupPhase() || phase == GamePhase.TRADE_BUILD) {
             toggleBuildOverlay();
@@ -1158,6 +1193,153 @@ public class GameController implements Initializable {
         renderExistingBuildings();
     }
 
+    private boolean isSetupOrderPending() {
+        if (game == null || game.getCurrentPhase() != GamePhase.SETUP_FIRST_ROUND || game.getSetupSettlementCount() != 0) {
+            return false;
+        }
+        return game.getGameLog().getEntries().stream()
+                .map(LogEntry::getMessage)
+                .noneMatch(message -> message != null && message.contains("Fase Setup dimulai"));
+    }
+
+    private void updateSetupOrderOverlay() {
+        if (setupOrderOverlay == null) return;
+        setupOrderOverlay.setVisible(setupOrderPending);
+        setupOrderOverlay.setManaged(setupOrderPending);
+        if (setupOrderPending) {
+            setupOrderOverlay.toFront();
+            updateSetupOrderPlayersLabel();
+        }
+    }
+
+    private void updateSetupOrderPlayersLabel() {
+        if (setupOrderPlayersBox == null || game == null) return;
+        setupOrderPlayersBox.getChildren().clear();
+
+        int currentIndex = getCurrentSetupOrderPlayerIndex();
+        for (int i = 0; i < game.getPlayers().size(); i++) {
+            Player player = game.getPlayers().get(i);
+            DiceResult roll = setupOrderRolls.get(i);
+            String resultText = roll == null ? "belum roll" : roll.getDie1() + " + " + roll.getDie2() + " = " + roll.getTotal();
+            Label row = new Label((i + 1) + ". " + player.getName() + " - " +
+                    formatPlayerColorName(player.getColor()) + " | " + resultText);
+            row.setMaxWidth(Double.MAX_VALUE);
+            row.setWrapText(true);
+            row.setStyle("-fx-font-size: 14px; -fx-text-fill: #444; -fx-padding: 4 6;");
+            if (i == currentIndex) {
+                row.setStyle(row.getStyle() + "-fx-font-weight: bold; -fx-background-color: #fff3cd; -fx-background-radius: 6;");
+            }
+            setupOrderPlayersBox.getChildren().add(row);
+        }
+
+        if (setupOrderStatusLabel != null) {
+            int idx = getCurrentSetupOrderPlayerIndex();
+            if (idx >= 0) {
+                setupOrderStatusLabel.setText("Giliran roll: " + game.getPlayers().get(idx).getName());
+            } else {
+                setupOrderStatusLabel.setText("Menentukan pemenang roll...");
+            }
+        }
+
+        if (btnStartSetupOrder != null) {
+            int idx = getCurrentSetupOrderPlayerIndex();
+            btnStartSetupOrder.setText(idx >= 0 ? "Roll untuk " + game.getPlayers().get(idx).getName() : "Lanjut");
+        }
+    }
+
+    private void resetSetupOrderCandidates() {
+        setupOrderCandidates = new ArrayList<>();
+        for (int i = 0; i < game.getPlayers().size(); i++) {
+            setupOrderCandidates.add(i);
+        }
+        setupOrderRolls = new HashMap<>();
+        setupOrderCursor = 0;
+    }
+
+    private int getCurrentSetupOrderPlayerIndex() {
+        if (!setupOrderPending || setupOrderCandidates.isEmpty() || setupOrderCursor >= setupOrderCandidates.size()) {
+            return -1;
+        }
+        return setupOrderCandidates.get(setupOrderCursor);
+    }
+
+    private void rollCurrentSetupOrderPlayer() {
+        if (setupOrderCandidates.isEmpty()) {
+            resetSetupOrderCandidates();
+        }
+
+        int playerIndex = getCurrentSetupOrderPlayerIndex();
+        if (playerIndex < 0) return;
+
+        Player player = game.getPlayers().get(playerIndex);
+        DiceResult result = game.getDice().roll();
+        setupOrderRolls.put(playerIndex, result);
+        showDiceResult(result);
+        game.getGameLog().addEntry(
+                LogEntry.EventType.SYSTEM,
+                player.getName(),
+                player.getName() + " melempar urutan: " + result.getDie1() +
+                        " + " + result.getDie2() + " = " + result.getTotal()
+        );
+
+        setupOrderCursor++;
+        if (setupOrderCursor >= setupOrderCandidates.size()) {
+            resolveSetupOrderRound();
+        }
+    }
+
+    private void resolveSetupOrderRound() {
+        int highest = setupOrderCandidates.stream()
+                .map(setupOrderRolls::get)
+                .filter(result -> result != null)
+                .mapToInt(DiceResult::getTotal)
+                .max()
+                .orElse(0);
+
+        List<Integer> winners = setupOrderCandidates.stream()
+                .filter(index -> setupOrderRolls.get(index) != null && setupOrderRolls.get(index).getTotal() == highest)
+                .toList();
+
+        if (winners.size() == 1) {
+            int winnerIndex = winners.get(0);
+            Player winner = game.getPlayers().get(winnerIndex);
+            game.getTurnManager().setActiveIndex(winnerIndex);
+            game.getTurnManager().setOrder(TurnOrder.CLOCKWISE);
+            game.getGameLog().addEntry(LogEntry.EventType.SYSTEM,
+                    "Fase Setup dimulai. Pemain menentukan urutan dengan dadu.");
+            game.getGameLog().addEntry(
+                    LogEntry.EventType.TURN_CHANGE,
+                    winner.getName(),
+                    winner.getName() + " memulai pertama (dadu tertinggi: " + highest + ")"
+            );
+            setupOrderPending = false;
+            if (setupOrderStatusLabel != null) {
+                setupOrderStatusLabel.setText(winner.getName() + " memulai pertama.");
+            }
+            return;
+        }
+
+        String names = String.join(", ", winners.stream()
+                .map(index -> game.getPlayers().get(index).getName())
+                .toList());
+        game.getGameLog().addEntry(LogEntry.EventType.SYSTEM,
+                "Seri urutan pemain: " + names + ". Roll ulang untuk pemain yang seri.");
+        setupOrderCandidates = new ArrayList<>(winners);
+        setupOrderRolls = new HashMap<>();
+        setupOrderCursor = 0;
+    }
+
+    private String formatPlayerColorName(PlayerColor color) {
+        if (color == null) return "Unknown";
+        return switch (color) {
+            case RED -> "Red";
+            case BLUE -> "Blue";
+            case GREEN -> "Green";
+            case ORANGE -> "Orange";
+            default -> color.name();
+        };
+    }
+
     public void updatePlayerPanel() {
         if (game == null) return;
         List<Player> players = game.getPlayers();
@@ -1344,6 +1526,11 @@ public class GameController implements Initializable {
 
     public void updateCurrentPlayer() {
         if (game == null || currentPlayerLabel == null) return;
+        if (setupOrderPending) {
+            currentPlayerLabel.setText("Roll Order");
+            currentPlayerLabel.setStyle("-fx-background-color: #fff3cd;");
+            return;
+        }
         Player active = game.getActivePlayer();
         if (active != null) {
             currentPlayerLabel.setText(active.getName() + "'s Turn");
@@ -1371,14 +1558,15 @@ public class GameController implements Initializable {
         boolean isGathering = (phase == GamePhase.RESOURCE_GATHERING);
         boolean isGameOver = (phase == GamePhase.GAME_OVER);
 
-        btnRollDice.setDisable(isSetup || !isGathering || isGameOver);
-        btnSetDice.setDisable(isSetup || isGameOver);
-        btnBuild.setDisable(isGathering || isGameOver);
-        btnTrade.setDisable(isSetup || isGathering || isGameOver);
-        btnCard.setDisable(isSetup || isGathering || isGameOver);
-        btnDeclareVictory.setDisable(isSetup || isGameOver);
-        btnEndTurn.setDisable(isSetup || isGathering || isGameOver);
+        btnRollDice.setDisable(setupOrderPending || isSetup || !isGathering || isGameOver);
+        btnSetDice.setDisable(setupOrderPending || isSetup || isGameOver);
+        btnBuild.setDisable(setupOrderPending || isGathering || isGameOver);
+        btnTrade.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
+        btnCard.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
+        btnDeclareVictory.setDisable(setupOrderPending || isSetup || isGameOver);
+        btnEndTurn.setDisable(setupOrderPending || isSetup || isGathering || isGameOver);
         btnSettings.setDisable(isGameOver);
+        if (btnStartSetupOrder != null) btnStartSetupOrder.setDisable(!setupOrderPending);
 
         if (btnSteal != null) btnSteal.setDisable(currentMode != InteractionMode.ROBBER);
         if (btnDiscard != null) btnDiscard.setDisable(humanDiscardQueue.isEmpty());
@@ -1980,6 +2168,10 @@ public class GameController implements Initializable {
 
     public void updateConditionLabel() {
         if (currentConditionLabel == null || game == null) return;
+        if (setupOrderPending) {
+            currentConditionLabel.setText("Fase: Tentukan Urutan");
+            return;
+        }
         switch (currentMode) {
             case SETTLEMENT -> currentConditionLabel.setText("Mode: Build Pos Pantau");
             case BUILD_OVERLAY -> currentConditionLabel.setText("Mode: Build (Pos Pantau / Pipa)");

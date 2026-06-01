@@ -241,7 +241,6 @@ public class LobbyController {
         }
 
         Game game = new Game(players, loadedMapPlugin);
-        game.startSetupPhase();
 
         FXMLLoader loader = App.getLoader("game");
         Parent root = loader.load();
