@@ -191,6 +191,60 @@ public class Board {
     }
 
     /**
+     * Mengembalikan daftar intersections yang bisa dibangun Pos Pantau
+     * oleh pemain (kosong, distance rule valid, dan terhubung ke road
+     * milik pemain).
+     */
+    public List<Intersection> getBuildableSettlements(Player player) {
+        if (player == null) {
+            return List.of();
+        }
+
+        List<Intersection> result = new ArrayList<>();
+        for (Intersection intersection : intersections) {
+            if (intersection.hasBuilding()) {
+                continue;
+            }
+            if (!isDistanceRuleValid(intersection)) {
+                continue;
+            }
+            // Harus terhubung ke minimal 1 road milik pemain
+            boolean connected = intersection.getAdjacentPaths().stream().anyMatch(
+                p -> p.hasRoad() && player.equals(p.getOwner()));
+            if (connected) {
+                result.add(intersection);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Mengembalikan daftar intersections yang memiliki Pos Pantau milik
+     * pemain dan bisa di-upgrade menjadi Laboratorium.
+     */
+    public List<Intersection> getBuildableCities(Player player) {
+        if (player == null) {
+            return List.of();
+        }
+
+        List<Intersection> result = new ArrayList<>();
+        for (Intersection intersection : intersections) {
+            if (!intersection.hasBuilding()) {
+                continue;
+            }
+            if (!player.equals(intersection.getOwner())) {
+                continue;
+            }
+            if (intersection.getBuilding().getBuildingType() !=
+                banana.republic.building.BuildingType.POS_PANTAU) {
+                continue;
+            }
+            result.add(intersection);
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
      * Mengembalikan true jika path terhubung ke jaringan road/bangunan
      * milik player.
      *

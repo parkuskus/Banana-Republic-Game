@@ -5,11 +5,15 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import banana.republic.App;
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
+import banana.republic.board.Intersection;
+import banana.republic.board.Path;
 import banana.republic.core.Game;
 import banana.republic.core.GamePhase;
 import banana.republic.core.LogEntry;
@@ -103,6 +107,13 @@ public class GameController implements Initializable {
 
     // Board visual → model mapping
     private final java.util.Map<StackPane, HexTile> visualToModelTile = new java.util.HashMap<>();
+    private final java.util.Map<HexTile, StackPane> modelToVisualTile = new java.util.HashMap<>();
+
+    // Intersection / Path visual → model mapping
+    private final java.util.Map<Circle, Intersection> intersectionVisualToModel = new java.util.HashMap<>();
+    private final java.util.Map<Intersection, Circle> modelToIntersectionVisual = new java.util.HashMap<>();
+    private final java.util.Map<Line, Path> pathVisualToModel = new java.util.HashMap<>();
+    private final java.util.Map<Path, Line> modelToPathVisual = new java.util.HashMap<>();
 
     /** Static reference for cross-screen access (result, transition) */
     private static Game currentGame;
@@ -289,21 +300,224 @@ public class GameController implements Initializable {
     private void onBuild() {
         if (game == null) return;
         GamePhase phase = game.getCurrentPhase();
+        clearBuildHighlights();
         if (phase.isSetupPhase()) {
             if (game.getSetupSettlementCount() % 2 == 0) {
                 currentMode = InteractionMode.SETTLEMENT;
-                showInfo("Klik persimpangan (intersection) untuk menempatkan Pos Pantau.");
+                showInfo("Klik lingkaran hijau di persimpangan untuk menempatkan Pos Pantau.");
+                // Highlight semua intersection kosong & valid (setup tidak perlu road connection)
+                for (Intersection i : game.getBoard().getAllIntersections()) {
+                    if (!i.hasBuilding() && game.getBoard().isDistanceRuleValid(i)) {
+                        Circle c = modelToIntersectionVisual.get(i);
+                        if (c != null) {
+                            c.setFill(Color.web("#4fc978"));
+                            c.setStroke(Color.web("#1a6b3a"));
+                            c.setOpacity(1.0);
+                            c.setRadius(18);
+                            c.setStrokeWidth(4.0);
+                            c.toFront();
+                        }
+                    }
+                }
             } else {
                 currentMode = InteractionMode.ROAD;
-                showInfo("Klik jalan (path) untuk menempatkan Pipa.");
+                showInfo("Klik garis oranye di jalan untuk menempatkan Pipa.");
+                // Highlight paths yang terhubung ke settlement pemain ini baru saja ditempatkan
+                Player active = game.getActivePlayer();
+                for (Path p : game.getBoard().getAllPaths()) {
+                    if (!p.isEmpty()) continue;
+                    if (active.equals(p.getIntersectionA().getOwner()) || active.equals(p.getIntersectionB().getOwner())) {
+                        Line l = modelToPathVisual.get(p);
+                        if (l != null) {
+                            l.setStroke(Color.web("#ff7f00"));
+                            l.setOpacity(1.0);
+                            l.setStrokeWidth(12);
+                            l.toFront();
+                        }
+                    }
+                }
             }
         } else if (phase == GamePhase.TRADE_BUILD) {
-            // Toggle build menu / prompt in future could show choices
-            currentMode = InteractionMode.SETTLEMENT;
-            showInfo("Klik persimpangan untuk membangun Pos Pantau, atau tekan Shift+klik untuk upgrade ke Laboratorium.");
+            showBuildChoiceDialog();
         } else {
             showError("Tidak bisa membangun di fase ini.");
         }
+    }
+
+    /**
+     * Menampilkan dialog pilihan jenis build saat fase TRADE_BUILD.
+     */
+    private void showBuildChoiceDialog() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+
+        javafx.scene.control.ChoiceDialog<String> dialog =
+            new javafx.scene.control.ChoiceDialog<>("Road", "Road", "Settlement", "City", "Buy Development Card");
+        dialog.setTitle("Build Menu");
+        dialog.setHeaderText("Pilih aksi pembangunan:");
+        dialog.setContentText("Pilihan:");
+
+        dialog.showAndWait().ifPresent(choice -> {
+            clearBuildHighlights();
+            switch (choice) {
+                case "Road" -> {
+                    currentMode = InteractionMode.ROAD;
+                    highlightBuildableRoads();
+                    showInfo("Klik garis oranye di peta untuk membangun Pipa.");
+                }
+                case "Settlement" -> {
+                    currentMode = InteractionMode.SETTLEMENT;
+                    highlightBuildableSettlements();
+                    showInfo("Klik lingkaran hijau di peta untuk membangun Pos Pantau.");
+                }
+                case "City" -> {
+                    currentMode = InteractionMode.CITY;
+                    highlightBuildableCities();
+                    showInfo("Klik lingkaran biru di peta untuk upgrade ke Laboratorium.");
+                }
+                case "Buy Development Card" -> buyDevelopmentCard();
+            }
+        });
+    }
+
+    private void showBuildRoadDialog() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        Board board = game.getBoard();
+        List<Path> buildable = board.getBuildableRoadPaths(active);
+        if (buildable.isEmpty()) {
+            showError("Tidak ada jalan yang bisa dibangun (pastikan ada road yang terhubung dan cukup resource).");
+            return;
+        }
+
+        Map<String, Path> labelMap = buildable.stream().collect(Collectors.toMap(
+            this::pathLabel,
+            p -> p,
+            (a, b) -> a,
+            java.util.LinkedHashMap::new
+        ));
+
+        javafx.scene.control.ChoiceDialog<String> dialog =
+            new javafx.scene.control.ChoiceDialog<>(labelMap.keySet().iterator().next(), labelMap.keySet());
+        dialog.setTitle("Build Road");
+        dialog.setHeaderText("Pilih path untuk membangun Pipa Transportasi");
+        dialog.setContentText("Path:");
+
+        dialog.showAndWait().ifPresent(selected -> {
+            Path path = labelMap.get(selected);
+            if (path != null) {
+                try {
+                    game.buildRoad(active, path);
+                    refreshAllUI();
+                    updatePhaseUI();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void showBuildSettlementDialog() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        Board board = game.getBoard();
+        List<Intersection> buildable = board.getBuildableSettlements(active);
+        if (buildable.isEmpty()) {
+            showError("Tidak ada persimpangan yang bisa dibangun (pastikan terhubung road, kosong, dan memenuhi distance rule).");
+            return;
+        }
+
+        Map<String, Intersection> labelMap = buildable.stream().collect(Collectors.toMap(
+            this::intersectionLabel,
+            i -> i,
+            (a, b) -> a,
+            java.util.LinkedHashMap::new
+        ));
+
+        javafx.scene.control.ChoiceDialog<String> dialog =
+            new javafx.scene.control.ChoiceDialog<>(labelMap.keySet().iterator().next(), labelMap.keySet());
+        dialog.setTitle("Build Settlement");
+        dialog.setHeaderText("Pilih persimpangan untuk membangun Pos Pantau");
+        dialog.setContentText("Intersection:");
+
+        dialog.showAndWait().ifPresent(selected -> {
+            Intersection intersection = labelMap.get(selected);
+            if (intersection != null) {
+                try {
+                    game.buildSettlement(active, intersection);
+                    refreshAllUI();
+                    updatePhaseUI();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void showBuildCityDialog() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        Board board = game.getBoard();
+        List<Intersection> buildable = board.getBuildableCities(active);
+        if (buildable.isEmpty()) {
+            showError("Tidak ada Pos Pantau yang bisa di-upgrade (pastikan Anda punya Pos Pantau dan cukup resource).");
+            return;
+        }
+
+        Map<String, Intersection> labelMap = buildable.stream().collect(Collectors.toMap(
+            this::intersectionLabel,
+            i -> i,
+            (a, b) -> a,
+            java.util.LinkedHashMap::new
+        ));
+
+        javafx.scene.control.ChoiceDialog<String> dialog =
+            new javafx.scene.control.ChoiceDialog<>(labelMap.keySet().iterator().next(), labelMap.keySet());
+        dialog.setTitle("Build City");
+        dialog.setHeaderText("Pilih Pos Pantau untuk di-upgrade ke Laboratorium");
+        dialog.setContentText("Intersection:");
+
+        dialog.showAndWait().ifPresent(selected -> {
+            Intersection intersection = labelMap.get(selected);
+            if (intersection != null) {
+                try {
+                    game.buildCity(active, intersection);
+                    refreshAllUI();
+                    updatePhaseUI();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            }
+        });
+    }
+
+    private void buyDevelopmentCard() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        try {
+            game.buyDevelopmentCard(active);
+            refreshAllUI();
+            updatePhaseUI();
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            showError(e.getMessage());
+        }
+    }
+
+    private String intersectionLabel(Intersection i) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Intersection #").append(i.getId()).append(" (");
+        List<String> tileLabels = i.getAdjacentHexTiles().stream()
+            .map(t -> t.getTerrainType().name() + (t.getNumberToken() != null ? "-" + t.getNumberToken().getValue() : ""))
+            .collect(Collectors.toList());
+        sb.append(String.join(", ", tileLabels));
+        sb.append(")");
+        return sb.toString();
+    }
+
+    private String pathLabel(Path p) {
+        return "Path #" + p.getId() + " (Intersections " + p.getIntersectionA().getId() +
+               " -> " + p.getIntersectionB().getId() + ")";
     }
 
     @FXML
@@ -311,7 +525,7 @@ public class GameController implements Initializable {
         if (game == null) return;
         try {
             game.endTurn();
-            currentMode = InteractionMode.NONE;
+            clearBuildHighlights();
             refreshAllUI();
             updatePhaseUI();
 
@@ -652,8 +866,11 @@ public class GameController implements Initializable {
             HexTile matched = findMatchingTile(board, terrain, tokenValue);
             if (matched != null) {
                 visualToModelTile.put(sp, matched);
+                modelToVisualTile.put(matched, sp);
             }
         }
+
+        renderIntersectionsAndPaths();
     }
 
     private banana.republic.board.TerrainType parseTerrainFromStyle(String style) {
@@ -695,6 +912,325 @@ public class GameController implements Initializable {
         return null;
     }
 
+    // ============================================================
+    // Visual Intersections & Paths rendering
+    // ============================================================
+    private final java.util.Map<Intersection, double[]> intersectionPositions = new java.util.HashMap<>();
+
+    private void renderIntersectionsAndPaths() {
+        if (game == null || hexdesert == null) return;
+        javafx.scene.Group boardGroup = (javafx.scene.Group) hexdesert.getParent();
+        if (boardGroup == null) return;
+        Board board = game.getBoard();
+
+        // Render intersections
+        for (Intersection intersection : board.getAllIntersections()) {
+            double[] pos = calculateIntersectionPosition(intersection);
+            if (pos == null) continue;
+            intersectionPositions.put(intersection, pos);
+
+            Circle circle = new Circle(pos[0], pos[1], 14);
+            circle.setFill(Color.web("#ffffff", 0.3));
+            circle.setStroke(Color.web("#333333"));
+            circle.setStrokeWidth(3.0);
+            circle.setOpacity(0.85);
+            circle.setManaged(false);
+            circle.setMouseTransparent(false);
+            circle.setPickOnBounds(false);
+            circle.setCursor(javafx.scene.Cursor.HAND);
+
+            // Hover effects
+            circle.setOnMouseEntered(e -> {
+                if (isBuildableIntersection(circle)) {
+                    circle.setFill(Color.YELLOW);
+                    circle.setOpacity(1.0);
+                    circle.setRadius(18);
+                    circle.setStrokeWidth(4.0);
+                } else {
+                    circle.setFill(Color.web("#ffcccc", 0.6));
+                }
+            });
+            circle.setOnMouseExited(e -> {
+                restoreIntersectionVisual(circle);
+            });
+            circle.setOnMouseClicked(e -> handleIntersectionClick(intersection));
+
+            boardGroup.getChildren().add(circle);
+            circle.toFront();
+            intersectionVisualToModel.put(circle, intersection);
+            modelToIntersectionVisual.put(intersection, circle);
+        }
+
+        // Render paths (lines between intersections)
+        for (Path path : board.getAllPaths()) {
+            Intersection iA = path.getIntersectionA();
+            Intersection iB = path.getIntersectionB();
+            double[] posA = intersectionPositions.get(iA);
+            double[] posB = intersectionPositions.get(iB);
+            if (posA == null || posB == null) continue;
+
+            Line line = new Line(posA[0], posA[1], posB[0], posB[1]);
+            line.setStroke(Color.web("#aaaaaa", 0.5));
+            line.setStrokeWidth(8);
+            line.setOpacity(0.6);
+            line.setManaged(false);
+            line.setMouseTransparent(false);
+            line.setCursor(javafx.scene.Cursor.HAND);
+
+            // Hover effects
+            line.setOnMouseEntered(e -> {
+                if (isBuildablePath(line)) {
+                    line.setStroke(Color.YELLOW);
+                    line.setOpacity(1.0);
+                    line.setStrokeWidth(12);
+                }
+            });
+            line.setOnMouseExited(e -> {
+                restorePathVisual(line);
+            });
+            line.setOnMouseClicked(e -> handlePathClick(path));
+
+            boardGroup.getChildren().add(line);
+            line.toFront();
+            pathVisualToModel.put(line, path);
+            modelToPathVisual.put(path, line);
+        }
+    }
+
+    private double[] calculateIntersectionPosition(Intersection intersection) {
+        double sumX = 0, sumY = 0;
+        int count = 0;
+        for (HexTile tile : intersection.getAdjacentHexTiles()) {
+            StackPane sp = modelToVisualTile.get(tile);
+            if (sp != null) {
+                sumX += sp.getLayoutX() + sp.getPrefWidth() / 2.0;
+                sumY += sp.getLayoutY() + sp.getPrefHeight() / 2.0;
+                count++;
+            }
+        }
+        if (count == 0) return null;
+        return new double[]{sumX / count, sumY / count};
+    }
+
+    private boolean isBuildableIntersection(Circle circle) {
+        if (currentMode == InteractionMode.NONE) return false;
+        Intersection i = intersectionVisualToModel.get(circle);
+        if (i == null || game == null) return false;
+        Player active = game.getActivePlayer();
+        if (active == null) return false;
+        if (currentMode == InteractionMode.SETTLEMENT) {
+            return game.getBoard().getBuildableSettlements(active).contains(i) ||
+                   (game.getCurrentPhase().isSetupPhase() && !i.hasBuilding() && game.getBoard().isDistanceRuleValid(i));
+        }
+        if (currentMode == InteractionMode.CITY) {
+            return game.getBoard().getBuildableCities(active).contains(i);
+        }
+        return false;
+    }
+
+    private boolean isBuildablePath(Line line) {
+        if (currentMode != InteractionMode.ROAD) return false;
+        Path p = pathVisualToModel.get(line);
+        if (p == null || game == null) return false;
+        Player active = game.getActivePlayer();
+        if (active == null) return false;
+        if (game.getCurrentPhase().isSetupPhase()) {
+            // Setup: path harus terhubung ke settlement yang baru ditempatkan pemain ini giliran ini
+            // Sederhananya: cek apakah path kosong dan salah satu intersection milik pemain aktif
+            return p.isEmpty() && (active.equals(p.getIntersectionA().getOwner()) || active.equals(p.getIntersectionB().getOwner()));
+        }
+        return game.getBoard().getBuildableRoadPaths(active).contains(p);
+    }
+
+    private void restoreIntersectionVisual(Circle circle) {
+        Intersection i = intersectionVisualToModel.get(circle);
+        if (i == null) return;
+        if (i.hasBuilding()) {
+            Player owner = i.getOwner();
+            if (owner != null) {
+                String color = playerColorToHex(owner.getColor());
+                circle.setFill(Color.web(color));
+                circle.setStroke(Color.web("#333333"));
+                circle.setOpacity(1.0);
+                circle.setStrokeWidth(3.0);
+                circle.setRadius(i.getBuilding().getBuildingType() == banana.republic.building.BuildingType.LABORATORIUM ? 16 : 14);
+                return;
+            }
+        }
+        circle.setFill(Color.web("#ffffff", 0.3));
+        circle.setStroke(Color.web("#333333"));
+        circle.setOpacity(0.85);
+        circle.setStrokeWidth(3.0);
+        circle.setRadius(14);
+    }
+
+    private void restorePathVisual(Line line) {
+        Path p = pathVisualToModel.get(line);
+        if (p == null) return;
+        if (p.hasRoad()) {
+            Player owner = p.getOwner();
+            if (owner != null) {
+                line.setStroke(Color.web(playerColorToHex(owner.getColor())));
+                line.setOpacity(1.0);
+                line.setStrokeWidth(6);
+                return;
+            }
+        }
+        line.setStroke(Color.web("#aaaaaa", 0.5));
+        line.setOpacity(0.6);
+        line.setStrokeWidth(8);
+    }
+
+    private void handleIntersectionClick(Intersection intersection) {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+
+        if (currentMode == InteractionMode.SETTLEMENT) {
+            if (game.getCurrentPhase().isSetupPhase()) {
+                try {
+                    game.placeInitialSettlement(active, intersection);
+                    refreshAllUI();
+                    updatePhaseUI();
+                    clearBuildHighlights();
+                    // Jika masih setup, langsung beralih ke road mode
+                    if (game.getCurrentPhase().isSetupPhase()) {
+                        currentMode = InteractionMode.ROAD;
+                        showInfo("Pos Pantau ditempatkan! Sekarang klik garis oranye untuk menempatkan Pipa.");
+                        for (Path p : game.getBoard().getAllPaths()) {
+                            if (!p.isEmpty()) continue;
+                            if (active.equals(p.getIntersectionA().getOwner()) || active.equals(p.getIntersectionB().getOwner())) {
+                                Line l = modelToPathVisual.get(p);
+                                if (l != null) {
+                                    l.setStroke(Color.web("#ff7f00"));
+                                    l.setOpacity(1.0);
+                                    l.setStrokeWidth(12);
+                                    l.toFront();
+                                }
+                            }
+                        }
+                    }
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            } else {
+                try {
+                    game.buildSettlement(active, intersection);
+                    refreshAllUI();
+                    updatePhaseUI();
+                    clearBuildHighlights();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            }
+        } else if (currentMode == InteractionMode.CITY) {
+            try {
+                game.buildCity(active, intersection);
+                refreshAllUI();
+                updatePhaseUI();
+                clearBuildHighlights();
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                showError(e.getMessage());
+            }
+        }
+    }
+
+    private void handlePathClick(Path path) {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+
+        if (currentMode == InteractionMode.ROAD) {
+            if (game.getCurrentPhase().isSetupPhase()) {
+                try {
+                    game.placeInitialRoad(active, path);
+                    refreshAllUI();
+                    updatePhaseUI();
+                    clearBuildHighlights();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            } else {
+                try {
+                    game.buildRoad(active, path);
+                    refreshAllUI();
+                    updatePhaseUI();
+                    clearBuildHighlights();
+                } catch (IllegalStateException | IllegalArgumentException e) {
+                    showError(e.getMessage());
+                }
+            }
+        }
+    }
+
+    // ============================================================
+    // Build highlight helpers
+    // ============================================================
+    private void clearBuildHighlights() {
+        currentMode = InteractionMode.NONE;
+        for (Circle c : intersectionVisualToModel.keySet()) {
+            restoreIntersectionVisual(c);
+        }
+        for (Line l : pathVisualToModel.keySet()) {
+            restorePathVisual(l);
+        }
+    }
+
+    private void highlightBuildableSettlements() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+        List<Intersection> buildable = game.getBoard().getBuildableSettlements(active);
+        for (Intersection i : buildable) {
+            Circle c = modelToIntersectionVisual.get(i);
+            if (c != null) {
+                c.setFill(Color.web("#4fc978"));
+                c.setStroke(Color.web("#1a6b3a"));
+                c.setOpacity(1.0);
+                c.setRadius(18);
+                c.setStrokeWidth(4.0);
+                c.toFront();
+            }
+        }
+    }
+
+    private void highlightBuildableCities() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+        List<Intersection> buildable = game.getBoard().getBuildableCities(active);
+        for (Intersection i : buildable) {
+            Circle c = modelToIntersectionVisual.get(i);
+            if (c != null) {
+                c.setFill(Color.web("#305cde"));
+                c.setStroke(Color.web("#1a3a8c"));
+                c.setOpacity(1.0);
+                c.setRadius(18);
+                c.setStrokeWidth(4.0);
+                c.toFront();
+            }
+        }
+    }
+
+    private void highlightBuildableRoads() {
+        if (game == null) return;
+        Player active = game.getActivePlayer();
+        if (active == null) return;
+        List<Path> buildable = game.getBoard().getBuildableRoadPaths(active);
+        for (Path p : buildable) {
+            Line l = modelToPathVisual.get(p);
+            if (l != null) {
+                l.setStroke(Color.web("#ff7f00"));
+                l.setOpacity(1.0);
+                l.setStrokeWidth(12);
+                l.toFront();
+            }
+        }
+    }
+
+    // ============================================================
+    // Board interaction preserved
+    // ============================================================
     private void handleRobberClick(StackPane hexTile) {
         if (game == null) return;
         HexTile target = visualToModelTile.get(hexTile);

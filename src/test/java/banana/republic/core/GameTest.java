@@ -2,9 +2,13 @@ package banana.republic.core;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import banana.republic.board.Intersection;
+import banana.republic.board.Path;
 import banana.republic.player.HumanPlayer;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
+import banana.republic.resource.Bank;
+import banana.republic.resource.ResourceType;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -196,5 +200,200 @@ public class GameTest {
         assertTrue(str.contains("turn="), "toString harus mengandung 'turn='");
         assertTrue(str.contains("players=3"),
                    "toString harus mengandung jumlah players");
+    }
+
+    // ============================================================
+    // Build functionality tests (end-to-end through Game)
+    // ============================================================
+
+    private void completeSetup() {
+        game.startSetupPhase();
+        for (int round = 0; round < 2; round++) {
+            for (Player player : players) {
+                Intersection s = game.getBoard().getAllIntersections().stream()
+                    .filter(i -> !i.hasBuilding() && game.getBoard().isDistanceRuleValid(i))
+                    .findFirst().orElse(null);
+                assertNotNull(s, "Harus ada intersection kosong untuk setup");
+                game.placeInitialSettlement(player, s);
+                Path r = s.getAdjacentPaths().stream()
+                    .filter(Path::isEmpty).findFirst().orElse(null);
+                assertNotNull(r, "Harus ada path kosong untuk road");
+                game.placeInitialRoad(player, r);
+            }
+        }
+        assertEquals(GamePhase.RESOURCE_GATHERING, game.getCurrentPhase(), "Setup harus selesai dan masuk RESOURCE_GATHERING");
+    }
+
+    private void enterTradeBuildPhase() {
+        if (game.getCurrentPhase() != GamePhase.RESOURCE_GATHERING) {
+            throw new IllegalStateException("Harus di RESOURCE_GATHERING untuk roll dice");
+        }
+        game.getDice().setManualMode(true);
+        game.getDice().setManualValues(3, 4);
+        game.rollDice();
+        game.getDice().setManualMode(false);
+        assertEquals(GamePhase.TRADE_BUILD, game.getCurrentPhase(), "Setelah roll dice harus masuk TRADE_BUILD");
+    }
+
+    private void giveResourceFromBank(Player p, ResourceType type, int amount) {
+        Bank bank = game.getBank();
+        int available = bank.getCount(type);
+        int toGive = Math.min(amount, available);
+        if (toGive > 0) {
+            bank.takeResource(type, toGive);
+            p.addResource(type, toGive);
+        }
+    }
+
+    @Test
+    @DisplayName("buildRoad should throw IllegalStateException when not in TRADE_BUILD")
+    void testBuildRoadWrongPhase() {
+        // Default phase is SETUP_FIRST_ROUND
+        Path anyPath = game.getBoard().getAllPaths().get(0);
+        assertThrows(IllegalStateException.class, () -> {
+            game.buildRoad(players.get(0), anyPath);
+        }, "buildRoad harus throw IllegalStateException saat bukan TRADE_BUILD");
+    }
+
+    @Test
+    @DisplayName("buildSettlement should throw IllegalStateException when not in TRADE_BUILD")
+    void testBuildSettlementWrongPhase() {
+        Intersection anyIntersection = game.getBoard().getAllIntersections().get(0);
+        assertThrows(IllegalStateException.class, () -> {
+            game.buildSettlement(players.get(0), anyIntersection);
+        }, "buildSettlement harus throw IllegalStateException saat bukan TRADE_BUILD");
+    }
+
+    @Test
+    @DisplayName("buildCity should throw IllegalStateException when not in TRADE_BUILD")
+    void testBuildCityWrongPhase() {
+        Intersection anyIntersection = game.getBoard().getAllIntersections().get(0);
+        assertThrows(IllegalStateException.class, () -> {
+            game.buildCity(players.get(0), anyIntersection);
+        }, "buildCity harus throw IllegalStateException saat bukan TRADE_BUILD");
+    }
+
+    @Test
+    @DisplayName("buyDevelopmentCard should throw IllegalStateException when not in TRADE_BUILD")
+    void testBuyDevelopmentCardWrongPhase() {
+        assertThrows(IllegalStateException.class, () -> {
+            game.buyDevelopmentCard(players.get(0));
+        }, "buyDevelopmentCard harus throw IllegalStateException saat bukan TRADE_BUILD");
+    }
+
+    @Test
+    @DisplayName("buildRoad should deduct resources correctly in TRADE_BUILD")
+    void testBuildRoadDeductsResources() {
+        Player p = players.get(0);
+        completeSetup();
+
+        int woodBefore = p.getResourceCount(ResourceType.WOOD);
+        int brickBefore = p.getResourceCount(ResourceType.BRICK);
+        giveResourceFromBank(p, ResourceType.WOOD, 5);
+        giveResourceFromBank(p, ResourceType.BRICK, 5);
+
+        enterTradeBuildPhase();
+
+        Path buildablePath = game.getBoard().getBuildableRoadPaths(p).stream()
+            .findFirst().orElse(null);
+        assertNotNull(buildablePath, "Harus ada path yang bisa dibangun");
+
+        game.buildRoad(p, buildablePath);
+
+        assertEquals(woodBefore + Math.min(5, game.getBank().getCount(ResourceType.WOOD) + 1) - 1, p.getResourceCount(ResourceType.WOOD), "Wood harus berkurang 1");
+        assertEquals(brickBefore + Math.min(5, game.getBank().getCount(ResourceType.BRICK) + 1) - 1, p.getResourceCount(ResourceType.BRICK), "Brick harus berkurang 1");
+    }
+
+    @Test
+    @DisplayName("buildSettlement should deduct resources correctly in TRADE_BUILD")
+    void testBuildSettlementDeductsResources() {
+        Player p = players.get(0);
+        completeSetup();
+
+        // Bangun road tambahan untuk membuka intersection buildable
+        giveResourceFromBank(p, ResourceType.WOOD, 10);
+        giveResourceFromBank(p, ResourceType.BRICK, 10);
+
+        enterTradeBuildPhase();
+
+        // Bangun road sebanyak mungkin untuk membuka buildable intersections
+        List<Path> buildableRoads = game.getBoard().getBuildableRoadPaths(p);
+        for (Path path : buildableRoads) {
+            if (p.hasResource(ResourceType.WOOD, 1) && p.hasResource(ResourceType.BRICK, 1)) {
+                game.buildRoad(p, path);
+            }
+        }
+
+        Intersection target = game.getBoard().getBuildableSettlements(p).stream()
+            .findFirst().orElse(null);
+        if (target != null) {
+            int woodBefore = p.getResourceCount(ResourceType.WOOD);
+            int brickBefore = p.getResourceCount(ResourceType.BRICK);
+            int wheatBefore = p.getResourceCount(ResourceType.WHEAT);
+            int bananaBefore = p.getResourceCount(ResourceType.BANANA);
+
+            giveResourceFromBank(p, ResourceType.WOOD, 5);
+            giveResourceFromBank(p, ResourceType.BRICK, 5);
+            giveResourceFromBank(p, ResourceType.WHEAT, 5);
+            giveResourceFromBank(p, ResourceType.BANANA, 5);
+
+            game.buildSettlement(p, target);
+
+            assertEquals(woodBefore + Math.min(5, game.getBank().getCount(ResourceType.WOOD) + 1) - 1, p.getResourceCount(ResourceType.WOOD));
+            assertEquals(brickBefore + Math.min(5, game.getBank().getCount(ResourceType.BRICK) + 1) - 1, p.getResourceCount(ResourceType.BRICK));
+            assertEquals(wheatBefore + Math.min(5, game.getBank().getCount(ResourceType.WHEAT) + 1) - 1, p.getResourceCount(ResourceType.WHEAT));
+            assertEquals(bananaBefore + Math.min(5, game.getBank().getCount(ResourceType.BANANA) + 1) - 1, p.getResourceCount(ResourceType.BANANA));
+        }
+    }
+
+    @Test
+    @DisplayName("buildCity should upgrade settlement and deduct resources correctly")
+    void testBuildCityDeductsResources() {
+        Player p = players.get(0);
+        completeSetup();
+
+        Intersection owned = game.getBoard().getBuildableCities(p).stream()
+            .findFirst().orElse(null);
+        assertNotNull(owned, "Harus ada settlement milik pemain untuk di-upgrade");
+
+        giveResourceFromBank(p, ResourceType.WHEAT, 5);
+        giveResourceFromBank(p, ResourceType.ORE, 5);
+
+        enterTradeBuildPhase();
+
+        int wheatBefore = p.getResourceCount(ResourceType.WHEAT);
+        int oreBefore = p.getResourceCount(ResourceType.ORE);
+
+        game.buildCity(p, owned);
+
+        assertEquals(wheatBefore - 2, p.getResourceCount(ResourceType.WHEAT));
+        assertEquals(oreBefore - 3, p.getResourceCount(ResourceType.ORE));
+        assertEquals(banana.republic.building.BuildingType.LABORATORIUM,
+                     owned.getBuilding().getBuildingType(),
+                     "Bangunan harus menjadi Laboratorium");
+    }
+
+    @Test
+    @DisplayName("buyDevelopmentCard should deduct resources correctly in TRADE_BUILD")
+    void testBuyDevelopmentCardDeductsResources() {
+        Player p = players.get(0);
+        giveResourceFromBank(p, ResourceType.ORE, 3);
+        giveResourceFromBank(p, ResourceType.WHEAT, 3);
+        giveResourceFromBank(p, ResourceType.BANANA, 3);
+
+        completeSetup();
+        enterTradeBuildPhase();
+
+        int oreBefore = p.getResourceCount(ResourceType.ORE);
+        int wheatBefore = p.getResourceCount(ResourceType.WHEAT);
+        int bananaBefore = p.getResourceCount(ResourceType.BANANA);
+        int cardsBefore = p.getHandCards().size();
+
+        game.buyDevelopmentCard(p);
+
+        assertEquals(oreBefore - 1, p.getResourceCount(ResourceType.ORE));
+        assertEquals(wheatBefore - 1, p.getResourceCount(ResourceType.WHEAT));
+        assertEquals(bananaBefore - 1, p.getResourceCount(ResourceType.BANANA));
+        assertEquals(cardsBefore + 1, p.getHandCards().size());
     }
 }
