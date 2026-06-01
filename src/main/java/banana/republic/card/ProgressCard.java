@@ -2,18 +2,22 @@ package banana.republic.card;
 
 /**
  * Abstract progress card (Kartu Inovasi).
- * Progress Cards dapat dimainkan, mengambil efek spesifik, lalu dikonsumsi (habis).
- * Berbeda dengan Knight Yang dapat dimainkan berkali-kali jika ada (tidak mungkin karena dari deck).
  *
- * Jenis Progress Card:
- * - Road Building: Bangun 2 pipa gratis
- * - Monopoly: Ambil semua kartu satu jenis dari pemain lain
+ * <p>Progress Cards dapat dimainkan, mengambil efek spesifik, lalu
+ * dikonsumsi (habis). Berbeda dengan {@link KnightCard} yang dapat
+ * dimainkan berkali-kali jika ada (tidak mungkin karena dari deck).
+ *
+ * <p>Jenis Progress Card:
+ * <ul>
+ *   <li>{@link RoadBuildingCard} — Bangun 2 pipa gratis</li>
+ *   <li>{@link MonopolyCard} — Ambil semua kartu satu jenis dari pemain lain</li>
+ * </ul>
  */
 public abstract class ProgressCard extends DevelopmentCard {
     protected boolean consumed;
 
     /**
-     * Constructor untuk progress card.
+     * Constructor default.
      */
     public ProgressCard() {
         super();
@@ -21,7 +25,7 @@ public abstract class ProgressCard extends DevelopmentCard {
     }
 
     /**
-     * Mark kartu sebagai consumed (sudah digunakan dan keluar permainan).
+     * Menandai kartu sebagai consumed (sudah digunakan dan keluar dari permainan).
      */
     public void consume() {
         this.consumed = true;
@@ -29,6 +33,8 @@ public abstract class ProgressCard extends DevelopmentCard {
 
     /**
      * Cek apakah kartu sudah dikonsumsi.
+     *
+     * @return {@code true} jika sudah {@link #consume()}d
      */
     public boolean isConsumed() {
         return consumed;
@@ -36,19 +42,25 @@ public abstract class ProgressCard extends DevelopmentCard {
 
     /**
      * Progress Card hanya bisa dimainkan jika:
-     * 1. Belum dikonsumsi
-     * 2. Bukan newly drawn (atau pengecualian khusus untuk VP Card)
-     * <p>
-     * Note: Subclass akan override untuk tambahan validasi (mis: Monopoly butuh select resource)
+     * <ol>
+     *   <li>Belum dikonsumsi</li>
+     *   <li>Bukan newly-drawn (atau pengecualian khusus untuk VP Card)</li>
+     * </ol>
+     *
+     * <p>Subclass dapat meng-override untuk tambahan validasi
+     * (misal: {@link MonopolyCard} butuh select resource).
+     *
+     * @return {@code true} jika playable
      */
     @Override
     public boolean isPlayable() {
-        // General rule: tidak bisa dimainkan jika baru diambil
         return !isNewlyDrawn() && !isConsumed();
     }
 
     /**
-     * Progress Cards juga tersembunyi sampai dimainkan.
+     * Progress Cards bersifat secret sampai dimainkan atau dikonsumsi.
+     *
+     * @return {@code false} jika sudah revealed atau consumed
      */
     @Override
     public boolean isSecret() {

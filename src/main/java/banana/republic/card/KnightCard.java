@@ -7,19 +7,26 @@ import banana.republic.player.Player;
 import banana.republic.robber.Robber;
 
 /**
- * Knight Card (Kartu Penjaga).
- * Memungkinkan pemain memindahkan Nimon Ungu tanpa penalti discard fase.
+ * Kartu Penjaga (Knight Card).
  *
- * Jumlah: 14 kartu
- * Efek: Pindahkan Nimon Ungu ke petak lain, boleh curi 1 kartu acak dari pemain terdekat.
+ * <p>Efek: Pindahkan Nimon Ungu ke petak terrain lain dan curi 1 kartu
+ * sumber daya acak dari pemain yang punya bangunan di sekitar lokasi baru.
+ *
+ * <p>Komposisi deck: 14 kartu.
  */
 public class KnightCard extends DevelopmentCard {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCardName() {
         return "Kartu Penjaga (Knight)";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDescription() {
         return "Pindahkan Nimon Ungu ke petak terrain lain. " +
@@ -27,6 +34,12 @@ public class KnightCard extends DevelopmentCard {
                 "di sekitar lokasi baru Nimon Ungu.";
     }
 
+    /**
+     * Menerapkan efek Knight: pindahkan Nimon Ungu dan curi resource.
+     *
+     * @param state  state permainan saat ini (tidak boleh {@code null})
+     * @param player pemain yang memainkan kartu (tidak boleh {@code null})
+     */
     @Override
     public void applyEffect(GameState state, Player player) {
         assert player != null : "Player harus tidak null saat mainkan KnightCard";
@@ -65,18 +78,30 @@ public class KnightCard extends DevelopmentCard {
         }
     }
 
+    /**
+     * Knight Card tidak bisa dimainkan jika baru saja diambil dari deck
+     * pada giliran yang sama.
+     *
+     * @return {@code true} jika kartu bukan newly-drawn
+     */
     @Override
     public boolean isPlayable() {
         return !isNewlyDrawn();
     }
 
+    /**
+     * Knight Card terungkap saat dimainkan; sebelumnya bersifat secret.
+     *
+     * @return {@code false} jika sudah {@link #reveal()}ed, {@code true} sebaliknya
+     */
     @Override
     public boolean isSecret() {
-        // Knight terungkap ketika dimainkan
-        // Tapi sebelum dimainkan, tersembunyi
         return !revealed;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CardType getCardType() {
         return CardType.KNIGHT;
