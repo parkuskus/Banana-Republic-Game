@@ -2,7 +2,6 @@ package banana.republic.core;
 
 import banana.republic.board.Board;
 import banana.republic.board.Intersection;
-import banana.republic.board.Path;
 import banana.republic.building.BuildingType;
 import banana.republic.card.CardType;
 import banana.republic.card.ExperimentCard;
@@ -10,11 +9,7 @@ import banana.republic.player.Player;
 import banana.republic.player.SpecialCardType;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Menghitung Poin Prestasi (PP) setiap pemain dan menentukan pemenang.
@@ -71,10 +66,6 @@ public class VictoryPointCalculator {
         return calculate(player, board).getTotal();
     }
 
-    // -------------------------------------------------------------------------
-    // Hitung VP semua pemain
-    // -------------------------------------------------------------------------
-
     /**
      * Menghitung VP semua pemain dan mengembalikan daftar breakdown.
      *
@@ -98,10 +89,6 @@ public class VictoryPointCalculator {
         results.sort((a, b) -> Integer.compare(b.getTotal(), a.getTotal()));
         return Collections.unmodifiableList(results);
     }
-
-    // -------------------------------------------------------------------------
-    // Cek pemenang
-    // -------------------------------------------------------------------------
 
     /**
      * Mencari pemain yang sudah mencapai atau melampaui victoryTarget PP.
@@ -131,10 +118,6 @@ public class VictoryPointCalculator {
 
         return winner;
     }
-
-    // -------------------------------------------------------------------------
-    // Longest Road management
-    // -------------------------------------------------------------------------
 
     /**
      * Memeriksa dan memperbarui kepemilikan Jalan Terpanjang (Longest Road).
@@ -197,90 +180,53 @@ public class VictoryPointCalculator {
         return newHolder;
     }
 
-    // -------------------------------------------------------------------------
-    // Longest Road computation
-    // -------------------------------------------------------------------------
-
     /**
-     * Menghitung panjang jalan terpanjang pemain dari state board saat ini.
+     * Memeriksa dan memperbarui kepemilikan Pasukan Terbesar (Largest Army).
      *
-     * <p>Algoritma: untuk setiap jalan milik pemain, lakukan DFS ke kedua arah
-     * (kiri dan kanan) dengan edge tracking untuk menemukan path terpanjang.
-     * Persimpangan yang ditempati pemain lain memutus jalan.
+     * Dipanggil setelah setiap Knight Card dimainkan.
      *
-     * @param player pemain yang dihitung
-     * @param board  papan permainan
-     * @return panjang jalan terpanjang (jumlah ruas)
+     * Syarat:
+     *   - Minimal 3 knight dimainkan
+     *   - Lebih banyak dari pemegang saat ini
+     *
+     * Return: pemain yang sekarang memegang Largest Army,
+     *         atau null jika belum ada yang memenuhi syarat
      */
-    public int computeLongestRoadLength(Player player, Board board) {
-        List<Path> roads = board.getConnectedRoads(player);
-        if (roads.isEmpty()) {
-            return 0;
-        }
+    public Player updateLargestArmy(List<Player> players) {
+        final int MIN_KNIGHTS = 3;
 
-        Map<Intersection, List<RoadNode>> adj = new HashMap<>();
-        for (Path path : roads) {
-            Intersection a = path.getIntersectionA();
-            Intersection b = path.getIntersectionB();
-            adj.computeIfAbsent(a, k -> new ArrayList<>())
-               .add(new RoadNode(b, path));
-            adj.computeIfAbsent(b, k -> new ArrayList<>())
-               .add(new RoadNode(a, path));
-        }
-
-        int max = 0;
-        for (Path startPath : roads) {
-            Set<Path> visited = new HashSet<>();
-            visited.add(startPath);
-
-            int left = dfsRoad(startPath.getIntersectionA(), visited, adj,
-                               player);
-            int right = dfsRoad(startPath.getIntersectionB(), visited, adj,
-                                player);
-
-            max = Math.max(max, left + right + 1);
-        }
-
-        return max;
-    }
-
-    private int dfsRoad(Intersection current, Set<Path> visited,
-                        Map<Intersection, List<RoadNode>> adj, Player player) {
-        // Persimpangan yang ditempati pemain lain memutus jalan
-        if (current.hasBuilding() && current.getOwner() != null &&
-            !current.getOwner().equals(player)) {
-            return 0;
-        }
-
-        int max = 0;
-        for (RoadNode neighbor : adj.getOrDefault(current,
-                                                    Collections.emptyList())) {
-            if (visited.contains(neighbor.path)) {
-                continue;
+        Player currentHolder = null;
+        int holderKnights = 0;
+        for (Player p : players) {
+            if (p.hasSpecialCard(SpecialCardType.LARGEST_ARMY)) {
+                currentHolder = p;
+                holderKnights = p.getKnightsPlayed();
+                break;
             }
-
-            visited.add(neighbor.path);
-            int length = 1 + dfsRoad(neighbor.intersection, visited, adj,
-                                     player);
-            visited.remove(neighbor.path);
-            max = Math.max(max, length);
         }
-        return max;
-    }
 
-    private static class RoadNode {
-        final Intersection intersection;
-        final Path path;
-
-        RoadNode(Intersection intersection, Path path) {
-            this.intersection = intersection;
-            this.path = path;
+        Player newHolder = null;
+        int newKnights = 0;
+        for (Player p : players) {
+            int knights = p.getKnightsPlayed();
+            if (knights < MIN_KNIGHTS) continue;
+            boolean qualifies = (currentHolder == null)
+                ? knights >= MIN_KNIGHTS
+                : knights > holderKnights;
+            if (qualifies && p != currentHolder && knights > newKnights) {
+                newHolder = p;
+                newKnights = knights;
+            }
         }
-    }
 
-    // -------------------------------------------------------------------------
-    // Internal helpers
-    // -------------------------------------------------------------------------
+        if (newHolder == null) return currentHolder;
+
+        if (currentHolder != null) {
+            currentHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY, false);
+        }
+        newHolder.setSpecialCard(SpecialCardType.LARGEST_ARMY, true);
+        return newHolder;
+    }
 
     /**
      * Hitung PP dari Pos Pantau yang sudah ditempatkan pemain di board.

@@ -242,6 +242,14 @@ public class LobbyController {
 
         Game game = new Game(players, loadedMapPlugin);
 
+        // Initialize deck and inject any loaded card plugins
+        game.getCardDeck().buildDefaultDeck();
+        java.util.List<banana.republic.card.ExperimentCard> pluginCards =
+            pluginLoader.getLoadedCardPlugins();
+        if (!pluginCards.isEmpty()) {
+            game.getCardDeck().injectPluginCards(pluginCards);
+        }
+
         FXMLLoader loader = App.getLoader("game");
         Parent root = loader.load();
         GameController controller = loader.getController();

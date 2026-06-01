@@ -2311,4 +2311,46 @@ public class GameController implements Initializable {
         parentMap.layoutBoundsProperty().addListener((obs, o, n) -> recompute.run());
     }
 
+    // =========================================================================
+    // Plugin loading — load JAR during active game (spec: no restart required)
+    // =========================================================================
+
+    private final banana.republic.plugin.PluginLoader pluginLoader =
+        new banana.republic.plugin.PluginLoader();
+
+    /**
+     * Memuat semua ExperimentCard dari JAR dan menyuntikkannya ke deck aktif.
+     */
+    public java.util.List<banana.republic.plugin.PluginLoadResult<banana.republic.card.ExperimentCard>>
+    loadCardPlugin(String jarPath) {
+        var results = pluginLoader.loadAllCards(jarPath);
+        var loaded = results.stream()
+            .filter(banana.republic.plugin.PluginLoadResult::isSuccess)
+            .map(banana.republic.plugin.PluginLoadResult::getInstance)
+            .toList();
+        if (!loaded.isEmpty() && game != null) {
+            game.getCardDeck().injectPluginCards(loaded);
+        }
+        return results;
+    }
+
+    /**
+     * Load satu ExperimentCard secara manual by FQCN.
+     */
+    public banana.republic.plugin.PluginLoadResult<banana.republic.card.ExperimentCard>
+    loadCardPluginManual(String jarPath, String className) {
+        var result = pluginLoader.loadCard(jarPath, className);
+        if (result.isSuccess() && game != null) {
+            game.getCardDeck().injectPluginCards(java.util.List.of(result.getInstance()));
+        }
+        return result;
+    }
+
+    /**
+     * Auto-discovery: kembalikan FQCN semua ExperimentCard dalam JAR.
+     */
+    public java.util.List<String> discoverCardClasses(String jarPath) {
+        return pluginLoader.discoverCards(jarPath);
+    }
 }
+

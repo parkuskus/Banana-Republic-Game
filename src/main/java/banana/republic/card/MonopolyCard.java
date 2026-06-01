@@ -5,28 +5,38 @@ import banana.republic.player.Player;
 import banana.republic.resource.ResourceType;
 
 /**
- * Monopoly progress card (Monopoli Nimon).
- * Jumlah: 3 kartu
- * Efek: Pemain menyebutkan 1 jenis sumber daya.
- *       Semua pemain lain yang punya sumber daya jenis itu HARUS menyerahkan semuanya.
+ * Kartu Monopoli Nimon (Monopoly Progress Card).
+ *
+ * <p>Efek: Pemain menyebutkan 1 jenis sumber daya. Semua pemain lain
+ * yang punya sumber daya jenis itu HARUS menyerahkan semuanya.
+ *
+ * <p>Komposisi deck: 3 kartu.
  */
 public class MonopolyCard extends ProgressCard {
     private ResourceType targetResource;
 
     /**
-     * Constructor untuk Monopoly Card.
-     * targetResource diset ketika pemain memilih jenis sumber daya yang dimonopoli.
+     * Constructor default.
+     *
+     * <p>{@code targetResource} diset ketika pemain memilih jenis
+     * sumber daya yang akan dimonopoli.
      */
     public MonopolyCard() {
         super();
         this.targetResource = null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCardName() {
         return "Kartu Monopoli Nimon (Monopoly)";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDescription() {
         if (targetResource == null) {
@@ -38,35 +48,38 @@ public class MonopolyCard extends ProgressCard {
     }
 
     /**
-     * Get target resource.
+     * Mengembalikan jenis sumber daya target yang sedang dipilih.
+     *
+     * @return {@link ResourceType} yang dipilih, atau {@code null} jika belum dipilih
      */
     public ResourceType getTargetResource() {
         return targetResource;
     }
 
     /**
-     * Set target resource yang akan dimonopoli.
+     * Mengatur jenis sumber daya yang akan dimonopoli.
+     *
+     * @param type jenis sumber daya target
      */
     public void setTargetResource(ResourceType type) {
         this.targetResource = type;
     }
 
+    /**
+     * Mengambil semua kartu {@code targetResource} dari pemain lain
+     * dan menyerahkannya ke pemain yang memainkan kartu ini.
+     *
+     * @param state  state permainan saat ini
+     * @param player pemain yang memainkan kartu
+     */
     @Override
     public void applyEffect(GameState state, Player player) {
-        // Efek Monopoly:
-        // 1. Validasi targetResource sudah diset
-        // 2. Iterasi semua pemain lain
-        // 3. Ambil semua kartu targetResource dari mereka
-
         assert player != null : "Player harus tidak null saat mainkan MonopolyCard";
         assert state != null : "GameState harus tidak null saat mainkan MonopolyCard";
         assert targetResource != null : "Target resource harus diset sebelum applyEffect Monopoly";
 
-        // Ref
-        // Iterasi pemain lain dan ambil kartu mereka
         for (Player other : state.getAllPlayers()) {
             if (!other.equals(player)) {
-                // Transfer semua kartu jenis targetResource dari other ke player
                 int count = other.getResourceCount(targetResource);
                 if (count > 0) {
                     other.removeResource(targetResource, count);
@@ -75,20 +88,23 @@ public class MonopolyCard extends ProgressCard {
             }
         }
 
-        // Reveal kartu
         this.reveal();
-
-        // Consume kartu karena sudah digunakan
         this.consume();
     }
 
+    /**
+     * Monopoly Card bisa dimainkan jika bukan newly-drawn dan belum consumed.
+     *
+     * @return {@code true} jika playable
+     */
     @Override
     public boolean isPlayable() {
-        // Monopoly card bisa dimainkan, tapi perlu pilih resource dulu
-        // Jika sudah dimainkan sebelumnya (consumed), tidak bisa dimainkan lagi
         return !isNewlyDrawn() && !isConsumed();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public CardType getCardType() {
         return CardType.MONOPOLY;

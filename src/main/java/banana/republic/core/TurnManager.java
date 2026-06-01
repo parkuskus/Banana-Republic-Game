@@ -5,20 +5,19 @@ import banana.republic.timer.TurnTimer;
 import java.util.List;
 
 /**
- * Mengelola urutan giliran pemain dan mengintegrasikan TurnTimer.
+ * Mengelola urutan giliran pemain dan mengintegrasikan {@link TurnTimer}.
  *
- * Tanggung jawab TurnManager:
+ * <p>Tanggung jawab utama:
+ * <ul>
+ *   <li>Melacak indeks pemain aktif dalam list pemain</li>
+ *   <li>Menentukan arah putaran (clockwise / counter-clockwise) sesuai fase setup</li>
+ *   <li>Memulai dan menghentikan {@link TurnTimer} saat Trade/Build dimulai</li>
+ *   <li>Mengirimkan notifikasi ke {@link Game} saat timer habis via callback</li>
+ * </ul>
  *
- * Melacak indeks pemain aktif dalam list pemain
- *
- * Menentukan arah putaran (clockwise / counter-clockwise) sesuai fase setup
- *
- * Memulai dan menghentikan TurnTimer saat Trade/Build dimulai
- *
- * Mengirimkan notifikasi ke Game saat timer habis (via callback Runnable})
- *
- * TurnManager menginformasikan endgame Game melalui callback ({onTurnEnd}) agar
- * Game tetap menjadi satu-satunya pengontrol lifecycle permainan (DIP).
+ * <p>TurnManager menginformasikan endgame {@link Game} melalui callback
+ * {@code onTurnEnd} agar {@link Game} tetap menjadi satu-satunya pengontrol
+ * lifecycle permainan (DIP).
  */
 public class TurnManager {
 

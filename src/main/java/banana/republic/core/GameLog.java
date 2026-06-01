@@ -10,14 +10,11 @@ import java.util.stream.Collectors;
 /**
  * Log kejadian permainan Banana Republic, ditampilkan di panel Logbook pada UI.
  *
- * GameLog menyimpan riwayat semua LogEntry secara kronologis. Entri baru selalu
- * ditambahkan di akhir (append-only).
+ * <p>GameLog menyimpan riwayat semua {@link LogEntry} secara kronologis.
+ * Entri baru selalu ditambahkan di akhir (append-only).
  *
- * Di-inject ke GameState biar plugin dan UI bisa membaca log tanpa perlu akses
- * langsung ke Game.
- *
- * Penggunaan tipikal: gameLog.addEntry(LogEntry.EventType.BUILD,
- * player.getName(), "Membangun Pos Pantau di intersection 5"); }
+ * <p>Di-inject ke {@link GameState} agar plugin dan UI bisa membaca log tanpa
+ * perlu akses langsung ke {@link Game}.
  */
 public class GameLog {
 

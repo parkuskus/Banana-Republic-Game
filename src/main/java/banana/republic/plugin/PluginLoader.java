@@ -3,211 +3,502 @@ package banana.republic.plugin;
 import banana.republic.card.ExperimentCard;
 import banana.republic.player.PlayerStrategy;
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Plugin loader menggunakan URLClassLoader + Reflection.
+ * Memuat plugin dari file {@code .jar} secara runtime menggunakan {@code
+ * URLClassLoader} dan Java Reflection.
  *
- * <p>Tanggung jawab:
- * <ul>
- *   <li>Memuat file .jar eksternal secara runtime</li>
- *   <li>Validasi class yang dimuat mengimplementasikan interface yang benar</li>
- *   <li>Mengelola instance plugin yang sudah di-load</li>
- * </ul>
+ * <p>
+ * Mendukung tiga jenis plugin sesuai Spesifikasi Bab 8:
+ * <ol>
+ * <li>{@link ExperimentCard} — Kartu Temuan kustom (bisa multi per JAR)</li>
+ * <li>{@link MapGeneratorPlugin} — Generator peta kustom</li>
+ * <li>{@link PlayerStrategy} — Strategi bot kustom</li>
+ * </ol>
  *
- * <p>Waktu load:
- * <ul>
- *   <li>{@code ExperimentCard}: mid-game (Settings Dialog)</li>
- *   <li>{@code MapGeneratorPlugin}: pre-game (Lobby)</li>
- *   <li>{@code PlayerStrategy}/Bot: pre-game (Lobby)</li>
- * </ul>
+ * <p>
+ * Semua method mengembalikan {@link PluginLoadResult} — tidak pernah melempar
+ * exception untuk kondisi bisnis (JAR tidak ada, class tidak implement
+ * interface, dll).
  *
- * <p>Referensi: class-diagram/Module5_UI_Plugin_Save.puml
+ * <p>
+ * Gunakan {@link #closeAll()} setelah selesai menggunakan loader untuk melepas
+ * file handle dan mencegah memory leak.
  */
 public class PluginLoader {
 
-    private final List<ExperimentCard> loadedCardPlugins = new ArrayList<>();
-    private MapGeneratorPlugin loadedMapPlugin = null;
-    private final List<PlayerStrategy> loadedBotStrategies = new ArrayList<>();
+    /**
+     * Registry statis untuk semua URLClassLoader yang aktif di seluruh
+     * aplikasi.
+     *
+     * <p>
+     * Digunakan oleh {@link banana.republic.save.GameSaveManager} saat
+     * merekonstitusi kartu plugin dari save file: iterasi registry ini untuk
+     * menemukan class dengan FQCN yang disimpan.
+     *
+     * <p>
+     * Entry ditambahkan saat JAR baru diload, dan dibersihkan saat {@link
+     * #closeAll()} dipanggil pada instance terkait.
+     */
+    private static final java.util.List<URLClassLoader> GLOBAL_REGISTRY =
+        java.util.Collections.synchronizedList(new java.util.ArrayList<>());
 
     /**
-     * Load ExperimentCard plugin dari file .jar.
+     * Mencoba menemukan class berdasarkan FQCN dari semua URLClassLoader yang
+     * aktif.
      *
-     * @param jarPath path absolut ke file .jar
-     * @return instance ExperimentCard pertama yang berhasil di-load
-     * @throws IllegalStateException jika tidak ada class valid di dalam .jar
+     * <p>
+     * Dipanggil oleh {@link banana.republic.save.GameSaveManager} saat
+     * merekonstitusi kartu plugin dari save data.
+     *
+     * @param fqcn fully-qualified class name (misal {@code "com.ta.HealCard"})
+     * @return {@link Class} jika ditemukan, atau {@code null} jika tidak ada
+     *     loader yang bisa
+     */
+    public static Class<?> findPluginClass(String fqcn) {
+        if (fqcn == null || fqcn.isBlank())
+            return null;
+        // Coba system classloader dulu (jika class kebetulan ada di classpath)
+        try {
+            return Class.forName(fqcn);
+        } catch (ClassNotFoundException ignored) {
+        }
+        // Scan semua URLClassLoader yang terdaftar
+        synchronized (GLOBAL_REGISTRY) {
+            for (URLClassLoader loader : GLOBAL_REGISTRY) {
+                try {
+                    return loader.loadClass(fqcn);
+                } catch (ClassNotFoundException |
+                         NoClassDefFoundError ignored) {
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Semua URLClassLoader yang dibuat oleh instance ini, untuk close saat
+     * selesai.
+     */
+    private final java.util.List<URLClassLoader> openLoaders =
+        new java.util.ArrayList<>();
+
+    // =========================================================================
+    // Team API — simple throw-based loading (preserved for compatibility)
+    // =========================================================================
+
+    private final java.util.List<ExperimentCard>  loadedCardPlugins    = new java.util.ArrayList<>();
+    private       MapGeneratorPlugin               loadedMapPlugin      = null;
+    private final java.util.List<banana.republic.player.PlayerStrategy> loadedBotStrategies = new java.util.ArrayList<>();
+
+    /**
+     * Load ExperimentCard plugin dari file .jar (simple API).
+     * Melempar exception jika gagal.
      */
     public ExperimentCard loadExperimentCard(String jarPath) {
         Object plugin = loadClassFromJar(jarPath, ExperimentCard.class);
         if (!(plugin instanceof ExperimentCard card)) {
             throw new IllegalStateException(
-                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan ExperimentCard"
-            );
+                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan ExperimentCard");
         }
         loadedCardPlugins.add(card);
+        GLOBAL_REGISTRY.addAll(openLoaders); // ensure registry is up to date
         return card;
     }
 
     /**
-     * Load MapGeneratorPlugin dari file .jar.
-     *
-     * @param jarPath path absolut ke file .jar
-     * @return instance MapGeneratorPlugin yang berhasil di-load
-     * @throws IllegalStateException jika tidak ada class valid di dalam .jar
+     * Load MapGeneratorPlugin dari file .jar (simple API).
+     * Melempar exception jika gagal.
      */
     public MapGeneratorPlugin loadMapGenerator(String jarPath) {
         Object plugin = loadClassFromJar(jarPath, MapGeneratorPlugin.class);
         if (!(plugin instanceof MapGeneratorPlugin mapPlugin)) {
             throw new IllegalStateException(
-                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan MapGeneratorPlugin"
-            );
+                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan MapGeneratorPlugin");
         }
         loadedMapPlugin = mapPlugin;
         return mapPlugin;
     }
 
     /**
-     * Load PlayerStrategy (bot plugin) dari file .jar.
-     *
-     * @param jarPath path absolut ke file .jar
-     * @return instance PlayerStrategy pertama yang berhasil di-load
-     * @throws IllegalStateException jika tidak ada class valid di dalam .jar
+     * Load PlayerStrategy (bot plugin) dari file .jar (simple API).
+     * Melempar exception jika gagal.
      */
-    public PlayerStrategy loadBotStrategy(String jarPath) {
-        Object plugin = loadClassFromJar(jarPath, PlayerStrategy.class);
-        if (!(plugin instanceof PlayerStrategy strategy)) {
+    public banana.republic.player.PlayerStrategy loadBotStrategy(String jarPath) {
+        Object plugin = loadClassFromJar(jarPath, banana.republic.player.PlayerStrategy.class);
+        if (!(plugin instanceof banana.republic.player.PlayerStrategy strategy)) {
             throw new IllegalStateException(
-                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan PlayerStrategy"
-            );
+                "Class yang dimuat dari '" + jarPath + "' tidak mengimplementasikan PlayerStrategy");
         }
         loadedBotStrategies.add(strategy);
         return strategy;
     }
 
-    public List<ExperimentCard> getLoadedCardPlugins() {
-        return Collections.unmodifiableList(loadedCardPlugins);
+    public java.util.List<ExperimentCard> getLoadedCardPlugins() {
+        return java.util.Collections.unmodifiableList(loadedCardPlugins);
     }
 
-    public MapGeneratorPlugin getLoadedMapPlugin() {
-        return loadedMapPlugin;
-    }
+    public MapGeneratorPlugin getLoadedMapPlugin() { return loadedMapPlugin; }
 
-    public List<PlayerStrategy> getLoadedBotStrategies() {
-        return Collections.unmodifiableList(loadedBotStrategies);
+    public java.util.List<banana.republic.player.PlayerStrategy> getLoadedBotStrategies() {
+        return java.util.Collections.unmodifiableList(loadedBotStrategies);
     }
 
     /**
-     * Load class dari .jar menggunakan URLClassLoader + Reflection.
-     *
-     * <p>Proses:
-     * <ol>
-     *   <li>Buat URLClassLoader dari path .jar</li>
-     *   <li>Iterasi semua entry .jar yang berakhiran .class</li>
-     *   <li>Load class dengan Class.forName menggunakan class loader baru</li>
-     *   <li>Cek apakah class mengimplementasikan targetInterface</li>
-     *   <li>Buat instance via getDeclaredConstructor().newInstance()</li>
-     * </ol>
-     *
-     * @param jarPath         path ke file .jar
-     * @param targetInterface interface yang wajib diimplementasikan
-     * @return instance object yang valid
-     * @throws IllegalStateException jika tidak ada class yang cocok
+     * Core simple loader: scan JAR, find first class implementing targetInterface,
+     * instantiate via no-arg constructor. Used by the simple throw-based API above.
      */
     private Object loadClassFromJar(String jarPath, Class<?> targetInterface) {
-        if (jarPath == null || jarPath.isBlank()) {
+        if (jarPath == null || jarPath.isBlank())
             throw new IllegalArgumentException("JAR path cannot be null or blank");
-        }
-
-        File jarFile = new File(jarPath);
-        if (!jarFile.exists()) {
+        java.io.File jarFile = new java.io.File(jarPath);
+        if (!jarFile.exists())
             throw new IllegalArgumentException("JAR file not found: " + jarPath);
-        }
+        java.net.URL jarUrl;
+        try { jarUrl = jarFile.toURI().toURL(); }
+        catch (java.net.MalformedURLException e) { throw new IllegalStateException("Invalid JAR path: " + jarPath, e); }
 
-        URL jarUrl;
-        try {
-            jarUrl = jarFile.toURI().toURL();
-        } catch (MalformedURLException e) {
-            throw new IllegalStateException("Invalid JAR path: " + jarPath, e);
-        }
-
-        try (URLClassLoader classLoader = new URLClassLoader(
-                new URL[]{jarUrl},
-                PluginLoader.class.getClassLoader())) {
-
-            List<String> classNames = scanJarClasses(jarFile);
-
-            for (String className : classNames) {
+        try (URLClassLoader cl = new URLClassLoader(new java.net.URL[]{jarUrl}, PluginLoader.class.getClassLoader())) {
+            GLOBAL_REGISTRY.add(cl);
+            openLoaders.add(cl);
+            for (String className : scanJarClasses(jarFile)) {
                 try {
-                    Class<?> clazz = Class.forName(className, true, classLoader);
-                    if (validateInterface(clazz, targetInterface)) {
-                        Object instance = clazz.getDeclaredConstructor().newInstance();
-                        return instance;
-                    }
-                } catch (ClassNotFoundException e) {
-                    // Class mungkin bergantung pada dependency lain, skip
-                    continue;
-                } catch (NoSuchMethodException e) {
-                    // Class tidak punya no-arg constructor, skip
-                    continue;
-                } catch (Exception e) {
-                    // Instantiation gagal, skip ke class berikutnya
-                    continue;
-                }
+                    Class<?> clazz = Class.forName(className, true, cl);
+                    if (validateInterface(clazz, targetInterface))
+                        return clazz.getDeclaredConstructor().newInstance();
+                } catch (Exception ignored) {}
             }
-
             throw new IllegalStateException(
-                "Tidak ada class yang mengimplementasikan " + targetInterface.getName()
-                    + " di '" + jarPath + "'"
-            );
+                "Tidak ada class yang mengimplementasikan " + targetInterface.getName() + " di '" + jarPath + "'");
         } catch (java.io.IOException e) {
             throw new IllegalStateException("Failed to load JAR: " + jarPath, e);
         }
     }
 
-    /**
-     * Scan semua class names (FQCN) yang ada di dalam .jar file.
-     */
-    private List<String> scanJarClasses(File jarFile) throws java.io.IOException {
-        List<String> classNames = new ArrayList<>();
-        try (JarFile jar = new JarFile(jarFile)) {
-            Enumeration<JarEntry> entries = jar.entries();
+    private java.util.List<String> scanJarClasses(java.io.File jarFile) throws java.io.IOException {
+        java.util.List<String> names = new java.util.ArrayList<>();
+        try (java.util.jar.JarFile jar = new java.util.jar.JarFile(jarFile)) {
+            java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
             while (entries.hasMoreElements()) {
-                JarEntry entry = entries.nextElement();
-                String name = entry.getName();
-                if (name.endsWith(".class")) {
-                    // Convert jar path to fully-qualified class name
-                    String className = name.replace('/', '.').replace("\\", ".");
-                    className = className.substring(0, className.length() - ".class".length());
-                    classNames.add(className);
-                }
+                String name = entries.nextElement().getName();
+                if (name.endsWith(".class"))
+                    names.add(name.replace('/', '.').replace("\\", ".").replaceAll("\\.class$", ""));
             }
         }
-        return classNames;
+        return names;
     }
 
-    /**
-     * Validasi apakah class mengimplementasikan interface yang diharapkan.
-     *
-     * @param clazz           class yang akan divalidasi
-     * @param expectedInterface interface yang diharapkan
-     * @return true jika clazz adalah instance dari expectedInterface
-     */
     private boolean validateInterface(Class<?> clazz, Class<?> expectedInterface) {
-        if (!expectedInterface.isInterface()) {
-            throw new IllegalArgumentException(
-                expectedInterface.getName() + " bukan interface"
-            );
-        }
+        if (!expectedInterface.isInterface())
+            throw new IllegalArgumentException(expectedInterface.getName() + " bukan interface");
         return expectedInterface.isAssignableFrom(clazz)
             && !clazz.isInterface()
             && !java.lang.reflect.Modifier.isAbstract(clazz.getModifiers());
+    }
+
+
+    /**
+     * Memuat satu {@link ExperimentCard} dari JAR berdasarkan nama class-nya.
+     *
+     * <p>
+     * Gunakan {@link #discoverCards(String)} terlebih dahulu untuk
+     * auto-discovery jika nama class belum diketahui.
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @param className fully-qualified class name (misal {@code
+     *     "com.example.HealCard"})
+     * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
+     */
+    public PluginLoadResult<ExperimentCard> loadCard(String jarPath,
+                                                     String className) {
+        return loadPlugin(jarPath, className, ExperimentCard.class);
+    }
+
+    /**
+     * Memuat semua implementasi {@link ExperimentCard} yang ditemukan dalam
+     * JAR.
+     *
+     * <p>
+     * Mendukung JAR yang berisi lebih dari satu kartu kustom sekaligus. Inner
+     * class (nama mengandung {@code $}) dilewati otomatis.
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @return list hasil loading; tiap entry bisa success atau failure
+     */
+    public List<PluginLoadResult<ExperimentCard>> loadAllCards(String jarPath) {
+        return loadAllPlugins(jarPath, ExperimentCard.class);
+    }
+
+    /**
+     * Menemukan semua nama class dalam JAR yang mengimplementasikan {@link
+     * ExperimentCard}.
+     *
+     * <p>
+     * Digunakan untuk auto-discovery: UI bisa menampilkan daftar pilihan tanpa
+     * meminta pengguna mengetik nama class secara manual.
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @return list fully-qualified class name; kosong jika tidak ada atau JAR
+     *     tidak valid
+     */
+    public List<String> discoverCards(String jarPath) {
+        return discoverImplementors(jarPath, ExperimentCard.class);
+    }
+
+    /**
+     * Memuat satu {@link MapGeneratorPlugin} dari JAR berdasarkan nama
+     * class-nya.
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @param className fully-qualified class name
+     * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
+     */
+    public PluginLoadResult<MapGeneratorPlugin>
+    loadMapGenerator(String jarPath, String className) {
+        return loadPlugin(jarPath, className, MapGeneratorPlugin.class);
+    }
+
+    /**
+     * Menemukan semua implementasi {@link MapGeneratorPlugin} dalam JAR
+     * (auto-discovery).
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @return list fully-qualified class name
+     */
+    public List<String> discoverMapGenerators(String jarPath) {
+        return discoverImplementors(jarPath, MapGeneratorPlugin.class);
+    }
+
+    /**
+     * Memuat satu {@link PlayerStrategy} dari JAR berdasarkan nama class-nya.
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @param className fully-qualified class name
+     * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
+     */
+    public PluginLoadResult<PlayerStrategy> loadStrategy(String jarPath,
+                                                         String className) {
+        return loadPlugin(jarPath, className, PlayerStrategy.class);
+    }
+
+    /**
+     * Menemukan semua implementasi {@link PlayerStrategy} dalam JAR
+     * (auto-discovery).
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @return list fully-qualified class name
+     */
+    public List<String> discoverStrategies(String jarPath) {
+        return discoverImplementors(jarPath, PlayerStrategy.class);
+    }
+
+    /**
+     * Men-scan semua entry dalam JAR dan mengembalikan daftar nama class yang:
+     * <ul>
+     * <li>Mengimplementasikan (atau meng-extend) {@code targetInterface}</li>
+     * <li>Bukan interface itu sendiri</li>
+     * <li>Bukan abstract class</li>
+     * <li>Bukan inner class (nama tidak mengandung {@code $})</li>
+     * </ul>
+     *
+     * <p>
+     * Digunakan oleh UI untuk menampilkan dropdown auto-discovery. Jika JAR
+     * tidak bisa dibaca, mengembalikan list kosong (tidak throw).
+     *
+     * @param jarPath path absolut ke file {@code .jar}
+     * @param targetInterface interface yang dicari implementornya
+     * @return list fully-qualified class name; kosong jika tidak ada atau error
+     */
+    public List<String> discoverImplementors(String jarPath,
+                                             Class<?> targetInterface) {
+        List<String> found = new ArrayList<>();
+
+        File jarFile = new File(jarPath);
+        if (!jarFile.exists() || !jarFile.isFile()) {
+            return found; // JAR tidak ada — kembalikan kosong
+        }
+
+        URLClassLoader loader = null;
+        try {
+            URL jarUrl = jarFile.toURI().toURL();
+            loader = new URLClassLoader(new URL[] {jarUrl},
+                                        getClass().getClassLoader());
+            openLoaders.add(loader);
+            GLOBAL_REGISTRY.add(loader); // register globally for
+                                         // GameSaveManager plugin-class lookup
+
+            try (JarFile jar = new JarFile(jarFile)) {
+                Enumeration<JarEntry> entries = jar.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    String name = entry.getName();
+
+                    // Hanya proses .class yang bukan inner class
+                    if (!name.endsWith(".class") || name.contains("$"))
+                        continue;
+
+                    String className =
+                        name.replace('/', '.').replace(".class", "");
+                    try {
+                        Class<?> clazz = loader.loadClass(className);
+                        if (targetInterface.isAssignableFrom(clazz) &&
+                            !clazz.isInterface() &&
+                            !Modifier.isAbstract(clazz.getModifiers())) {
+                            found.add(className);
+                        }
+                    } catch (ClassNotFoundException |
+                             NoClassDefFoundError ignored) {
+                        // Lewati class yang tidak bisa diload (dependency tidak
+                        // tersedia)
+                    }
+                }
+            }
+        } catch (MalformedURLException e) {
+            // Path JAR tidak valid — kembalikan list kosong
+        } catch (IOException e) {
+            // JAR tidak bisa dibuka — kembalikan list kosong
+        }
+
+        return found;
+    }
+
+    /**
+     * Menutup semua {@code URLClassLoader} yang dibuat oleh instance ini.
+     *
+     * <p>
+     * Penting untuk dipanggil saat aplikasi keluar atau setelah game selesai
+     * agar file handle ke JAR dilepas dan tidak terjadi memory leak.
+     */
+    public void closeAll() {
+        for (URLClassLoader loader : openLoaders) {
+            GLOBAL_REGISTRY.remove(loader); // unregister from global registry
+            try {
+                loader.close();
+            } catch (IOException ignored) {
+                // Best-effort close
+            }
+        }
+        openLoaders.clear();
+    }
+
+    /**
+     * Core loading logic: load class dari JAR, validasi implements
+     * targetInterface, instantiasi via no-arg constructor.
+     */
+    @SuppressWarnings("unchecked")
+    private <T> PluginLoadResult<T> loadPlugin(String jarPath, String className,
+                                               Class<T> targetInterface) {
+        if (jarPath == null || jarPath.isBlank()) {
+            return PluginLoadResult.failure("jarPath tidak boleh kosong",
+                                            jarPath == null ? "" : jarPath);
+        }
+        if (className == null || className.isBlank()) {
+            return PluginLoadResult.failure("className tidak boleh kosong",
+                                            jarPath);
+        }
+
+        File jarFile = new File(jarPath);
+        if (!jarFile.exists() || !jarFile.isFile()) {
+            return PluginLoadResult.failure(
+                "File JAR tidak ditemukan: " + jarPath, jarPath);
+        }
+
+        URLClassLoader loader = null;
+        try {
+            URL jarUrl = jarFile.toURI().toURL();
+            loader = new URLClassLoader(new URL[] {jarUrl},
+                                        getClass().getClassLoader());
+            openLoaders.add(loader);
+            GLOBAL_REGISTRY.add(loader); // register globally for
+                                         // GameSaveManager plugin-class lookup
+
+            Class<?> clazz;
+            try {
+                clazz = loader.loadClass(className);
+            } catch (ClassNotFoundException e) {
+                return PluginLoadResult.failure(
+                    "Class tidak ditemukan dalam JAR: " + className, jarPath);
+            }
+
+            // Validasi: class harus implement interface yang diharapkan
+            if (!targetInterface.isAssignableFrom(clazz)) {
+                return PluginLoadResult.failure(
+                    "Class " + className + " tidak mengimplementasikan " +
+                        targetInterface.getSimpleName(),
+                    jarPath);
+            }
+
+            // Validasi: tidak boleh abstract atau interface
+            if (clazz.isInterface() ||
+                Modifier.isAbstract(clazz.getModifiers())) {
+                return PluginLoadResult.failure(
+                    "Class " + className +
+                        (" adalah abstract/interface, tidak bisa "
+                         + "diinstansiasi"),
+                    jarPath);
+            }
+
+            // Cek no-arg constructor
+            try {
+                clazz.getDeclaredConstructor(); // throws NoSuchMethodException
+                                                // jika tidak ada
+            } catch (NoSuchMethodException e) {
+                return PluginLoadResult.failure(
+                    "Class " + className + " tidak memiliki no-arg constructor",
+                    jarPath);
+            }
+
+            // Instantiasi
+            T instance;
+            try {
+                instance = (T)clazz.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                return PluginLoadResult.failure("Gagal menginstansiasi " +
+                                                    className + ": " +
+                                                    e.getMessage(),
+                                                jarPath);
+            }
+
+            return PluginLoadResult.success(instance, className, jarPath);
+
+        } catch (MalformedURLException e) {
+            return PluginLoadResult.failure(
+                "Path JAR tidak valid: " + e.getMessage(), jarPath);
+        }
+    }
+
+    /**
+     * Load semua implementor {@code targetInterface} dalam satu JAR.
+     * Menggunakan
+     * {@link #discoverImplementors} untuk scanning, lalu load satu per satu.
+     */
+    private <T> List<PluginLoadResult<T>>
+    loadAllPlugins(String jarPath, Class<T> targetInterface) {
+        List<PluginLoadResult<T>> results = new ArrayList<>();
+        List<String> classNames =
+            discoverImplementors(jarPath, targetInterface);
+
+        if (classNames.isEmpty()) {
+            results.add(PluginLoadResult.failure(
+                "Tidak ada implementasi " + targetInterface.getSimpleName() +
+                    " yang ditemukan dalam JAR",
+                jarPath));
+            return results;
+        }
+
+        for (String className : classNames) {
+            results.add(loadPlugin(jarPath, className, targetInterface));
+        }
+        return results;
     }
 }
