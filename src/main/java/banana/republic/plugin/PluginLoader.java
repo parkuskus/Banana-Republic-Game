@@ -2,7 +2,6 @@ package banana.republic.plugin;
 
 import banana.republic.card.ExperimentCard;
 import banana.republic.player.PlayerStrategy;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -16,50 +15,108 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 /**
- * Memuat plugin dari file {@code .jar} secara runtime menggunakan
- * {@code URLClassLoader} dan Java Reflection.
+ * Memuat plugin dari file {@code .jar} secara runtime menggunakan {@code
+ * URLClassLoader} dan Java Reflection.
  *
- * <p>Mendukung tiga jenis plugin sesuai Spesifikasi Bab 8:
+ * <p>
+ * Mendukung tiga jenis plugin sesuai Spesifikasi Bab 8:
  * <ol>
- *   <li>{@link ExperimentCard}     — Kartu Temuan kustom (bisa multi per JAR)</li>
- *   <li>{@link MapGeneratorPlugin} — Generator peta kustom</li>
- *   <li>{@link PlayerStrategy}     — Strategi bot kustom</li>
+ * <li>{@link ExperimentCard} — Kartu Temuan kustom (bisa multi per JAR)</li>
+ * <li>{@link MapGeneratorPlugin} — Generator peta kustom</li>
+ * <li>{@link PlayerStrategy} — Strategi bot kustom</li>
  * </ol>
  *
- * <p>Semua method mengembalikan {@link PluginLoadResult} — tidak pernah melempar
- * exception untuk kondisi bisnis (JAR tidak ada, class tidak implement interface, dll).
+ * <p>
+ * Semua method mengembalikan {@link PluginLoadResult} — tidak pernah melempar
+ * exception untuk kondisi bisnis (JAR tidak ada, class tidak implement
+ * interface, dll).
  *
- * <p>Gunakan {@link #closeAll()} setelah selesai menggunakan loader untuk melepas
+ * <p>
+ * Gunakan {@link #closeAll()} setelah selesai menggunakan loader untuk melepas
  * file handle dan mencegah memory leak.
  */
 public class PluginLoader {
 
-    /** Semua URLClassLoader yang dibuat oleh instance ini, untuk close saat selesai. */
-    private final List<URLClassLoader> openLoaders = new ArrayList<>();
+    /**
+     * Registry statis untuk semua URLClassLoader yang aktif di seluruh
+     * aplikasi.
+     *
+     * <p>
+     * Digunakan oleh {@link banana.republic.save.GameSaveManager} saat
+     * merekonstitusi kartu plugin dari save file: iterasi registry ini untuk
+     * menemukan class dengan FQCN yang disimpan.
+     *
+     * <p>
+     * Entry ditambahkan saat JAR baru diload, dan dibersihkan saat {@link
+     * #closeAll()} dipanggil pada instance terkait.
+     */
+    private static final java.util.List<URLClassLoader> GLOBAL_REGISTRY =
+        java.util.Collections.synchronizedList(new java.util.ArrayList<>());
 
-    // =========================================================================
-    // ExperimentCard
-    // =========================================================================
+    /**
+     * Mencoba menemukan class berdasarkan FQCN dari semua URLClassLoader yang
+     * aktif.
+     *
+     * <p>
+     * Dipanggil oleh {@link banana.republic.save.GameSaveManager} saat
+     * merekonstitusi kartu plugin dari save data.
+     *
+     * @param fqcn fully-qualified class name (misal {@code "com.ta.HealCard"})
+     * @return {@link Class} jika ditemukan, atau {@code null} jika tidak ada
+     *     loader yang bisa
+     */
+    public static Class<?> findPluginClass(String fqcn) {
+        if (fqcn == null || fqcn.isBlank())
+            return null;
+        // Coba system classloader dulu (jika class kebetulan ada di classpath)
+        try {
+            return Class.forName(fqcn);
+        } catch (ClassNotFoundException ignored) {
+        }
+        // Scan semua URLClassLoader yang terdaftar
+        synchronized (GLOBAL_REGISTRY) {
+            for (URLClassLoader loader : GLOBAL_REGISTRY) {
+                try {
+                    return loader.loadClass(fqcn);
+                } catch (ClassNotFoundException |
+                         NoClassDefFoundError ignored) {
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Semua URLClassLoader yang dibuat oleh instance ini, untuk close saat
+     * selesai.
+     */
+    private final java.util.List<URLClassLoader> openLoaders =
+        new java.util.ArrayList<>();
 
     /**
      * Memuat satu {@link ExperimentCard} dari JAR berdasarkan nama class-nya.
      *
-     * <p>Gunakan {@link #discoverCards(String)} terlebih dahulu untuk auto-discovery
-     * jika nama class belum diketahui.
+     * <p>
+     * Gunakan {@link #discoverCards(String)} terlebih dahulu untuk
+     * auto-discovery jika nama class belum diketahui.
      *
-     * @param jarPath   path absolut ke file {@code .jar}
-     * @param className fully-qualified class name (misal {@code "com.example.HealCard"})
+     * @param jarPath path absolut ke file {@code .jar}
+     * @param className fully-qualified class name (misal {@code
+     *     "com.example.HealCard"})
      * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
      */
-    public PluginLoadResult<ExperimentCard> loadCard(String jarPath, String className) {
+    public PluginLoadResult<ExperimentCard> loadCard(String jarPath,
+                                                     String className) {
         return loadPlugin(jarPath, className, ExperimentCard.class);
     }
 
     /**
-     * Memuat semua implementasi {@link ExperimentCard} yang ditemukan dalam JAR.
+     * Memuat semua implementasi {@link ExperimentCard} yang ditemukan dalam
+     * JAR.
      *
-     * <p>Mendukung JAR yang berisi lebih dari satu kartu kustom sekaligus.
-     * Inner class (nama mengandung {@code $}) dilewati otomatis.
+     * <p>
+     * Mendukung JAR yang berisi lebih dari satu kartu kustom sekaligus. Inner
+     * class (nama mengandung {@code $}) dilewati otomatis.
      *
      * @param jarPath path absolut ke file {@code .jar}
      * @return list hasil loading; tiap entry bisa success atau failure
@@ -69,35 +126,37 @@ public class PluginLoader {
     }
 
     /**
-     * Menemukan semua nama class dalam JAR yang mengimplementasikan {@link ExperimentCard}.
+     * Menemukan semua nama class dalam JAR yang mengimplementasikan {@link
+     * ExperimentCard}.
      *
-     * <p>Digunakan untuk auto-discovery: UI bisa menampilkan daftar pilihan
-     * tanpa meminta pengguna mengetik nama class secara manual.
+     * <p>
+     * Digunakan untuk auto-discovery: UI bisa menampilkan daftar pilihan tanpa
+     * meminta pengguna mengetik nama class secara manual.
      *
      * @param jarPath path absolut ke file {@code .jar}
-     * @return list fully-qualified class name; kosong jika tidak ada atau JAR tidak valid
+     * @return list fully-qualified class name; kosong jika tidak ada atau JAR
+     *     tidak valid
      */
     public List<String> discoverCards(String jarPath) {
         return discoverImplementors(jarPath, ExperimentCard.class);
     }
 
-    // =========================================================================
-    // MapGeneratorPlugin
-    // =========================================================================
-
     /**
-     * Memuat satu {@link MapGeneratorPlugin} dari JAR berdasarkan nama class-nya.
+     * Memuat satu {@link MapGeneratorPlugin} dari JAR berdasarkan nama
+     * class-nya.
      *
-     * @param jarPath   path absolut ke file {@code .jar}
+     * @param jarPath path absolut ke file {@code .jar}
      * @param className fully-qualified class name
      * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
      */
-    public PluginLoadResult<MapGeneratorPlugin> loadMapGenerator(String jarPath, String className) {
+    public PluginLoadResult<MapGeneratorPlugin>
+    loadMapGenerator(String jarPath, String className) {
         return loadPlugin(jarPath, className, MapGeneratorPlugin.class);
     }
 
     /**
-     * Menemukan semua implementasi {@link MapGeneratorPlugin} dalam JAR (auto-discovery).
+     * Menemukan semua implementasi {@link MapGeneratorPlugin} dalam JAR
+     * (auto-discovery).
      *
      * @param jarPath path absolut ke file {@code .jar}
      * @return list fully-qualified class name
@@ -106,23 +165,21 @@ public class PluginLoader {
         return discoverImplementors(jarPath, MapGeneratorPlugin.class);
     }
 
-    // =========================================================================
-    // PlayerStrategy
-    // =========================================================================
-
     /**
      * Memuat satu {@link PlayerStrategy} dari JAR berdasarkan nama class-nya.
      *
-     * @param jarPath   path absolut ke file {@code .jar}
+     * @param jarPath path absolut ke file {@code .jar}
      * @param className fully-qualified class name
      * @return {@link PluginLoadResult} berisi instance atau alasan kegagalan
      */
-    public PluginLoadResult<PlayerStrategy> loadStrategy(String jarPath, String className) {
+    public PluginLoadResult<PlayerStrategy> loadStrategy(String jarPath,
+                                                         String className) {
         return loadPlugin(jarPath, className, PlayerStrategy.class);
     }
 
     /**
-     * Menemukan semua implementasi {@link PlayerStrategy} dalam JAR (auto-discovery).
+     * Menemukan semua implementasi {@link PlayerStrategy} dalam JAR
+     * (auto-discovery).
      *
      * @param jarPath path absolut ke file {@code .jar}
      * @return list fully-qualified class name
@@ -131,27 +188,25 @@ public class PluginLoader {
         return discoverImplementors(jarPath, PlayerStrategy.class);
     }
 
-    // =========================================================================
-    // Auto-discovery generik
-    // =========================================================================
-
     /**
      * Men-scan semua entry dalam JAR dan mengembalikan daftar nama class yang:
      * <ul>
-     *   <li>Mengimplementasikan (atau meng-extend) {@code targetInterface}</li>
-     *   <li>Bukan interface itu sendiri</li>
-     *   <li>Bukan abstract class</li>
-     *   <li>Bukan inner class (nama tidak mengandung {@code $})</li>
+     * <li>Mengimplementasikan (atau meng-extend) {@code targetInterface}</li>
+     * <li>Bukan interface itu sendiri</li>
+     * <li>Bukan abstract class</li>
+     * <li>Bukan inner class (nama tidak mengandung {@code $})</li>
      * </ul>
      *
-     * <p>Digunakan oleh UI untuk menampilkan dropdown auto-discovery.
-     * Jika JAR tidak bisa dibaca, mengembalikan list kosong (tidak throw).
+     * <p>
+     * Digunakan oleh UI untuk menampilkan dropdown auto-discovery. Jika JAR
+     * tidak bisa dibaca, mengembalikan list kosong (tidak throw).
      *
-     * @param jarPath         path absolut ke file {@code .jar}
+     * @param jarPath path absolut ke file {@code .jar}
      * @param targetInterface interface yang dicari implementornya
      * @return list fully-qualified class name; kosong jika tidak ada atau error
      */
-    public List<String> discoverImplementors(String jarPath, Class<?> targetInterface) {
+    public List<String> discoverImplementors(String jarPath,
+                                             Class<?> targetInterface) {
         List<String> found = new ArrayList<>();
 
         File jarFile = new File(jarPath);
@@ -162,8 +217,11 @@ public class PluginLoader {
         URLClassLoader loader = null;
         try {
             URL jarUrl = jarFile.toURI().toURL();
-            loader = new URLClassLoader(new URL[]{jarUrl}, getClass().getClassLoader());
+            loader = new URLClassLoader(new URL[] {jarUrl},
+                                        getClass().getClassLoader());
             openLoaders.add(loader);
+            GLOBAL_REGISTRY.add(loader); // register globally for
+                                         // GameSaveManager plugin-class lookup
 
             try (JarFile jar = new JarFile(jarFile)) {
                 Enumeration<JarEntry> entries = jar.entries();
@@ -172,18 +230,22 @@ public class PluginLoader {
                     String name = entry.getName();
 
                     // Hanya proses .class yang bukan inner class
-                    if (!name.endsWith(".class") || name.contains("$")) continue;
+                    if (!name.endsWith(".class") || name.contains("$"))
+                        continue;
 
-                    String className = name.replace('/', '.').replace(".class", "");
+                    String className =
+                        name.replace('/', '.').replace(".class", "");
                     try {
                         Class<?> clazz = loader.loadClass(className);
-                        if (targetInterface.isAssignableFrom(clazz)
-                                && !clazz.isInterface()
-                                && !Modifier.isAbstract(clazz.getModifiers())) {
+                        if (targetInterface.isAssignableFrom(clazz) &&
+                            !clazz.isInterface() &&
+                            !Modifier.isAbstract(clazz.getModifiers())) {
                             found.add(className);
                         }
-                    } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
-                        // Lewati class yang tidak bisa diload (dependency tidak tersedia)
+                    } catch (ClassNotFoundException |
+                             NoClassDefFoundError ignored) {
+                        // Lewati class yang tidak bisa diload (dependency tidak
+                        // tersedia)
                     }
                 }
             }
@@ -196,18 +258,16 @@ public class PluginLoader {
         return found;
     }
 
-    // =========================================================================
-    // Resource management
-    // =========================================================================
-
     /**
      * Menutup semua {@code URLClassLoader} yang dibuat oleh instance ini.
      *
-     * <p>Penting untuk dipanggil saat aplikasi keluar atau setelah game selesai
+     * <p>
+     * Penting untuk dipanggil saat aplikasi keluar atau setelah game selesai
      * agar file handle ke JAR dilepas dan tidak terjadi memory leak.
      */
     public void closeAll() {
         for (URLClassLoader loader : openLoaders) {
+            GLOBAL_REGISTRY.remove(loader); // unregister from global registry
             try {
                 loader.close();
             } catch (IOException ignored) {
@@ -217,34 +277,36 @@ public class PluginLoader {
         openLoaders.clear();
     }
 
-    // =========================================================================
-    // Internal helpers
-    // =========================================================================
-
     /**
-     * Core loading logic: load class dari JAR, validasi implements targetInterface,
-     * instantiasi via no-arg constructor.
+     * Core loading logic: load class dari JAR, validasi implements
+     * targetInterface, instantiasi via no-arg constructor.
      */
     @SuppressWarnings("unchecked")
     private <T> PluginLoadResult<T> loadPlugin(String jarPath, String className,
-                                                Class<T> targetInterface) {
+                                               Class<T> targetInterface) {
         if (jarPath == null || jarPath.isBlank()) {
-            return PluginLoadResult.failure("jarPath tidak boleh kosong", jarPath == null ? "" : jarPath);
+            return PluginLoadResult.failure("jarPath tidak boleh kosong",
+                                            jarPath == null ? "" : jarPath);
         }
         if (className == null || className.isBlank()) {
-            return PluginLoadResult.failure("className tidak boleh kosong", jarPath);
+            return PluginLoadResult.failure("className tidak boleh kosong",
+                                            jarPath);
         }
 
         File jarFile = new File(jarPath);
         if (!jarFile.exists() || !jarFile.isFile()) {
-            return PluginLoadResult.failure("File JAR tidak ditemukan: " + jarPath, jarPath);
+            return PluginLoadResult.failure(
+                "File JAR tidak ditemukan: " + jarPath, jarPath);
         }
 
         URLClassLoader loader = null;
         try {
             URL jarUrl = jarFile.toURI().toURL();
-            loader = new URLClassLoader(new URL[]{jarUrl}, getClass().getClassLoader());
+            loader = new URLClassLoader(new URL[] {jarUrl},
+                                        getClass().getClassLoader());
             openLoaders.add(loader);
+            GLOBAL_REGISTRY.add(loader); // register globally for
+                                         // GameSaveManager plugin-class lookup
 
             Class<?> clazz;
             try {
@@ -257,53 +319,66 @@ public class PluginLoader {
             // Validasi: class harus implement interface yang diharapkan
             if (!targetInterface.isAssignableFrom(clazz)) {
                 return PluginLoadResult.failure(
-                    "Class " + className + " tidak mengimplementasikan "
-                    + targetInterface.getSimpleName(), jarPath);
+                    "Class " + className + " tidak mengimplementasikan " +
+                        targetInterface.getSimpleName(),
+                    jarPath);
             }
 
             // Validasi: tidak boleh abstract atau interface
-            if (clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers())) {
+            if (clazz.isInterface() ||
+                Modifier.isAbstract(clazz.getModifiers())) {
                 return PluginLoadResult.failure(
-                    "Class " + className + " adalah abstract/interface, tidak bisa diinstansiasi",
+                    "Class " + className +
+                        (" adalah abstract/interface, tidak bisa "
+                         + "diinstansiasi"),
                     jarPath);
             }
 
             // Cek no-arg constructor
             try {
-                clazz.getDeclaredConstructor(); // throws NoSuchMethodException jika tidak ada
+                clazz.getDeclaredConstructor(); // throws NoSuchMethodException
+                                                // jika tidak ada
             } catch (NoSuchMethodException e) {
                 return PluginLoadResult.failure(
-                    "Class " + className + " tidak memiliki no-arg constructor", jarPath);
+                    "Class " + className + " tidak memiliki no-arg constructor",
+                    jarPath);
             }
 
             // Instantiasi
             T instance;
             try {
-                instance = (T) clazz.getDeclaredConstructor().newInstance();
+                instance = (T)clazz.getDeclaredConstructor().newInstance();
             } catch (Exception e) {
-                return PluginLoadResult.failure(
-                    "Gagal menginstansiasi " + className + ": " + e.getMessage(), jarPath);
+                return PluginLoadResult.failure("Gagal menginstansiasi " +
+                                                    className + ": " +
+                                                    e.getMessage(),
+                                                jarPath);
             }
 
             return PluginLoadResult.success(instance, className, jarPath);
 
         } catch (MalformedURLException e) {
-            return PluginLoadResult.failure("Path JAR tidak valid: " + e.getMessage(), jarPath);
+            return PluginLoadResult.failure(
+                "Path JAR tidak valid: " + e.getMessage(), jarPath);
         }
     }
 
     /**
      * Load semua implementor {@code targetInterface} dalam satu JAR.
-     * Menggunakan {@link #discoverImplementors} untuk scanning, lalu load satu per satu.
+     * Menggunakan
+     * {@link #discoverImplementors} untuk scanning, lalu load satu per satu.
      */
-    private <T> List<PluginLoadResult<T>> loadAllPlugins(String jarPath, Class<T> targetInterface) {
+    private <T> List<PluginLoadResult<T>>
+    loadAllPlugins(String jarPath, Class<T> targetInterface) {
         List<PluginLoadResult<T>> results = new ArrayList<>();
-        List<String> classNames = discoverImplementors(jarPath, targetInterface);
+        List<String> classNames =
+            discoverImplementors(jarPath, targetInterface);
 
         if (classNames.isEmpty()) {
             results.add(PluginLoadResult.failure(
-                "Tidak ada implementasi " + targetInterface.getSimpleName()
-                + " yang ditemukan dalam JAR", jarPath));
+                "Tidak ada implementasi " + targetInterface.getSimpleName() +
+                    " yang ditemukan dalam JAR",
+                jarPath));
             return results;
         }
 
