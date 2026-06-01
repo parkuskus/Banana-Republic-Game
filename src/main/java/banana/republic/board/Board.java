@@ -190,6 +190,16 @@ public class Board {
         return Collections.unmodifiableList(result);
     }
 
+    public Path findPathBetween(Intersection a, Intersection b) {
+        if (a == null || b == null) return null;
+        for (Path path : a.getAdjacentPaths()) {
+            if (path.getIntersectionA().equals(b) || path.getIntersectionB().equals(b)) {
+                return path;
+            }
+        }
+        return null;
+    }
+
     /**
      * Mengembalikan true jika path terhubung ke jaringan road/bangunan
      * milik player.

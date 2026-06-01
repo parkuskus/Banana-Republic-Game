@@ -10,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
@@ -182,13 +183,25 @@ public class LobbyController {
         List<Player> players = new ArrayList<>();
         for (int i = 0; i < playerCount; i++) {
             String name = getPlayerNameFromBox(playerBoxes[i]);
-            if (name == null || name.isBlank()) {
-                name = "Player " + (i + 1);
+
+            // Validasi 1: Cek apakah nama sudah diisi
+            if (name == null || name.trim().isEmpty()) {
+                showAlert("Data Tidak Lengkap", "Mohon isi nama untuk Player " + (i + 1) + "!");
+                return; // Membatalkan proses ke game berikutnya
             }
+
+            // Validasi 2: Cek apakah warna sudah dipilih
+            if (selectedColors[i] == null) {
+                showAlert("Data Tidak Lengkap", "Mohon pilih warna untuk Player " + (i + 1) + "!");
+                return; // Membatalkan proses ke game berikutnya
+            }
+
             PlayerColor color = paintToPlayerColor(selectedColors[i]);
             if (color == null) {
-                color = PlayerColor.values()[i % PlayerColor.values().length];
+                showAlert("Warna Tidak Valid", "Warna yang dipilih untuk Player " + (i + 1) + " tidak terdaftar dalam sistem!");
+                return;
             }
+
             players.add(new HumanPlayer(name, color));
         }
 
@@ -199,6 +212,15 @@ public class LobbyController {
         GameController controller = loader.getController();
         controller.initialize(game);
         App.setRootFromLoader(root);
+    }
+
+    // Helper method untuk memunculkan pop-up peringatan JavaFX
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     private String getPlayerNameFromBox(HBox box) {
@@ -214,13 +236,13 @@ public class LobbyController {
     private PlayerColor paintToPlayerColor(Paint paint) {
         if (paint instanceof Color c) {
             String hex = String.format("#%02x%02x%02x",
-                (int) (c.getRed() * 255),
-                (int) (c.getGreen() * 255),
-                (int) (c.getBlue() * 255));
+                    (int) (c.getRed() * 255),
+                    (int) (c.getGreen() * 255),
+                    (int) (c.getBlue() * 255));
             return switch (hex.toLowerCase()) {
                 case "#c21a09" -> PlayerColor.RED;
                 case "#305cde" -> PlayerColor.BLUE;
-                case "#4fc978" -> PlayerColor.WHITE;
+                case "#4fc978" -> PlayerColor.GREEN;
                 case "#ff7f00" -> PlayerColor.ORANGE;
                 default -> null;
             };

@@ -220,28 +220,54 @@ public class Game {
             LogEntry.EventType.SYSTEM,
             "Fase Setup dimulai. Pemain menentukan urutan dengan dadu.");
 
-        // Tentukan pemain pertama: setiap pemain lempar dadu, yang tertinggi
-        // mulai
-        int highestRoll = -1;
-        int firstPlayerIndex = 0;
-        for (int i = 0; i < players.size(); i++) {
-            DiceResult roll = dice.roll();
-            int total = roll.getTotal();
-            gameLog.addEntry(
-                LogEntry.EventType.SYSTEM, players.get(i).getName(),
-                players.get(i).getName() + " melempar dadu: " + roll.getDie1() +
-                    " + " + roll.getDie2() + " = " + total);
-            if (total > highestRoll) {
-                highestRoll = total;
-                firstPlayerIndex = i;
+        // Tentukan pemain pertama: setiap pemain melempar dadu. Jika ada seri
+        // tertinggi, ulangi lemparan hanya di antara pemain yang seri sampai
+        // didapat satu pemenang.
+        List<Integer> candidates = new ArrayList<>();
+        for (int i = 0; i < players.size(); i++) candidates.add(i);
+
+        int firstPlayerIndex = -1;
+        int winningRoll = -1;
+
+        while (firstPlayerIndex == -1) {
+            // lakukan lemparan untuk kandidat saat ini
+            Map<Integer, Integer> rollTotals = new HashMap<>();
+            int highest = -1;
+            for (int idx : candidates) {
+                DiceResult roll = dice.roll();
+                int total = roll.getTotal();
+                rollTotals.put(idx, total);
+                gameLog.addEntry(
+                    LogEntry.EventType.SYSTEM, players.get(idx).getName(),
+                    players.get(idx).getName() + " melempar dadu: " + roll.getDie1() +
+                        " + " + roll.getDie2() + " = " + total);
+                if (total > highest) highest = total;
+            }
+
+            // Ambil semua kandidat yang mendapatkan nilai tertinggi
+            List<Integer> winners = new ArrayList<>();
+            for (var e : rollTotals.entrySet()) {
+                if (e.getValue() == highest) winners.add(e.getKey());
+            }
+
+            if (winners.size() == 1) {
+                firstPlayerIndex = winners.get(0);
+                winningRoll = highest;
+            } else {
+                // Seri: log dan ulangi hanya antara pemain yang seri
+                String names = String.join(", ", winners.stream().map(i -> players.get(i).getName()).toList());
+                gameLog.addEntry(LogEntry.EventType.SYSTEM,
+                                 "Tie: ulangi lemparan di antara: " + names);
+                candidates = winners;
             }
         }
+
         turnManager.setActiveIndex(firstPlayerIndex);
         gameLog.addEntry(
             LogEntry.EventType.TURN_CHANGE,
             players.get(firstPlayerIndex).getName(),
             players.get(firstPlayerIndex).getName() +
-                " memulai pertama (dadu tertinggi: " + highestRoll + ")");
+                " memulai pertama (dadu tertinggi: " + winningRoll + ")");
     }
 
     /**
