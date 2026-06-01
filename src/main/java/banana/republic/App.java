@@ -26,6 +26,23 @@ public class App extends Application{
 
         primaryStage.setScene(scene);
 
+        // ensure UI scales down on small screens so nothing gets cut off
+        Platform.runLater(() -> {
+            try {
+                javafx.geometry.Rectangle2D bounds = javafx.stage.Screen.getPrimary().getVisualBounds();
+                double availW = bounds.getWidth();
+                double availH = bounds.getHeight();
+                double prefW = root.prefWidth(-1);
+                double prefH = root.prefHeight(-1);
+                if (prefW > 0 && prefH > 0) {
+                    double scale = Math.min(availW / prefW, availH / prefH);
+                    scale = Math.min(scale, 1.0); // only downscale
+                    root.setScaleX(scale);
+                    root.setScaleY(scale);
+                }
+            } catch (Exception ignored) {}
+        });
+
         primaryStage.setTitle("Banana Republic");
         primaryStage.setFullScreen(true);
         primaryStage.setFullScreenExitHint("");

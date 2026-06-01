@@ -174,6 +174,8 @@ public class GameController implements Initializable {
                 permanentBuildLayer.setPickOnBounds(false);
                 parentMap.getChildren().add(permanentBuildLayer);
             }
+            // make map scale responsively to its container so the view fits different laptop screens
+            setupResponsiveScaling(parentMap);
         }
 
         game.startSetupPhase();
@@ -1472,4 +1474,34 @@ public class GameController implements Initializable {
             }
         }
     }
+
+    // responsive scaling helper: scale the parent map group to fit its container while preserving aspect
+    private void setupResponsiveScaling(Group parentMap) {
+        if (parentMap == null) return;
+        javafx.scene.Node parent = parentMap.getParent();
+        if (!(parent instanceof javafx.scene.layout.Region)) return;
+        javafx.scene.layout.Region container = (javafx.scene.layout.Region) parent;
+
+        Runnable recompute = () -> {
+            double mapW = parentMap.getLayoutBounds().getWidth();
+            double mapH = parentMap.getLayoutBounds().getHeight();
+            double availW = container.getWidth();
+            double availH = container.getHeight();
+            if (mapW <= 0 || mapH <= 0 || availW <= 0 || availH <= 0) return;
+            double scale = Math.min(availW / mapW, availH / mapH);
+            // do not upscale beyond 1.0 (prevents blurry scaling); allow downscale to fit
+            scale = Math.min(scale, 1.0);
+            parentMap.setScaleX(scale);
+            parentMap.setScaleY(scale);
+        };
+
+        // initial run after layout
+        javafx.application.Platform.runLater(recompute);
+
+        // listen for changes
+        container.widthProperty().addListener((obs, o, n) -> recompute.run());
+        container.heightProperty().addListener((obs, o, n) -> recompute.run());
+        parentMap.layoutBoundsProperty().addListener((obs, o, n) -> recompute.run());
+    }
+
 }
