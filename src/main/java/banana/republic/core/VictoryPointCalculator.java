@@ -2,6 +2,7 @@ package banana.republic.core;
 
 import banana.republic.board.Board;
 import banana.republic.board.Intersection;
+import banana.republic.board.Path;
 import banana.republic.building.BuildingType;
 import banana.republic.card.CardType;
 import banana.republic.card.ExperimentCard;
@@ -9,7 +10,11 @@ import banana.republic.player.Player;
 import banana.republic.player.SpecialCardType;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Menghitung Poin Prestasi (PP) setiap pemain dan menentukan pemenang.
@@ -190,6 +195,87 @@ public class VictoryPointCalculator {
         }
         newHolder.setSpecialCard(SpecialCardType.LONGEST_ROAD, true);
         return newHolder;
+    }
+
+    // -------------------------------------------------------------------------
+    // Longest Road computation
+    // -------------------------------------------------------------------------
+
+    /**
+     * Menghitung panjang jalan terpanjang pemain dari state board saat ini.
+     *
+     * <p>Algoritma: untuk setiap jalan milik pemain, lakukan DFS ke kedua arah
+     * (kiri dan kanan) dengan edge tracking untuk menemukan path terpanjang.
+     * Persimpangan yang ditempati pemain lain memutus jalan.
+     *
+     * @param player pemain yang dihitung
+     * @param board  papan permainan
+     * @return panjang jalan terpanjang (jumlah ruas)
+     */
+    public int computeLongestRoadLength(Player player, Board board) {
+        List<Path> roads = board.getConnectedRoads(player);
+        if (roads.isEmpty()) {
+            return 0;
+        }
+
+        Map<Intersection, List<RoadNode>> adj = new HashMap<>();
+        for (Path path : roads) {
+            Intersection a = path.getIntersectionA();
+            Intersection b = path.getIntersectionB();
+            adj.computeIfAbsent(a, k -> new ArrayList<>())
+               .add(new RoadNode(b, path));
+            adj.computeIfAbsent(b, k -> new ArrayList<>())
+               .add(new RoadNode(a, path));
+        }
+
+        int max = 0;
+        for (Path startPath : roads) {
+            Set<Path> visited = new HashSet<>();
+            visited.add(startPath);
+
+            int left = dfsRoad(startPath.getIntersectionA(), visited, adj,
+                               player);
+            int right = dfsRoad(startPath.getIntersectionB(), visited, adj,
+                                player);
+
+            max = Math.max(max, left + right + 1);
+        }
+
+        return max;
+    }
+
+    private int dfsRoad(Intersection current, Set<Path> visited,
+                        Map<Intersection, List<RoadNode>> adj, Player player) {
+        // Persimpangan yang ditempati pemain lain memutus jalan
+        if (current.hasBuilding() && current.getOwner() != null &&
+            !current.getOwner().equals(player)) {
+            return 0;
+        }
+
+        int max = 0;
+        for (RoadNode neighbor : adj.getOrDefault(current,
+                                                    Collections.emptyList())) {
+            if (visited.contains(neighbor.path)) {
+                continue;
+            }
+
+            visited.add(neighbor.path);
+            int length = 1 + dfsRoad(neighbor.intersection, visited, adj,
+                                     player);
+            visited.remove(neighbor.path);
+            max = Math.max(max, length);
+        }
+        return max;
+    }
+
+    private static class RoadNode {
+        final Intersection intersection;
+        final Path path;
+
+        RoadNode(Intersection intersection, Path path) {
+            this.intersection = intersection;
+            this.path = path;
+        }
     }
 
     // -------------------------------------------------------------------------

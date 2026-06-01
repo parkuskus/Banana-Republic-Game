@@ -1,11 +1,19 @@
 package banana.republic.ui;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import banana.republic.App;
 import banana.republic.core.Game;
 import banana.republic.player.BotPlayer;
 import banana.republic.player.HumanPlayer;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
+import banana.republic.player.PlayerStrategy;
+import banana.republic.plugin.MapGeneratorPlugin;
+import banana.republic.plugin.PluginLoader;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -21,11 +29,6 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Main menu controller.
@@ -44,6 +47,9 @@ public class LobbyController {
     private HBox player4Box;
 
     private Paint[] selectedColors = new Paint[4];
+    private final PluginLoader pluginLoader = new PluginLoader();
+    private MapGeneratorPlugin loadedMapPlugin = null;
+    private PlayerStrategy loadedBotStrategy = null;
 
     @FXML
     public void initialize() {
@@ -171,7 +177,32 @@ public class LobbyController {
         File fileYangDipilih = fileChooser.showOpenDialog(window);
 
         if (fileYangDipilih != null) {
-            System.out.println("File dipilih: " + fileYangDipilih.getAbsolutePath());
+            try {
+                loadedMapPlugin = pluginLoader.loadMapGenerator(fileYangDipilih.getAbsolutePath());
+                showInfo("Map plugin berhasil dimuat: " + fileYangDipilih.getName());
+            } catch (Exception e) {
+                showAlert("Gagal memuat map plugin", e.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void handleLoadBot(MouseEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Load Bot Strategy Plugin");
+        FileChooser.ExtensionFilter extFilterJAR = new FileChooser.ExtensionFilter("JAR files (*.jar)", "*.jar");
+        fileChooser.getExtensionFilters().addAll(extFilterJAR);
+
+        Window window = ((Node) event.getSource()).getScene().getWindow();
+        File fileYangDipilih = fileChooser.showOpenDialog(window);
+
+        if (fileYangDipilih != null) {
+            try {
+                loadedBotStrategy = pluginLoader.loadBotStrategy(fileYangDipilih.getAbsolutePath());
+                showInfo("Bot strategy plugin berhasil dimuat: " + fileYangDipilih.getName());
+            } catch (Exception e) {
+                showAlert("Gagal memuat bot plugin", e.getMessage());
+            }
         }
     }
 
@@ -202,10 +233,15 @@ public class LobbyController {
                 return;
             }
 
-            players.add(new HumanPlayer(name, color));
+            if (loadedBotStrategy != null && i == playerCount - 1) {
+                players.add(new BotPlayer(name, color, loadedBotStrategy));
+            } else {
+                players.add(new HumanPlayer(name, color));
+            }
         }
 
-        Game game = new Game(players, null);
+        Game game = new Game(players, loadedMapPlugin);
+        game.startSetupPhase();
 
         FXMLLoader loader = App.getLoader("game");
         Parent root = loader.load();
@@ -221,6 +257,18 @@ public class LobbyController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showInfo(String message) {
+        showInfo("Information", message);
     }
 
     private String getPlayerNameFromBox(HBox box) {

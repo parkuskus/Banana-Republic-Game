@@ -1,15 +1,19 @@
 package banana.republic.ui;
 
+import banana.republic.App;
 import banana.republic.core.Game;
 import banana.republic.plugin.PluginLoader;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 import java.io.File;
+import java.io.IOException;
 
 public class SettingsDialogController implements DialogController, GameAwareController {
 
@@ -72,11 +76,14 @@ public class SettingsDialogController implements DialogController, GameAwareCont
         if (file != null) {
             try {
                 Game loaded = Game.loadGame(file.getAbsolutePath());
-                // NOTE: untuk mengganti game yang sedang berjalan,
-                // perlu transisi screen ke game baru. Ini butuh referensi ke GameController.
-                // Untuk sekarang, kita hanya informasikan bahwa load berhasil.
-                showInfo("Load berhasil! File: " + file.getAbsolutePath() +
-                         "\nMulai ulang game untuk menerapkan save.");
+                FXMLLoader gameLoader = App.getLoader("game");
+                Parent gameRoot = gameLoader.load();
+                GameController gameCtrl = gameLoader.getController();
+                gameCtrl.setGame(loaded);
+                App.setRootFromLoader(gameRoot);
+                showInfo("Load berhasil! Memasuki game yang dimuat.");
+            } catch (IOException e) {
+                showError("Gagal memuat UI game: " + e.getMessage());
             } catch (Exception e) {
                 showError("Gagal memuat save: " + e.getMessage());
             }
@@ -97,7 +104,12 @@ public class SettingsDialogController implements DialogController, GameAwareCont
         if (file != null) {
             try {
                 var card = pluginLoader.loadExperimentCard(file.getAbsolutePath());
-                showInfo("Plugin kartu berhasil dimuat:\n" + card.getCardName());
+                if (game != null) {
+                    game.getCardDeck().addCard(card);
+                    showInfo("Plugin kartu berhasil dimuat dan ditambahkan ke deck:\n" + card.getCardName());
+                } else {
+                    showInfo("Plugin kartu berhasil dimuat (belum ada game aktif):\n" + card.getCardName());
+                }
             } catch (Exception e) {
                 showError("Gagal memuat plugin kartu: " + e.getMessage());
             }

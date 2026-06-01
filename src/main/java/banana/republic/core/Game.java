@@ -1,5 +1,11 @@
 package banana.republic.core;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.board.Intersection;
@@ -23,16 +29,11 @@ import banana.republic.resource.BankImpl;
 import banana.republic.resource.ResourceProductionService;
 import banana.republic.resource.ResourceType;
 import banana.republic.robber.Robber;
-import banana.republic.timer.TurnTimer;
 import banana.republic.save.GameSaveManager;
+import banana.republic.timer.TurnTimer;
 import banana.republic.trade.TradeManager;
 import banana.republic.trade.TradeOffer;
 import banana.republic.trade.ValidationResult;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Orkestrator utama permainan Banana Republic.
@@ -398,7 +399,16 @@ public class Game {
 
         turnManager.stopTimer();
         tradeManager.reset(); // tutup semua negosiasi yang masih terbuka
+        
         Player prev = getActivePlayer();
+        
+        // Tandai bahwa kartu yang baru dibeli giliran ini sekarang bisa dimainkan
+        for (banana.republic.card.ExperimentCard card : prev.getHandCards()) {
+            if (card instanceof banana.republic.card.DevelopmentCard devCard) {
+                devCard.setNewlyDrawn(false);
+            }
+        }
+        
         turnManager.advanceTurn();
         currentPhase = GamePhase.RESOURCE_GATHERING;
         turnNumber++;
@@ -678,6 +688,9 @@ public class Game {
                          player.getName() +
                              " membangun Pos Pantau di intersection #" +
                              intersection.getId());
+
+        // Pos Pantau baru bisa memutus jalan terpanjang pemain lain
+        updateLongestRoad();
     }
 
     /**
@@ -941,7 +954,7 @@ public class Game {
                 "Hanya boleh memainkan 1 kartu per giliran");
         }
         if (!card.isPlayable()) {
-            throw new IllegalStateException("Kartu " + card.getCardName() +
+            throw new IllegalStateException("" + card.getCardName() +
                                             " tidak bisa dimainkan saat ini");
         }
 
@@ -1139,6 +1152,12 @@ public class Game {
      * Dipanggil secara internal oleh {@link #buildRoad} dan {@link #placeInitialRoad}.
      */
     private void updateLongestRoad() {
+        // Recompute longest road lengths from current board state
+        for (Player p : players) {
+            int length = vpCalculator.computeLongestRoadLength(p, board);
+            p.setLongestRoadLength(length);
+        }
+
         Player prev    = null;
         for (Player p : players) {
             if (p.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) { prev = p; break; }

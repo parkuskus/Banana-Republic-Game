@@ -4,11 +4,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.HashSet;
 
 import banana.republic.App;
 import banana.republic.board.Board;
@@ -20,20 +21,18 @@ import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
 import banana.republic.resource.ResourceType;
-
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Tooltip;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.effect.GaussianBlur;
-import javafx.scene.Parent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -46,8 +45,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Shape;
-import javafx.scene.shape.StrokeLineCap;
-import javafx.util.Duration;
+
 
 public class GameController implements Initializable {
 
@@ -80,7 +78,8 @@ public class GameController implements Initializable {
     @FXML private VBox logbookContainer;
     @FXML private Label logEntry1, logEntry2, logEntry3, logEntry4, logEntry5, logEntry6, logEntry7;
 
-    @FXML private Button btnRollDice, btnSetDice, btnBuild, btnTrade, btnCard, btnDeclareVictory, btnSettings, btnEndTurn;
+    @FXML private Button btnRollDice, btnSetDice, btnBuild, btnTrade, btnBuyCard, btnCard, btnDeclareVictory, btnSettings, btnEndTurn;
+    @FXML private Button btnSteal, btnDiscard, btnEndGame;
     @FXML private Label currentConditionLabel;
 
     // ============================================================
@@ -92,6 +91,7 @@ public class GameController implements Initializable {
     private Image[] diceImages = new Image[6];
     private GaussianBlur blurEffect = new GaussianBlur(10);
     private Image gambarAnchorGlobal = null;
+    private Image gambarNimonGlobal = null;
     // Tambahkan di bagian atas bersama variabel state lainnya
     private banana.republic.board.Intersection lastSetupSettlement = null;
 
@@ -118,14 +118,14 @@ public class GameController implements Initializable {
     // ============================================================
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        for (int i = 1; i <= 6; i++) {
-            URL url = getClass().getResource("/icons/dice_one.png");
+        String[] diceNames = {"one", "two", "three", "four", "five", "six"};
+        for (int i = 0; i < 6; i++) {
             try {
-                URL specific = getClass().getResource("/icons/dice_" + i + ".png");
+                URL specific = getClass().getResource("/icons/dice_" + diceNames[i] + ".png");
                 if (specific == null) specific = getClass().getResource("/icons/dice_one.png");
-                diceImages[i - 1] = new Image(specific.toExternalForm());
+                diceImages[i] = new Image(specific.toExternalForm());
             } catch (Exception e) {
-                diceImages[i - 1] = null;
+                diceImages[i] = null;
             }
         }
 
@@ -178,7 +178,6 @@ public class GameController implements Initializable {
             setupResponsiveScaling(parentMap);
         }
 
-        game.startSetupPhase();
         refreshAllUI();
         updatePhaseUI();
 
@@ -210,11 +209,17 @@ public class GameController implements Initializable {
             if (result.isSeven()) {
                 game.processDiscardPhase();
                 refreshAllUI();
-                boolean needHumanDiscard = game.getPlayers().stream()
-                        .anyMatch(p -> !p.isBot() && p.getTotalResourceCount() > Game.HAND_LIMIT);
-                if (needHumanDiscard) {
-                    try { openDialog("discard", discardDialogOverlay); } catch (IOException e) {}
+
+                humanDiscardQueue.clear();
+                for (Player p : game.getPlayers()) {
+                    if (!p.isBot() && p.getTotalResourceCount() > Game.HAND_LIMIT) {
+                        humanDiscardQueue.offer(p);
+                    }
                 }
+                if (!humanDiscardQueue.isEmpty()) {
+                    showNextDiscardDialog();
+                }
+
                 currentMode = InteractionMode.ROBBER;
                 showInfo("Dadu 7! Nimon Ungu aktif. Pilih petak untuk memindahkan Nimon Ungu.");
             } else {
@@ -229,14 +234,27 @@ public class GameController implements Initializable {
     @FXML
     private void onSetDice() {
         if (game == null) return;
-        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("1,1");
+        
+        if (game.getCurrentPhase() != GamePhase.RESOURCE_GATHERING) {
+            showError("Dadu sudah dikocok (atau tidak bisa melempar dadu saat ini).");
+            return;
+        }
+        
+        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog("7");
         dialog.setTitle("Set Dice Manual");
-        dialog.setHeaderText("Masukkan nilai dadu (1-6)");
+        dialog.setHeaderText("Masukkan total nilai dadu (2-12)");
         dialog.showAndWait().ifPresent(input -> {
             try {
-                String[] parts = input.split(",");
-                int d1 = Integer.parseInt(parts[0].trim());
-                int d2 = Integer.parseInt(parts[1].trim());
+                int total = Integer.parseInt(input.trim());
+                if (total < 2 || total > 12) {
+                    showError("Total dadu harus antara 2 hingga 12.");
+                    return;
+                }
+                
+                // Pisahkan total menjadi 2 nilai dadu (1-6)
+                int d1 = Math.min(6, total - 1);
+                int d2 = total - d1;
+                
                 game.getDice().setManualMode(true);
                 game.getDice().setManualValues(d1, d2);
                 DiceResult result = game.rollDice();
@@ -247,14 +265,27 @@ public class GameController implements Initializable {
                 if (result.isSeven()) {
                     game.processDiscardPhase();
                     refreshAllUI();
+
+                    humanDiscardQueue.clear();
+                    for (Player p : game.getPlayers()) {
+                        if (!p.isBot() && p.getTotalResourceCount() > Game.HAND_LIMIT) {
+                            humanDiscardQueue.offer(p);
+                        }
+                    }
+                    if (!humanDiscardQueue.isEmpty()) {
+                        showNextDiscardDialog();
+                    }
+
                     currentMode = InteractionMode.ROBBER;
                     showInfo("Dadu 7! Nimon Ungu aktif.");
                 } else {
                     game.startTradeBuildTimer(this::updateTimer);
                 }
                 updatePhaseUI();
+            } catch (NumberFormatException e) {
+                showError("Format angka tidak valid.");
             } catch (Exception e) {
-                showError("Format tidak valid.");
+                showError(e.getMessage());
             }
         });
     }
@@ -328,135 +359,167 @@ public class GameController implements Initializable {
         }
         final Color finalPlayerColor = activePlayerColor;
 
-        // --- 2. LOOP MURNI DARI MEMORI BACKEND (TIDAK ADA LAGI PERGESERAN VISUAL) ---
-        // Menggunakan globalIntersectionCoords menjamin bahwa titik yang diklik
-        // sama persis posisinya dengan titik yang dirender ulang saat End Turn.
+        // --- 2. SETUP ROAD MODE (Special Case) ---
+        if (game != null && game.getCurrentPhase().isSetupPhase() && lastSetupSettlement != null) {
+            for (banana.republic.board.Path path : lastSetupSettlement.getAdjacentPaths()) {
+                if (path == null || path.hasRoad()) continue;
+
+                banana.republic.board.Intersection other =
+                    (path.getIntersectionA().getId() == lastSetupSettlement.getId()) ? path.getIntersectionB() : path.getIntersectionA();
+                double[] coordsA = globalIntersectionCoords.get(lastSetupSettlement);
+                double[] coordsB = globalIntersectionCoords.get(other);
+
+                if (coordsA == null || coordsB == null) continue;
+
+                javafx.scene.shape.Line rect = createRoadLine(coordsA[0], coordsA[1], coordsB[0], coordsB[1], 10.0);
+                rect.setStroke(Color.rgb(200, 200, 200, 0.6));
+                rect.setStyle("-fx-cursor: hand;");
+
+                DropShadow glow = new DropShadow(12, Color.YELLOW);
+                rect.setOnMouseEntered(e -> {
+                    rect.setEffect(glow);
+                    rect.setStroke(Color.YELLOW);
+                    rect.setStrokeWidth(14.0);
+                });
+                rect.setOnMouseExited(e -> {
+                    rect.setEffect(null);
+                    rect.setStroke(Color.rgb(200, 200, 200, 0.6));
+                    rect.setStrokeWidth(10.0);
+                });
+
+                final banana.republic.board.Path targetPath = path;
+                rect.setOnMouseClicked(e -> {
+                    eksekusiBangunDariOverlay(null, targetPath, false);
+                    e.consume();
+                });
+
+                buildOverlayPane.getChildren().add(rect);
+            }
+
+            buildOverlayPane.toFront();
+            updateConditionLabel();
+            return;
+        }
+
+        // --- 3. ROAD BUILDING OVERLAY (TRADE_BUILD) ---
+        if (game != null && game.getCurrentPhase() == GamePhase.TRADE_BUILD) {
+            for (banana.republic.board.Path path : game.getBoard().getAllPaths()) {
+                if (!path.isEmpty()) continue;
+                if (!game.getBoard().isPathConnectedToPlayer(path, game.getActivePlayer())) continue;
+
+                double[] cA = globalIntersectionCoords.get(path.getIntersectionA());
+                double[] cB = globalIntersectionCoords.get(path.getIntersectionB());
+                if (cA == null || cB == null) continue;
+
+                javafx.scene.shape.Line roadOverlay = createRoadLine(cA[0], cA[1], cB[0], cB[1], 10.0);
+                roadOverlay.setStroke(Color.rgb(255, 255, 255, 0.3));
+                roadOverlay.setStyle("-fx-cursor: hand;");
+
+                DropShadow glow = new DropShadow(10, finalPlayerColor);
+                roadOverlay.setOnMouseEntered(e -> {
+                    roadOverlay.setEffect(glow);
+                    roadOverlay.setStroke(finalPlayerColor.deriveColor(0, 1, 1, 0.5));
+                    roadOverlay.setStrokeWidth(14.0);
+                });
+                roadOverlay.setOnMouseExited(e -> {
+                    roadOverlay.setEffect(null);
+                    roadOverlay.setStroke(Color.rgb(255, 255, 255, 0.3));
+                    roadOverlay.setStrokeWidth(10.0);
+                });
+
+                final banana.republic.board.Path targetPath = path;
+                roadOverlay.setOnMouseClicked(e -> {
+                    eksekusiBangunDariOverlay(null, targetPath, false);
+                    e.consume();
+                });
+
+                buildOverlayPane.getChildren().add(roadOverlay);
+            }
+        }
+
+        // --- 4. INTERSECTION BUILDING OVERLAY (SETTLEMENT / CITY) ---
         for (Map.Entry<banana.republic.board.Intersection, double[]> entry : globalIntersectionCoords.entrySet()) {
             banana.republic.board.Intersection inter = entry.getKey();
             double[] coords = entry.getValue();
-
-            // Titik Absolut yang dikunci oleh JavaFX dan Backend
             double cx = coords[0];
             double cy = coords[1];
 
-            // ==============================================================
-            // PRE-VALIDATION LOGIC
-            // ==============================================================
-            // Aturan 1: Lewati jika sudah ada bangunan di sini
-            if (inter.getOwner() != null) continue;
+            boolean canBuildSettlement = false;
+            boolean canUpgradeToCity = false;
 
-            // Aturan 2: Aturan Jarak (Distance Rule)
-            boolean distanceValid = true;
-            if (inter.getAdjacentPaths() != null) {
-                for (banana.republic.board.Path p : inter.getAdjacentPaths()) {
-                    if (p == null) continue;
-                    banana.republic.board.Intersection neighbor = (p.getIntersectionA() == inter) ? p.getIntersectionB() : p.getIntersectionA();
-                    if (neighbor != null && neighbor.getOwner() != null) {
-                        distanceValid = false;
-                        break;
+            if (inter.getOwner() == null) {
+                // Check distance rule and connection for settlement
+                if (game.getBoard().isDistanceRuleValid(inter)) {
+                    if (game.getCurrentPhase().isSetupPhase()) {
+                        canBuildSettlement = true;
+                    } else if (inter.getAdjacentPaths().stream().anyMatch(p -> p.hasRoad() && game.getActivePlayer().equals(p.getOwner()))) {
+                        canBuildSettlement = true;
                     }
                 }
-            }
-            if (!distanceValid) continue; // Skip, jangan munculkan lingkaran
-
-            // Aturan 3: Aturan Koneksi Jalan (Hanya di luar Fase Setup)
-            if (game != null && !game.getCurrentPhase().isSetupPhase() && game.getActivePlayer() != null) {
-                boolean isConnectedToOwnRoad = false;
-                if (inter.getAdjacentPaths() != null) {
-                    for (banana.republic.board.Path p : inter.getAdjacentPaths()) {
-                        if (p != null && game.getActivePlayer().equals(p.getOwner())) {
-                            isConnectedToOwnRoad = true;
-                            break;
-                        }
-                    }
+            } else if (inter.getOwner().equals(game.getActivePlayer())) {
+                if (inter.getBuilding().getBuildingType() == banana.republic.building.BuildingType.POS_PANTAU && game.getCurrentPhase() == GamePhase.TRADE_BUILD) {
+                    canUpgradeToCity = true;
                 }
-                if (!isConnectedToOwnRoad) continue; // Skip, tidak terhubung dengan pipa
             }
-            // ==============================================================
 
-            // Deteksi apakah titik ini adalah harbor untuk menambahkan logo jangkar
+            if (!canBuildSettlement && !canUpgradeToCity) continue;
+
+            // Harbor check for anchor icon
             boolean isHarbor = false;
             for (double[] hp : harborPoints) {
                 if (Math.hypot(hp[0] - cx, hp[1] - cy) < 20.0) {
                     isHarbor = true;
-                    // PERBAIKAN PENTING: Kita tidak lagi menimpa nilai cx dan cy dengan hp[0] hp[1].
-                    // Hal inilah yang membuat posisi bangunan melompat-lompat di kode sebelumnya!
                     break;
                 }
             }
 
             StackPane nodeWadah = new StackPane();
-            nodeWadah.setLayoutX(cx - 15);
-            nodeWadah.setLayoutY(cy - 15);
-            nodeWadah.setPrefSize(30, 30);
+            nodeWadah.setLayoutX(cx - 18);
+            nodeWadah.setLayoutY(cy - 18);
+            nodeWadah.setPrefSize(36, 36);
             nodeWadah.setStyle("-fx-cursor: hand;");
 
-            Circle dot = new Circle(14);
-            if (isHarbor) {
-                dot.setFill(Color.rgb(255, 255, 255, 0.4));
-                dot.setStroke(Color.rgb(40, 40, 40, 0.8));
-                dot.setStrokeWidth(2.5);
+            if (canUpgradeToCity) {
+                javafx.scene.shape.Rectangle labRect = new javafx.scene.shape.Rectangle(24, 24);
+                labRect.setFill(finalPlayerColor.deriveColor(0, 0.8, 1.2, 0.7));
+                labRect.setStroke(Color.WHITE);
+                labRect.setStrokeWidth(2);
+                nodeWadah.getChildren().add(labRect);
+
+                nodeWadah.setOnMouseEntered(e -> labRect.setEffect(new DropShadow(15, Color.CYAN)));
+                nodeWadah.setOnMouseExited(e -> labRect.setEffect(null));
+                nodeWadah.setOnMouseClicked(e -> {
+                    eksekusiBangunDariOverlay(inter, null, true);
+                    e.consume();
+                });
             } else {
-                dot.setFill(Color.rgb(255, 255, 255, 0.85));
-                dot.setStroke(Color.rgb(40, 40, 40, 0.8));
-                dot.setStrokeWidth(1.5);
+                Circle dot = new Circle(14);
+                if (isHarbor) {
+                    dot.setFill(Color.rgb(255, 255, 255, 0.4));
+                    dot.setStroke(Color.rgb(40, 40, 40, 0.8));
+                    dot.setStrokeWidth(2.5);
+                } else {
+                    dot.setFill(Color.rgb(255, 255, 255, 0.85));
+                    dot.setStroke(Color.rgb(40, 40, 40, 0.8));
+                    dot.setStrokeWidth(1.5);
+                }
+                nodeWadah.getChildren().add(dot);
+
+                if (isHarbor && gambarAnchorGlobal != null) {
+                    ImageView anchorView = new ImageView(gambarAnchorGlobal);
+                    anchorView.setFitWidth(16);
+                    anchorView.setFitHeight(16);
+                    anchorView.setPreserveRatio(true);
+                    nodeWadah.getChildren().add(anchorView);
+                }
+
+                nodeWadah.setOnMouseEntered(e -> dot.setEffect(new DropShadow(15, finalPlayerColor)));
+                nodeWadah.setOnMouseExited(e -> dot.setEffect(null));
+                nodeWadah.setOnMouseClicked(e -> {
+                    eksekusiBangunDariOverlay(inter, null, false);
+                    e.consume();
+                });
             }
-            nodeWadah.getChildren().add(dot);
-
-            // Tambahkan Ikon Harbor
-            if (isHarbor && gambarAnchorGlobal != null) {
-                ImageView anchorView = new ImageView(gambarAnchorGlobal);
-                anchorView.setFitWidth(16);
-                anchorView.setFitHeight(16);
-                anchorView.setPreserveRatio(true);
-                nodeWadah.getChildren().add(anchorView);
-            }
-
-            final double finalCx = cx;
-            final double finalCy = cy;
-
-            // --- EFEK HOVER WARNA PLAYER ---
-            nodeWadah.setOnMouseEntered(e -> {
-                dot.setEffect(new DropShadow(15, finalPlayerColor));
-            });
-            nodeWadah.setOnMouseExited(e -> {
-                dot.setEffect(null);
-            });
-
-            // --- EVENT KLIK KEKAL ---
-            nodeWadah.setOnMouseClicked(e -> {
-                if (game != null && game.getActivePlayer() != null) {
-                    try {
-                        Player activeP = game.getActivePlayer();
-                        if (game.getCurrentPhase().isSetupPhase()) {
-                            game.placeInitialSettlement(activeP, inter);
-                        } else {
-                            game.buildSettlement(activeP, inter);
-                        }
-                    } catch (Exception ex) {
-                        showError("Sistem gagal membangun di backend: " + ex.getMessage());
-                        return;
-                    }
-                }
-
-                // Tampilkan bayangan permanen segera setelah diklik
-                Circle permanentBuilding = new Circle(finalCx, finalCy, 16);
-                permanentBuilding.setFill(finalPlayerColor);
-                permanentBuilding.setStroke(Color.BLACK);
-                permanentBuilding.setStrokeWidth(2);
-
-                if (permanentBuildLayer != null) {
-                    permanentBuildLayer.getChildren().add(permanentBuilding);
-                    permanentBuildLayer.toFront();
-                }
-
-                removeBuildOverlay();
-                if (btnEndTurn != null) {
-                    btnEndTurn.setDisable(false);
-                }
-
-                e.consume();
-            });
 
             buildOverlayPane.getChildren().add(nodeWadah);
         }
@@ -520,26 +583,55 @@ public class GameController implements Initializable {
         intersectionLayer.getChildren().add(marker);
     }
 
+    private javafx.scene.shape.Line createRoadLine(double sx, double sy, double ex, double ey, double width) {
+        javafx.scene.shape.Line line = new javafx.scene.shape.Line(sx, sy, ex, ey);
+        line.setStrokeWidth(width);
+        line.setStrokeLineCap(javafx.scene.shape.StrokeLineCap.ROUND);
+        return line;
+    }
+
     private void createPathLine(double sx, double sy, double ex, double ey, Pane pathLayer, banana.republic.board.Path path) {
-        Line line = new Line(sx, sy, ex, ey);
+        javafx.scene.shape.Line line = createRoadLine(sx, sy, ex, ey, 10.0);
         line.setStroke(Color.rgb(200, 200, 200, 0.6));
-        line.setStrokeWidth(12.0);
-        line.setStrokeLineCap(StrokeLineCap.ROUND);
         line.setStyle("-fx-cursor: hand;");
 
         DropShadow glow = new DropShadow(12, Color.YELLOW);
         line.setOnMouseEntered(e -> {
             line.setEffect(glow);
             line.setStroke(Color.YELLOW);
-            line.setStrokeWidth(18.0);
+            line.setStrokeWidth(14.0);
         });
         line.setOnMouseExited(e -> {
             line.setEffect(null);
             line.setStroke(Color.rgb(200, 200, 200, 0.6));
-            line.setStrokeWidth(12.0);
+            line.setStrokeWidth(10.0);
         });
 
         line.setOnMouseClicked(e -> eksekusiBangunDariOverlay(null, path, false));
+        pathLayer.getChildren().add(line);
+    }
+
+    private void createPathLine(double sx, double sy, double ex, double ey, Pane pathLayer) {
+        javafx.scene.shape.Line line = createRoadLine(sx, sy, ex, ey, 10.0);
+        line.setStroke(Color.rgb(200, 200, 200, 0.6));
+        line.setStyle("-fx-cursor: hand;");
+
+        Tooltip.install(line, new Tooltip("Bangun Pipa\n" + getRoadCostString()));
+
+        DropShadow glow = new DropShadow(12, Color.YELLOW);
+        line.setOnMouseEntered(e -> {
+            line.setEffect(glow);
+            line.setStroke(Color.YELLOW);
+            line.setStrokeWidth(14.0);
+        });
+        line.setOnMouseExited(e -> {
+            line.setEffect(null);
+            line.setStroke(Color.rgb(200, 200, 200, 0.6));
+            line.setStrokeWidth(10.0);
+        });
+
+        line.setOnMouseClicked(e -> buildFromVisualEdge(sx, sy, ex, ey));
+
         pathLayer.getChildren().add(line);
     }
 
@@ -572,7 +664,9 @@ public class GameController implements Initializable {
         if (iA != null && iB != null) {
             banana.republic.board.Path path = cariPathAntara(iA, iB);
             if (path != null) {
-//                eksekusiBangunDariOverlay(null, path);
+                if (game != null && game.getCurrentPhase().isSetupPhase() && lastSetupSettlement != null) {
+                    eksekusiBangunDariOverlay(null, path, false);
+                }
                 return;
             }
         }
@@ -670,31 +764,7 @@ public class GameController implements Initializable {
         return container;
     }
 
-    private void createPathLine(double sx, double sy, double ex, double ey, Pane pathLayer) {
-        Line line = new Line(sx, sy, ex, ey);
-        line.setStroke(Color.rgb(200, 200, 200, 0.6));
-        line.setStrokeWidth(12.0);
-        line.setStrokeLineCap(StrokeLineCap.ROUND);
-        line.setStyle("-fx-cursor: hand;");
 
-        Tooltip.install(line, new Tooltip("Bangun Pipa\n" + getRoadCostString()));
-
-        DropShadow glow = new DropShadow(12, Color.YELLOW);
-        line.setOnMouseEntered(e -> {
-            line.setEffect(glow);
-            line.setStroke(Color.YELLOW);
-            line.setStrokeWidth(18.0);
-        });
-        line.setOnMouseExited(e -> {
-            line.setEffect(null);
-            line.setStroke(Color.rgb(200, 200, 200, 0.6));
-            line.setStrokeWidth(12.0);
-        });
-
-        line.setOnMouseClicked(e -> buildFromVisualEdge(sx, sy, ex, ey));
-
-        pathLayer.getChildren().add(line);
-    }
 
     private String getSettlementCostString() {
         // Hard-coded human readable cost (no Cost model available in project)
@@ -752,10 +822,8 @@ public class GameController implements Initializable {
                 double[] cA = globalIntersectionCoords.get(path.getIntersectionA());
                 double[] cB = globalIntersectionCoords.get(path.getIntersectionB());
                 if (cA != null && cB != null) {
-                    Line builtRoad = new Line(cA[0], cA[1], cB[0], cB[1]);
+                    javafx.scene.shape.Line builtRoad = createRoadLine(cA[0], cA[1], cB[0], cB[1], 12.0);
                     builtRoad.setStroke(Color.web(playerColorToHex(path.getOwner().getColor())));
-                    builtRoad.setStrokeWidth(12);
-                    builtRoad.setStrokeLineCap(StrokeLineCap.ROUND);
                     permanentBuildLayer.getChildren().add(builtRoad);
                 }
             }
@@ -782,7 +850,48 @@ public class GameController implements Initializable {
                 }
             }
         }
+        
+        // Render Nimon Ungu (Robber)
+        if (game.getRobber() != null && game.getRobber().getCurrentTile() != null) {
+            HexTile robberTile = game.getRobber().getCurrentTile();
+            StackPane sp = modelToVisualTileFallback(robberTile);
+            if (sp != null) {
+                if (gambarNimonGlobal == null) {
+                    try {
+                        URL nimonUrl = getClass().getResource("/icons/nimon_ungu.png");
+                        if (nimonUrl != null) gambarNimonGlobal = new Image(nimonUrl.toExternalForm());
+                    } catch (Exception e) {}
+                }
+                if (gambarNimonGlobal != null) {
+                    ImageView robberView = new ImageView(gambarNimonGlobal);
+                    robberView.setFitWidth(36);
+                    robberView.setFitHeight(36);
+                    robberView.setPreserveRatio(true);
+                    
+                    double w = sp.getPrefWidth() > 0 ? sp.getPrefWidth() : 94.0;
+                    double h = sp.getPrefHeight() > 0 ? sp.getPrefHeight() : 108.0;
+                    double rx = sp.getLayoutX() + (w / 2) - 18;
+                    double ry = sp.getLayoutY() + (h / 2) - 18;
+                    
+                    robberView.setLayoutX(rx);
+                    robberView.setLayoutY(ry);
+                    
+                    // Efek shadow agar Nimon terlihat melayang/menonjol
+                    robberView.setEffect(new DropShadow(10, Color.PURPLE));
+                    
+                    permanentBuildLayer.getChildren().add(robberView);
+                }
+            }
+        }
+        
         permanentBuildLayer.toFront();
+    }
+    
+    private StackPane modelToVisualTileFallback(HexTile tile) {
+        for (Map.Entry<StackPane, HexTile> entry : visualToModelTile.entrySet()) {
+            if (entry.getValue().equals(tile)) return entry.getKey();
+        }
+        return null;
     }
 
     @FXML
@@ -825,6 +934,18 @@ public class GameController implements Initializable {
             App.setRootFromLoader(root);
         } catch (IOException e) {
             showError("Gagal membuka layar transisi: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void buyCard() {
+        if (game == null) return;
+        try {
+            game.buyDevelopmentCard(game.getActivePlayer());
+            refreshAllUI();
+            showInfo("Berhasil membeli Kartu Temuan.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            showError(e.getMessage());
         }
     }
 
@@ -1029,6 +1150,10 @@ public class GameController implements Initializable {
         btnEndTurn.setDisable(isSetup || isGathering || isGameOver);
         btnSettings.setDisable(isGameOver);
 
+        if (btnSteal != null) btnSteal.setDisable(currentMode != InteractionMode.ROBBER);
+        if (btnDiscard != null) btnDiscard.setDisable(humanDiscardQueue.isEmpty());
+        if (btnEndGame != null) btnEndGame.setDisable(isGameOver);
+
         updateConditionLabel();
     }
 
@@ -1064,7 +1189,7 @@ public class GameController implements Initializable {
         if (a.getAdjacentPaths() == null) return null;
         for (banana.republic.board.Path path : a.getAdjacentPaths()) {
             if (path == null) continue;
-            if (path.getIntersectionA() == b || path.getIntersectionB() == b) {
+            if (path.getIntersectionA().getId() == b.getId() || path.getIntersectionB().getId() == b.getId()) {
                 return path;
             }
         }
@@ -1084,6 +1209,19 @@ public class GameController implements Initializable {
         }
     }
 
+    private static final double SQRT_3 = Math.sqrt(3.0);
+    private static final int[] BACKEND_TO_UI_CORNER = {1, 2, 3, 4, 5, 0};
+
+    private String getCornerKey(HexTile tile, int cornerIndex) {
+        double centerX = SQRT_3 * (tile.getColumn() + tile.getRow() / 2.0);
+        double centerY = 1.5 * tile.getRow();
+        double angleDeg = 60.0 * cornerIndex - 30.0;
+        double angleRad = Math.toRadians(angleDeg);
+        double x = centerX + Math.cos(angleRad);
+        double y = centerY + Math.sin(angleRad);
+        return String.format(java.util.Locale.US, "%.6f,%.6f", x, y);
+    }
+
     private void buildVisualToModelMapping() {
         if (game == null || hexdesert == null) return;
         visualToModelTile.clear();
@@ -1094,59 +1232,77 @@ public class GameController implements Initializable {
         if (parentMap == null) return;
 
         Board board = game.getBoard();
-        Set<HexTile> usedTiles = new HashSet<>();
 
+        // 1. Identify all 19 hex StackPanes
         for (javafx.scene.Node node : parentMap.getChildren()) {
             if (node instanceof StackPane sp) {
-                String id = sp.getId();
-//                if (id != null && id.startsWith("harbor")) continue; // ABAIKAN UBIN OCEAN HARBOR FXML
-                if (sp.getStyleClass().toString().contains("hex-tile-")) {
+                if (sp.getStyleClass().stream().anyMatch(s -> s.startsWith("hex-tile-"))) {
                     mainHexesOnly.add(sp);
                 }
             }
         }
 
-        // TAHAP 1
-        for (StackPane sp : mainHexesOnly) {
-            String style = sp.getStyleClass().stream().filter(s -> s.startsWith("hex-tile-")).findFirst().orElse("");
-            banana.republic.board.TerrainType terrain = parseTerrainFromStyle(style);
-            int tokenValue = parseTokenFromVisual(sp);
+        // 2. Sort StackPanes by Y then X (with tolerance for minor alignment issues)
+        mainHexesOnly.sort((a, b) -> {
+            double ay = a.getLayoutY();
+            double by = b.getLayoutY();
+            if (Math.abs(ay - by) > 10) return Double.compare(ay, by);
+            return Double.compare(a.getLayoutX(), b.getLayoutX());
+        });
 
-            HexTile matched = findMatchingTile(board, terrain, tokenValue, usedTiles);
-            if (matched != null) {
-                visualToModelTile.put(sp, matched);
-                usedTiles.add(matched);
+        // 3. Sort Model HexTiles by R then Q (consistent with StandardMapGenerator axial order)
+        List<HexTile> modelTiles = new ArrayList<>(board.getAllHexTiles());
+        modelTiles.sort((a, b) -> {
+            if (a.getRow() != b.getRow()) return Integer.compare(a.getRow(), b.getRow());
+            return Integer.compare(a.getColumn(), b.getColumn());
+        });
+
+        // 4. Map them one-to-one based on position
+        int count = Math.min(mainHexesOnly.size(), modelTiles.size());
+        Map<HexTile, StackPane> modelToVisualTile = new HashMap<>();
+        for (int i = 0; i < count; i++) {
+            StackPane sp = mainHexesOnly.get(i);
+            HexTile tile = modelTiles.get(i);
+            visualToModelTile.put(sp, tile);
+            modelToVisualTile.put(tile, sp);
+        }
+
+        // 5. Calculate precise intersection coordinates using mathematical mapping
+        Map<String, double[]> cornerSum = new java.util.LinkedHashMap<>();
+        Map<String, Integer> cornerCount = new java.util.HashMap<>();
+
+        for (HexTile tile : board.getAllHexTiles()) {
+            StackPane sp = modelToVisualTile.get(tile);
+            if (sp == null) continue;
+            double[][] uiCorners = getHexCorners(sp);
+
+            for (int cornerIndex = 0; cornerIndex < 6; cornerIndex++) {
+                String key = getCornerKey(tile, cornerIndex);
+                int uiIdx = BACKEND_TO_UI_CORNER[cornerIndex];
+
+                double[] sum = cornerSum.getOrDefault(key, new double[]{0.0, 0.0});
+                sum[0] += uiCorners[uiIdx][0];
+                sum[1] += uiCorners[uiIdx][1];
+                cornerSum.put(key, sum);
+
+                cornerCount.put(key, cornerCount.getOrDefault(key, 0) + 1);
             }
         }
 
-        // TAHAP 2
-        for (StackPane sp : mainHexesOnly) {
-            if (!visualToModelTile.containsKey(sp)) {
-                for (HexTile tile : board.getAllHexTiles()) {
-                    if (!usedTiles.contains(tile)) {
-                        visualToModelTile.put(sp, tile);
-                        usedTiles.add(tile);
-                        break;
-                    }
-                }
-            }
-        }
+        // Map calculated UI coordinates to the Board's logical intersections exactly in order
+        List<banana.republic.board.Intersection> allIntersections = board.getAllIntersections();
+        int idx = 0;
+        for (Map.Entry<String, double[]> entry : cornerSum.entrySet()) {
+            String key = entry.getKey();
+            double[] sum = entry.getValue();
+            int cCount = cornerCount.get(key);
 
-        // TAHAP 3
-        for (Map.Entry<StackPane, HexTile> entry : visualToModelTile.entrySet()) {
-            StackPane sp = entry.getKey();
-            HexTile tile = entry.getValue();
-            List<banana.republic.board.Intersection> adjs = game.getBoard().getAdjacentIntersections(tile);
-            if (adjs == null) continue;
+            double cx = sum[0] / cCount;
+            double cy = sum[1] / cCount;
 
-            double[][] corners = getHexCorners(sp);
-            for (int i = 0; i < 6; i++) {
-                if (i < adjs.size()) {
-                    banana.republic.board.Intersection inter = adjs.get(i);
-                    if (!globalIntersectionCoords.containsKey(inter)) {
-                        globalIntersectionCoords.put(inter, corners[i]);
-                    }
-                }
+            if (idx < allIntersections.size()) {
+                globalIntersectionCoords.put(allIntersections.get(idx), new double[]{cx, cy});
+                idx++;
             }
         }
     }
@@ -1226,6 +1382,7 @@ public class GameController implements Initializable {
                     stealDialogOverlay.setVisible(false);
                     if (mainGameRoot != null) mainGameRoot.setEffect(null);
                     refreshAllUI();
+                    game.startTradeBuildTimer(this::updateTimer);
                 });
             }
             if (controller instanceof GameAwareController ga) ga.setGame(game);
@@ -1355,6 +1512,43 @@ public class GameController implements Initializable {
         parentMap.getChildren().addAll(dock1, dock2, tokoBox);
     }
 
+    private java.util.Queue<Player> humanDiscardQueue = new java.util.LinkedList<>();
+
+    private void showNextDiscardDialog() {
+        if (humanDiscardQueue.isEmpty()) return;
+        Player p = humanDiscardQueue.poll();
+        try {
+            if (discardDialogOverlay == null) return;
+            discardDialogOverlay.getChildren().clear();
+            URL fxmlLocation = getClass().getResource("/fxml/discard.fxml");
+            if (fxmlLocation == null) return;
+
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(fxmlLocation);
+            javafx.scene.Parent dialogUI = loader.load();
+
+            Object controller = loader.getController();
+            if (controller instanceof DiscardDialogController discardController) {
+                discardController.setGame(game);
+                discardController.setDiscardingPlayer(p);
+                discardController.setCloseHandler(() -> {
+                    discardDialogOverlay.setVisible(false);
+                    if (mainGameRoot != null) mainGameRoot.setEffect(null);
+                    refreshAllUI();
+                    showNextDiscardDialog(); // Tampilkan pemain berikutnya
+                });
+            }
+
+            discardDialogOverlay.getChildren().add(dialogUI);
+            discardDialogOverlay.setVisible(true);
+            if (mainGameRoot != null) {
+                javafx.scene.effect.BoxBlur blur = new javafx.scene.effect.BoxBlur(5, 5, 3);
+                mainGameRoot.setEffect(blur);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void openDialog(String fxmlName, StackPane dialogOverlay) throws IOException {
         if (dialogOverlay == null) return;
@@ -1388,6 +1582,16 @@ public class GameController implements Initializable {
             Player bot = game.getActivePlayer();
             if (bot == null || !bot.isBot()) return;
 
+            // Jalankan strategi bot jika tersedia
+            java.util.List<banana.republic.player.Action> botActions = null;
+            if (bot instanceof banana.republic.player.BotPlayer botPlayer) {
+                try {
+                    botActions = botPlayer.executeTurn(game.getState());
+                } catch (Exception e) {
+                    // Strategi gagal, lanjutkan dengan perilaku bawaan
+                }
+            }
+
             try {
                 DiceResult result = game.rollDice();
                 showDiceResult(result);
@@ -1408,6 +1612,14 @@ public class GameController implements Initializable {
                 game.startTradeBuildTimer(this::updateTimer);
             } catch (Exception e) {}
 
+            // Eksekusi aksi dari strategi bot (trade, build, dsb.)
+            if (botActions != null) {
+                for (banana.republic.player.Action action : botActions) {
+                    executeBotAction(bot, action);
+                }
+                refreshAllUI();
+            }
+
             Platform.runLater(() -> {
                 try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                 if (game != null) {
@@ -1420,6 +1632,68 @@ public class GameController implements Initializable {
                 }
             });
         });
+    }
+
+    /**
+     * Mengeksekusi satu aksi yang dikembalikan oleh strategi bot.
+     */
+    private void executeBotAction(Player bot, banana.republic.player.Action action) {
+        if (action == null || game == null || bot == null) return;
+        try {
+            switch (action.getActionType()) {
+                case TRADE_MARITIME -> {
+                    banana.republic.resource.ResourceType sell =
+                        (banana.republic.resource.ResourceType) action.getParameter("sellType");
+                    banana.republic.resource.ResourceType buy =
+                        (banana.republic.resource.ResourceType) action.getParameter("buyType");
+                    if (sell != null && buy != null) {
+                        game.tradeWithBank(bot, sell, buy);
+                    }
+                }
+                case BUY_DEV_CARD -> game.buyDevelopmentCard(bot);
+                case BUILD_ROAD -> {
+                    Integer pathId = (Integer) action.getParameter("pathId");
+                    if (pathId != null) {
+                        game.getBoard().getPathById(pathId).ifPresent(
+                            path -> game.buildRoad(bot, path));
+                    }
+                }
+                case BUILD_SETTLEMENT -> {
+                    Integer interId = (Integer) action.getParameter("intersectionId");
+                    if (interId != null) {
+                        game.getBoard().getIntersectionById(interId).ifPresent(
+                            inter -> game.buildSettlement(bot, inter));
+                    }
+                }
+                case BUILD_CITY -> {
+                    Integer interId = (Integer) action.getParameter("intersectionId");
+                    if (interId != null) {
+                        game.getBoard().getIntersectionById(interId).ifPresent(
+                            inter -> game.buildCity(bot, inter));
+                    }
+                }
+                case PLAY_KNIGHT -> {
+                    Integer tileId = (Integer) action.getParameter("tileId");
+                    Integer victimIdx = (Integer) action.getParameter("victimIndex");
+                    if (tileId != null) {
+                        banana.republic.board.HexTile target =
+                            game.getBoard().getHexTileById(tileId).orElse(null);
+                        if (target != null) {
+                            banana.republic.player.Player victim = null;
+                            if (victimIdx != null && victimIdx >= 0 &&
+                                victimIdx < game.getPlayers().size()) {
+                                victim = game.getPlayers().get(victimIdx);
+                            }
+                            game.activateRobber(target, victim);
+                        }
+                    }
+                }
+                case END_TURN -> { /* diteruskan ke blok end turn di bawah */ }
+                default -> { /* aksi lain diabaikan untuk sekarang */ }
+            }
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            // Aksi bot tidak valid (misal resource tidak cukup), abaikan
+        }
     }
 
     private void showError(String message) {

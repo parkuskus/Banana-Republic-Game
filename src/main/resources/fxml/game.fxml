@@ -318,16 +318,12 @@
                                     </Group>
                                     <VBox alignment="BOTTOM_RIGHT" prefHeight="200.0" prefWidth="100.0">
                                        <children>
-                                           <Button mnemonicParsing="false" onAction="#endGame" text="end game" />
-                                           <Button mnemonicParsing="false" onAction="#toDiscard" text="discard" />
-                                             <Button mnemonicParsing="false" onAction="#toSteal" text="steal" />
-
-                                          <Label fx:id="currentConditionLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Condition">
-                                             <VBox.margin>
-                                                <Insets bottom="10.0" />
-                                             </VBox.margin>
-                                          </Label>
-                                            <Label fx:id="currentPlayerLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
+                                           <Label fx:id="currentConditionLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Condition">
+                                              <VBox.margin>
+                                                 <Insets bottom="10.0" />
+                                              </VBox.margin>
+                                           </Label>
+                                             <Label fx:id="currentPlayerLabel" alignment="CENTER" prefHeight="46.0" prefWidth="256.0" styleClass="rounded-card-wood" text="Current Player" />
                                           <HBox alignment="BOTTOM_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="119.0" prefWidth="257.0">
                                              <children>
                                            <ImageView fx:id="diceImage1" fitHeight="150.0" fitWidth="118.0" pickOnBounds="true" preserveRatio="true">
@@ -730,7 +726,8 @@
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
                                 <Button fx:id="btnTrade" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toTrade" prefWidth="200.0" styleClass="game-bottom-button" text="Trade" />
-                                <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toCard" prefWidth="200.0" styleClass="game-bottom-button" text="Card" />
+                                <Button fx:id="btnBuyCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#buyCard" prefWidth="200.0" styleClass="game-bottom-button" text="Buy Card" />
+                                <Button fx:id="btnCard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toCard" prefWidth="200.0" styleClass="game-bottom-button" text="Play Card" />
                                 <Button fx:id="btnDeclareVictory" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toVictory" prefWidth="200.0" styleClass="game-bottom-button" text="Declare victory" />
                            </children>
                            <HBox.margin>
@@ -739,8 +736,11 @@
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
                            <children>
+                                <Button fx:id="btnSteal" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSteal" prefWidth="200.0" styleClass="game-bottom-button" text="Steal" />
+                                <Button fx:id="btnDiscard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toDiscard" prefWidth="200.0" styleClass="game-bottom-button" text="Discard" />
+                                <Button fx:id="btnEndGame" maxWidth="-Infinity" mnemonicParsing="false" onAction="#endGame" prefWidth="200.0" styleClass="game-bottom-button" text="End Game" />
                                 <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
-                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="99.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
+                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
                            </children>
                            <HBox.margin>
                               <Insets left="25.0" />

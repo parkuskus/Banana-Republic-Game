@@ -2,6 +2,7 @@ package banana.republic.ui;
 
 import banana.republic.App;
 import banana.republic.core.Game;
+import banana.republic.player.BotPlayer;
 import banana.republic.player.Player;
 import banana.republic.resource.ResourceType;
 import banana.republic.trade.TradeOffer;
@@ -126,27 +127,54 @@ public class TradeDialogController implements Initializable, DialogController, G
             lblReceiveWoodVal, lblReceiveBrickVal, lblReceiveWheatVal, lblReceiveOreVal, lblReceiveBananaVal
         );
 
-        // Validasi: total give dan receive tidak boleh nol
         int totalGive = give.values().stream().mapToInt(Integer::intValue).sum();
         int totalReceive = receive.values().stream().mapToInt(Integer::intValue).sum();
 
-        if (totalGive == 0 && totalReceive == 0) {
-            showError("Tidak ada resource yang ditawarkan atau diminta.");
+        if (totalGive == 0 || totalReceive == 0) {
+            showError("Penawaran atau permintaan tidak boleh kosong.");
             return;
         }
 
-        // Untuk sekarang, trade domestik langsung dieksekusi (simplifikasi)
-        // Cari target pemain pertama yang bukan active player
-        Player target = game.getPlayers().stream()
-            .filter(p -> !p.equals(active))
-            .findFirst().orElse(null);
+        boolean isMaritime = tabMaritime.getStyleClass().contains("tab-active");
 
-        if (target == null) {
-            showError("Tidak ada pemain lain untuk berdagang.");
+        if (isMaritime) {
+            ResourceType sellType = null;
+            ResourceType buyType = null;
+            int typesGiven = 0;
+            int typesReceived = 0;
+
+            for (Map.Entry<ResourceType, Integer> entry : give.entrySet()) {
+                if (entry.getValue() > 0) {
+                    sellType = entry.getKey();
+                    typesGiven++;
+                }
+            }
+            for (Map.Entry<ResourceType, Integer> entry : receive.entrySet()) {
+                if (entry.getValue() > 0) {
+                    buyType = entry.getKey();
+                    typesReceived++;
+                }
+            }
+
+            if (typesGiven != 1 || typesReceived != 1) {
+                showError("Trade Maritim hanya dapat menukar 1 jenis sumber daya dengan 1 jenis lainnya.");
+                return;
+            }
+
+            try {
+                banana.republic.trade.ValidationResult result = game.tradeWithBank(active, sellType, buyType);
+                if (!result.isValid()) {
+                    showError("Trade Maritim gagal: " + result.getReason());
+                } else {
+                    closeDialog();
+                }
+            } catch (Exception e) {
+                showError("Error: " + e.getMessage());
+            }
             return;
         }
 
-        // Validasi pemain punya resource
+        // DOMESTIC TRADE
         for (Map.Entry<ResourceType, Integer> entry : give.entrySet()) {
             if (!active.hasResource(entry.getKey(), entry.getValue())) {
                 showError("Anda tidak punya cukup " + entry.getKey().getDisplayName() + " untuk ditukar.");
@@ -154,25 +182,66 @@ public class TradeDialogController implements Initializable, DialogController, G
             }
         }
 
-        try {
-            // Eksekusi trade langsung
-            for (Map.Entry<ResourceType, Integer> entry : give.entrySet()) {
-                active.removeResource(entry.getKey(), entry.getValue());
-                target.addResource(entry.getKey(), entry.getValue());
-            }
-            for (Map.Entry<ResourceType, Integer> entry : receive.entrySet()) {
-                target.removeResource(entry.getKey(), entry.getValue());
-                active.addResource(entry.getKey(), entry.getValue());
-            }
-            game.getGameLog().addEntry(
-                banana.republic.core.LogEntry.EventType.TRADE,
-                active.getName(),
-                active.getName() + " berdagang dengan " + target.getName()
-            );
-            closeDialog();
-        } catch (IllegalArgumentException e) {
-            showError(e.getMessage());
+        java.util.List<Player> otherPlayers = game.getPlayers().stream()
+                .filter(p -> !p.equals(active))
+                .toList();
+
+        if (otherPlayers.isEmpty()) {
+            showError("Tidak ada pemain lain.");
+            return;
         }
+
+        javafx.scene.control.ChoiceDialog<Player> dialog = new javafx.scene.control.ChoiceDialog<>(otherPlayers.get(0), otherPlayers);
+        dialog.setTitle("Pilih Target Trade");
+        dialog.setHeaderText("Pilih pemain yang akan menerima tawaran dagangmu.");
+        dialog.setContentText("Target:");
+        dialog.showAndWait().ifPresent(target -> {
+            // Validasi pemain target punya resource yang diminta
+            for (Map.Entry<ResourceType, Integer> entry : receive.entrySet()) {
+                if (!target.hasResource(entry.getKey(), entry.getValue())) {
+                    showError(target.getName() + " tidak punya cukup " + entry.getKey().getDisplayName() + ".");
+                    return;
+                }
+            }
+
+            if (target.isBot() && target instanceof BotPlayer botPlayer) {
+                boolean accepted = botPlayer.getStrategy().shouldAcceptTrade(
+                    game.getState(), active, give, receive);
+                if (!accepted) {
+                    showError(target.getName() + " (bot) menolak tawaran dagang.");
+                    return;
+                }
+            } else {
+                javafx.scene.control.Alert confirmDialog = new javafx.scene.control.Alert(Alert.AlertType.CONFIRMATION);
+                confirmDialog.setTitle("Konfirmasi Trade");
+                confirmDialog.setHeaderText("Tawaran dari " + active.getName() + " ke " + target.getName());
+                confirmDialog.setContentText(target.getName() + ", apakah kamu menerima trade ini?");
+                java.util.Optional<javafx.scene.control.ButtonType> result = confirmDialog.showAndWait();
+                if (result.isEmpty() || result.get() != javafx.scene.control.ButtonType.OK) {
+                    showError(target.getName() + " menolak tawaran dagang.");
+                    return;
+                }
+            }
+
+            try {
+                for (Map.Entry<ResourceType, Integer> entry : give.entrySet()) {
+                    active.removeResource(entry.getKey(), entry.getValue());
+                    target.addResource(entry.getKey(), entry.getValue());
+                }
+                for (Map.Entry<ResourceType, Integer> entry : receive.entrySet()) {
+                    target.removeResource(entry.getKey(), entry.getValue());
+                    active.addResource(entry.getKey(), entry.getValue());
+                }
+                game.getGameLog().addEntry(
+                    banana.republic.core.LogEntry.EventType.TRADE,
+                    active.getName(),
+                    active.getName() + " berdagang dengan " + target.getName()
+                );
+                closeDialog();
+            } catch (IllegalArgumentException e) {
+                showError(e.getMessage());
+            }
+        });
     }
 
     private Map<ResourceType, Integer> readResourcesFromLabels(

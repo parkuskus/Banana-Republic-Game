@@ -138,7 +138,6 @@ public class StealDialogController implements DialogController, GameAwareControl
         } catch (Exception e) {
             // ignore
         }
-        game.startTradeBuildTimer(null);
         closeDialog();
     }
 }

@@ -91,12 +91,38 @@ public class CardDialogController implements DialogController, GameAwareControll
             return;
         }
 
-        // Determine which card type is selected based on toggle state
         ExperimentCard cardToPlay = null;
         if (isSelected(cardPurple)) {
             cardToPlay = findFirstInHand(player.getHandCards(), KnightCard.class);
         } else if (isSelected(cardGreen)) {
-            cardToPlay = findFirstInHand(player.getHandCards(), ProgressCard.class);
+            // Cek ada ProgressCard apa saja
+            List<ExperimentCard> progressCards = player.getHandCards().stream()
+                .filter(c -> c instanceof ProgressCard)
+                .toList();
+                
+            if (progressCards.isEmpty()) {
+                cardToPlay = null;
+            } else if (progressCards.size() == 1) {
+                cardToPlay = progressCards.get(0);
+            } else {
+                // Ada lebih dari 1, tanya user mana yang mau dipakai (cek tipe unik)
+                List<String> types = progressCards.stream().map(c -> c.getClass().getSimpleName()).distinct().toList();
+                if (types.size() > 1) {
+                    javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(types.get(0), types);
+                    dialog.setTitle("Pilih Progress Card");
+                    dialog.setHeaderText("Kamu punya lebih dari satu jenis Progress Card.");
+                    dialog.setContentText("Pilih yang ingin digunakan:");
+                    var res = dialog.showAndWait();
+                    if (res.isPresent()) {
+                        String chosenType = res.get();
+                        cardToPlay = progressCards.stream().filter(c -> c.getClass().getSimpleName().equals(chosenType)).findFirst().orElse(null);
+                    } else {
+                        return; // user cancel
+                    }
+                } else {
+                    cardToPlay = progressCards.get(0);
+                }
+            }
         } else if (isSelected(cardOrange)) {
             cardToPlay = findFirstInHand(player.getHandCards(), VictoryPointCard.class);
         }
@@ -106,8 +132,29 @@ public class CardDialogController implements DialogController, GameAwareControll
             return;
         }
 
+        if (cardToPlay instanceof banana.republic.card.MonopolyCard mc) {
+            javafx.scene.control.ChoiceDialog<banana.republic.resource.ResourceType> dialog = new javafx.scene.control.ChoiceDialog<>(banana.republic.resource.ResourceType.WOOD, banana.republic.resource.ResourceType.values());
+            dialog.setTitle("Pilih Resource");
+            dialog.setHeaderText("Monopoly Nimon: Pilih satu resource untuk diambil dari semua pemain.");
+            var res = dialog.showAndWait();
+            if (res.isPresent()) {
+                mc.setTargetResource(res.get());
+            } else {
+                return; // cancel
+            }
+        }
+
         try {
             game.playCard(player, cardToPlay);
+            
+            // For Victory Point card, auto-check victory
+            if (cardToPlay instanceof VictoryPointCard) {
+                if (game.checkVictory() != null) {
+                    closeDialog();
+                    // Let GameController detect victory automatically, or do nothing as btnDeclareVictory is used
+                }
+            }
+            
             closeDialog();
         } catch (IllegalStateException | IllegalArgumentException e) {
             showError(e.getMessage());

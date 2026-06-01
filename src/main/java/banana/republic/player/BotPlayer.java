@@ -52,11 +52,11 @@ public class BotPlayer implements Player {
     }
 
 
-    public void executeTurn(GameState state) {
+    public List<Action> executeTurn(GameState state) {
         if (state == null) {
             throw new IllegalArgumentException("GameState cannot be null");
         }
-        strategy.takeTurn(state);
+        return strategy.takeTurn(state);
     }
 
     public PlayerStrategy getStrategy() {

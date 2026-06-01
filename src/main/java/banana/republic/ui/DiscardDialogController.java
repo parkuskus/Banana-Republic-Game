@@ -42,6 +42,7 @@ public class DiscardDialogController implements Initializable, DialogController,
 
     private Runnable closeHandler;
     private Game game;
+    private Player targetPlayer;
     private int requiredDiscard = 0;
 
     @Override
@@ -57,6 +58,10 @@ public class DiscardDialogController implements Initializable, DialogController,
     @Override
     public void setGame(Game game) {
         this.game = game;
+    }
+
+    public void setDiscardingPlayer(Player player) {
+        this.targetPlayer = player;
         populatePlayerData();
     }
 
@@ -66,11 +71,9 @@ public class DiscardDialogController implements Initializable, DialogController,
     }
 
     private void populatePlayerData() {
-        if (game == null) return;
-        Player active = game.getActivePlayer();
-        if (active == null) return;
+        if (game == null || targetPlayer == null) return;
 
-        int totalResources = active.getTotalResourceCount();
+        int totalResources = targetPlayer.getTotalResourceCount();
         requiredDiscard = totalResources > Game.HAND_LIMIT ? totalResources / 2 : 0;
 
         if (lblHandCount != null) lblHandCount.setText(String.valueOf(totalResources));
@@ -78,11 +81,11 @@ public class DiscardDialogController implements Initializable, DialogController,
         if (lblRequiredCount != null) lblRequiredCount.setText(String.valueOf(requiredDiscard));
         if (lblSelectedCount != null) lblSelectedCount.setText("0");
 
-        if (lblWoodOwned != null) lblWoodOwned.setText(String.valueOf(active.getResourceCount(ResourceType.WOOD)));
-        if (lblBrickOwned != null) lblBrickOwned.setText(String.valueOf(active.getResourceCount(ResourceType.BRICK)));
-        if (lblWheatOwned != null) lblWheatOwned.setText(String.valueOf(active.getResourceCount(ResourceType.WHEAT)));
-        if (lblOreOwned != null) lblOreOwned.setText(String.valueOf(active.getResourceCount(ResourceType.ORE)));
-        if (lblBananaOwned != null) lblBananaOwned.setText(String.valueOf(active.getResourceCount(ResourceType.BANANA)));
+        if (lblWoodOwned != null) lblWoodOwned.setText(String.valueOf(targetPlayer.getResourceCount(ResourceType.WOOD)));
+        if (lblBrickOwned != null) lblBrickOwned.setText(String.valueOf(targetPlayer.getResourceCount(ResourceType.BRICK)));
+        if (lblWheatOwned != null) lblWheatOwned.setText(String.valueOf(targetPlayer.getResourceCount(ResourceType.WHEAT)));
+        if (lblOreOwned != null) lblOreOwned.setText(String.valueOf(targetPlayer.getResourceCount(ResourceType.ORE)));
+        if (lblBananaOwned != null) lblBananaOwned.setText(String.valueOf(targetPlayer.getResourceCount(ResourceType.BANANA)));
     }
 
     private void updateSelectedCount() {
@@ -105,9 +108,7 @@ public class DiscardDialogController implements Initializable, DialogController,
 
     @FXML
     private void handleDiscard() {
-        if (game == null) return;
-        Player active = game.getActivePlayer();
-        if (active == null) return;
+        if (game == null || targetPlayer == null) return;
 
         Map<ResourceType, Integer> toDiscard = new EnumMap<>(ResourceType.class);
         toDiscard.put(ResourceType.WOOD, parseInt(lblGiveWoodVal));
@@ -119,13 +120,13 @@ public class DiscardDialogController implements Initializable, DialogController,
         int totalSelected = toDiscard.values().stream().mapToInt(Integer::intValue).sum();
 
         if (totalSelected != requiredDiscard) {
-            showError("Kamu harus membuang tepat " + requiredDiscard + " kartu (sekarang: " + totalSelected + ").");
+            showError("Kamu (" + targetPlayer.getName() + ") harus membuang tepat " + requiredDiscard + " kartu (sekarang: " + totalSelected + ").");
             return;
         }
 
         for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
             if (entry.getValue() > 0) {
-                if (!active.hasResource(entry.getKey(), entry.getValue())) {
+                if (!targetPlayer.hasResource(entry.getKey(), entry.getValue())) {
                     showError("Kamu tidak punya cukup " + entry.getKey().getDisplayName());
                     return;
                 }
@@ -134,7 +135,7 @@ public class DiscardDialogController implements Initializable, DialogController,
 
         for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
             if (entry.getValue() > 0) {
-                game.discardResource(active, entry.getKey(), entry.getValue());
+                game.discardResource(targetPlayer, entry.getKey(), entry.getValue());
             }
         }
 

@@ -122,13 +122,13 @@
                            </children>
                         </HBox>
                         <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-text" text="Automaton Intelligence" />
-                        <HBox alignment="CENTER" onMouseClicked="#handleLoadMap" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
-                           <children>
-                              <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../icons/bot.png" />
-                                 </image>
-                              </ImageView>
+                         <HBox alignment="CENTER" onMouseClicked="#handleLoadBot" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
+                            <children>
+                               <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                                  <image>
+                                     <Image url="@../icons/bot.png" />
+                                  </image>
+                               </ImageView>
                               <Region prefHeight="47.0" prefWidth="46.0" />
                               <Label maxWidth="1.7976931348623157E308" prefHeight="62.0" prefWidth="170.0" styleClass="marcellus-text13" text="Load Bot Plugin (.jar)" />
                               <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
