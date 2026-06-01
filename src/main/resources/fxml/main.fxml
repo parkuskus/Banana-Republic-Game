@@ -4,29 +4,45 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="427.0" prefWidth="804.0" styleClass="main-menu-bg" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.MainMenuController">
-   <children>
-      <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+<ScrollPane pannable="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED"
+            fitToWidth="true" fitToHeight="true"
+            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="banana.republic.ui.MainMenuController">
+   <content>
+      <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+                 prefHeight="1080.0" prefWidth="1920.0" styleClass="main-menu-bg">
          <children>
-            <VBox alignment="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="427.0" prefWidth="418.0" spacing="24.0" styleClass=".main-vbox" StackPane.alignment="CENTER">
+            <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                <children>
-                  <Label fx:id="messageLabel" alignment="TOP_CENTER" styleClass="main-text" text="Banana Republic" textAlignment="CENTER" />
-                  <Button mnemonicParsing="false" onAction="#handleNewGame" styleClass="dark-button" text="New Game" />
-                   <Button mnemonicParsing="false" onAction="#handleLoadGame" styleClass="dark-button" text="Load Game" />
-                  <Button mnemonicParsing="false" onAction="#handleExit" styleClass="dark-button" text="EXIT" />
+                  <VBox alignment="CENTER" maxHeight="1.7976931348623157E308"
+                        maxWidth="1.7976931348623157E308"
+                        prefHeight="1080.0" prefWidth="1920.0"
+                        spacing="36.0" StackPane.alignment="CENTER">
+                     <children>
+                        <Label fx:id="messageLabel" alignment="TOP_CENTER"
+                               styleClass="main-text" text="Banana Republic"
+                               textAlignment="CENTER" />
+                        <Button mnemonicParsing="false" onAction="#handleNewGame"
+                                styleClass="dark-button" text="New Game" />
+                        <Button mnemonicParsing="false" onAction="#handleLoadGame"
+                                styleClass="dark-button" text="Load Game" />
+                        <Button mnemonicParsing="false" onAction="#handleExit"
+                                styleClass="dark-button" text="EXIT" />
+                     </children>
+                     <padding>
+                        <Insets left="50.0" right="50.0" />
+                     </padding>
+                  </VBox>
                </children>
-               <padding>
-                  <Insets left="50.0" right="50.0" />
-               </padding>
-            </VBox>
+            </StackPane>
          </children>
+         <stylesheets>
+            <URL value="@../css/style.css" />
+         </stylesheets>
       </StackPane>
-   </children>
-   <stylesheets>
-      <URL value="@../css/style.css" />
-      <URL value="@../css/style.css" />
-   </stylesheets>
-</StackPane>
+   </content>
+</ScrollPane>

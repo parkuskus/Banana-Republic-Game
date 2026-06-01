@@ -990,3 +990,41 @@
     -fx-text-fill: #222222;
     -fx-border-color: #aaaaaa;
 }
+
+/* ===== RESPONSIVE FULLSCREEN FIX ===== */
+
+/* Root ScrollPane: transparent background so it doesn't show its own color */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical,
+.scroll-pane .scroll-bar:horizontal {
+    -fx-opacity: 0.6;
+}
+
+/* Dialog overlay that fills the screen with a dark blur-ready background */
+.dialog-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.45);
+    -fx-alignment: center;
+    -fx-padding: 40px;
+}
+
+/* Ensure turn-screen-bg fills the full area it's given */
+.turn-screen-bg {
+    -fx-min-width: 100%;
+    -fx-min-height: 100%;
+}
+
+/* Ensure main-menu-bg fills the full area */
+.main-menu-bg {
+    -fx-min-width: 100%;
+    -fx-min-height: 100%;
+}

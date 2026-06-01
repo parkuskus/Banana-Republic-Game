@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane maxHeight="-Infinity" prefHeight="544.0" prefWidth="855.0" styleClass="dialog-overlay" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.DiscardDialogController">
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="dialog-overlay" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.DiscardDialogController">
 
     <VBox alignment="CENTER" maxHeight="1000.0" maxWidth="900.0" prefHeight="803.0" prefWidth="747.0" spacing="20" styleClass="dialog-box" StackPane.alignment="CENTER">
 

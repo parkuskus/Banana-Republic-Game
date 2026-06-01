@@ -4,42 +4,47 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane styleClass="turn-screen-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.TransitionScreenController">
+<ScrollPane pannable="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" fitToWidth="true" fitToHeight="true" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.TransitionScreenController">
+    <content>
+        <StackPane maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308" prefWidth="1920.0" prefHeight="1080.0" styleClass="turn-screen-bg" stylesheets="@../css/style.css">
 
-    <VBox alignment="CENTER" prefHeight="882.0" prefWidth="1041.0" spacing="50.0">
+            <VBox alignment="CENTER" prefHeight="1080.0" prefWidth="1920.0" spacing="50.0">
 
-        <Label styleClass="turn-game-title" text="B A N A N A   R E P U B L I C" />
+                <Label styleClass="turn-game-title" text="B A N A N A   R E P U B L I C" />
 
-        <VBox alignment="CENTER" spacing="15.0">
-         <HBox maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="60.0" prefWidth="60.0" styleClass="turn-icon-box">
-            <children>
-               <ImageView fitHeight="31.0" fitWidth="31.0" pickOnBounds="true" preserveRatio="true">
-                  <image>
-                     <Image url="@../icons/clockwise-rotation.png" />
-                  </image>
-               </ImageView>
-            </children>
-         </HBox>
+                <VBox alignment="CENTER" spacing="15.0">
+                 <HBox maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="60.0" prefWidth="60.0" styleClass="turn-icon-box">
+                    <children>
+                       <ImageView fitHeight="31.0" fitWidth="31.0" pickOnBounds="true" preserveRatio="true">
+                          <image>
+                             <Image url="@../icons/clockwise-rotation.png" />
+                          </image>
+                       </ImageView>
+                    </children>
+                 </HBox>
 
-            <Label styleClass="turn-heading" text="Turn Complete." />
+                    <Label styleClass="turn-heading" text="Turn Complete." />
 
-            <HBox alignment="CENTER" spacing="4.0">
-                <Label styleClass="turn-subheading" text="Waiting for" />
-                <Label fx:id="turnHeadingLabel" styleClass="turn-subheading-bold" text="Player2..." />
-            </HBox>
-        </VBox>
+                    <HBox alignment="CENTER" spacing="4.0">
+                        <Label styleClass="turn-subheading" text="Waiting for" />
+                        <Label fx:id="turnHeadingLabel" styleClass="turn-subheading-bold" text="Player2..." />
+                    </HBox>
+                </VBox>
 
-        <Button onAction="#handleStartTurn" styleClass="btn-ready" text="I AM READY, START MY TURN! ❯" />
+                <Button onAction="#handleStartTurn" styleClass="btn-ready" text="I AM READY, START MY TURN! ❯" />
 
-        <VBox alignment="CENTER" maxWidth="350.0" spacing="20.0">
-            <Region styleClass="turn-divider" />
-             <Label styleClass="turn-footer" text="PASS THE DEVICE TO THE NEXT PLAYER" />
-        </VBox>
+                <VBox alignment="CENTER" maxWidth="350.0" spacing="20.0">
+                    <Region styleClass="turn-divider" />
+                     <Label styleClass="turn-footer" text="PASS THE DEVICE TO THE NEXT PLAYER" />
+                </VBox>
 
-    </VBox>
-</StackPane>
+            </VBox>
+        </StackPane>
+    </content>
+</ScrollPane>

@@ -5,82 +5,89 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane prefHeight="718.0" prefWidth="672.0" styleClass="dialog-overlay" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.SettingsDialogController">
+<ScrollPane pannable="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.SettingsDialogController">
 
-    <VBox maxHeight="582.0" maxWidth="650" prefHeight="582.0" prefWidth="592.0" spacing="30" styleClass="dialog-box">
+    <content>
+        <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="dialog-overlay" stylesheets="@../css/style.css">
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-         <ImageView fitHeight="39.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
-            <image>
-               <Image url="@../icons/settings.png" />
-            </image>
-         </ImageView>
-            <Label styleClass="settings-title" text="Settings &amp; Plugins" />
-        </HBox>
+            <VBox maxHeight="582.0" maxWidth="650" prefHeight="582.0" prefWidth="592.0" spacing="30" styleClass="dialog-box">
 
-        <HBox alignment="CENTER" prefHeight="293.0" prefWidth="531.0" spacing="30">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                 <ImageView fitHeight="39.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                       <Image url="@../icons/settings.png" />
+                    </image>
+                 </ImageView>
+                    <Label styleClass="settings-title" text="Settings &amp; Plugins" />
+                </HBox>
 
-            <VBox spacing="20" styleClass="settings-card">
-                <Label styleClass="settings-icon-box, icon-yellow" text="💾" />
+                <HBox alignment="CENTER" prefHeight="293.0" prefWidth="531.0" spacing="30">
 
-                <Label alignment="CENTER" prefHeight="58.0" prefWidth="163.0" styleClass="settings-card-title" text="Save Current Game" textAlignment="CENTER" wrapText="true" />
-            <HBox alignment="CENTER" onMouseClicked="#handleSaveState" prefHeight="30.0" prefWidth="210.0" styleClass="btn-outline-dark">
-               <children>
-                  <ImageView fitHeight="21.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../icons/download.png" />
-                     </image>
-                     <HBox.margin>
-                        <Insets left="30.0" right="10.0" />
-                     </HBox.margin>
-                  </ImageView>
-                  <Label maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="102.0" styleClass="black-text" text="SAVE STATE" HBox.hgrow="NEVER" />
-               </children>
-            </HBox>
+                    <VBox spacing="20" styleClass="settings-card">
+                        <Label styleClass="settings-icon-box, icon-yellow" text="💾" />
+
+                        <Label alignment="CENTER" prefHeight="58.0" prefWidth="163.0" styleClass="settings-card-title" text="Save Current Game" textAlignment="CENTER" wrapText="true" />
+                    <HBox alignment="CENTER" onMouseClicked="#handleSaveState" prefHeight="30.0" prefWidth="210.0" styleClass="btn-outline-dark">
+                       <children>
+                          <ImageView fitHeight="21.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                <Image url="@../icons/download.png" />
+                             </image>
+                             <HBox.margin>
+                                <Insets left="30.0" right="10.0" />
+                             </HBox.margin>
+                          </ImageView>
+                          <Label maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="102.0" styleClass="black-text" text="SAVE STATE" HBox.hgrow="NEVER" />
+                       </children>
+                    </HBox>
+                    </VBox>
+
+                    <VBox spacing="20" styleClass="settings-card">
+                        <Label styleClass="settings-icon-box, icon-blue">
+                       <graphic>
+                          <ImageView fitHeight="40.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                <Image url="@../icons/file_upload.png" />
+                             </image>
+                          </ImageView>
+                       </graphic></Label>
+
+                        <Label prefHeight="54.0" prefWidth="159.0" styleClass="settings-card-title" text="Load Card Plugin (.jar)" wrapText="true" />
+                    <HBox alignment="CENTER" onMouseClicked="#handleBrowseFiles" prefHeight="30.0" prefWidth="210.0" styleClass="btn-solid-blue" VBox.vgrow="NEVER">
+                       <children>
+                          <ImageView fitHeight="21.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                             <image>
+                                <Image url="@../icons/open-folder.png" />
+                             </image>
+                             <HBox.margin>
+                                <Insets left="30.0" right="10.0" />
+                             </HBox.margin>
+                          </ImageView>
+                          <Label maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="102.0" styleClass="white-text" text="BROWSE FILES" HBox.hgrow="NEVER" />
+                       </children>
+                       <VBox.margin>
+                          <Insets />
+                       </VBox.margin>
+                    </HBox>
+                    </VBox>
+
+                </HBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <HBox alignment="BOTTOM_RIGHT" spacing="15">
+                    <Button onAction="#closeDialog" styleClass="btn-cancel" text="CANCEL" />
+                    <Button onAction="#handleApplyChanges" styleClass="btn-submit" text="APPLY CHANGES" />
+                </HBox>
+
             </VBox>
+        </StackPane>
+    </content>
 
-            <VBox spacing="20" styleClass="settings-card">
-                <Label styleClass="settings-icon-box, icon-blue">
-               <graphic>
-                  <ImageView fitHeight="40.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../icons/file_upload.png" />
-                     </image>
-                  </ImageView>
-               </graphic></Label>
-
-                <Label prefHeight="54.0" prefWidth="159.0" styleClass="settings-card-title" text="Load Card Plugin (.jar)" wrapText="true" />
-            <HBox alignment="CENTER" onMouseClicked="#handleBrowseFiles" prefHeight="30.0" prefWidth="210.0" styleClass="btn-solid-blue" VBox.vgrow="NEVER">
-               <children>
-                  <ImageView fitHeight="21.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../icons/open-folder.png" />
-                     </image>
-                     <HBox.margin>
-                        <Insets left="30.0" right="10.0" />
-                     </HBox.margin>
-                  </ImageView>
-                  <Label maxHeight="-Infinity" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="30.0" prefWidth="102.0" styleClass="white-text" text="BROWSE FILES" HBox.hgrow="NEVER" />
-               </children>
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </HBox>
-            </VBox>
-
-        </HBox>
-
-        <Region VBox.vgrow="ALWAYS" />
-
-        <HBox alignment="BOTTOM_RIGHT" spacing="15">
-            <Button onAction="#closeDialog" styleClass="btn-cancel" text="CANCEL" />
-            <Button onAction="#handleApplyChanges" styleClass="btn-submit" text="APPLY CHANGES" />
-        </HBox>
-
-    </VBox>
-</StackPane>
+</ScrollPane>
