@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1136.0" prefWidth="1825.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
+<StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
    <children>
       <StackPane fx:id="tradeDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
       <StackPane fx:id="cardDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
@@ -23,10 +23,10 @@
       <StackPane fx:id="discardDialogOverlay" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" />
       <StackPane fx:id="mainGameRoot" alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="vbox-shade">
          <children>
-            <VBox prefHeight="200.0" prefWidth="100.0">
+            <VBox prefHeight="1080.0" prefWidth="1920.0">
                <children>
 
-                  <HBox prefHeight="1128.0" prefWidth="1671.0">
+                  <HBox prefHeight="830.0" prefWidth="1920.0">
                      <children>
                         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="1270.0">
                            <children>
@@ -551,7 +551,7 @@
                         </VBox>
                      </children>
                   </HBox>
-                  <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="900.0" prefWidth="1671.0" spacing="20.0" styleClass="bottom-panel">
+                  <HBox alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="250.0" prefWidth="1920.0" spacing="20.0" styleClass="bottom-panel">
                      <children>
                         <StackPane alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="83.0" prefWidth="63.0" scaleX="1.5" scaleY="1.5" styleClass="card-wood">
                            <HBox.margin>
@@ -713,7 +713,7 @@
                               <Insets left="100.0" right="50.0" />
                            </HBox.margin>
                         </VBox>
-                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
+                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="8.0">
                            <HBox.margin>
                               <Insets left="25.0" />
                            </HBox.margin>
@@ -734,13 +734,13 @@
                               <Insets left="25.0" />
                            </HBox.margin>
                         </VBox>
-                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="205.0" prefWidth="180.0" spacing="12.0">
+                        <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="5.0">
                            <children>
-                                <Button fx:id="btnSteal" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSteal" prefWidth="200.0" styleClass="game-bottom-button" text="Steal" />
-                                <Button fx:id="btnDiscard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toDiscard" prefWidth="200.0" styleClass="game-bottom-button" text="Discard" />
-                                <Button fx:id="btnEndGame" maxWidth="-Infinity" mnemonicParsing="false" onAction="#endGame" prefWidth="200.0" styleClass="game-bottom-button" text="End Game" />
-                                <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
-                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
+                                <Button fx:id="btnSteal" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSteal" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Steal" />
+                                <Button fx:id="btnDiscard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toDiscard" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Discard" />
+                                <Button fx:id="btnEndGame" maxWidth="-Infinity" mnemonicParsing="false" onAction="#endGame" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End Game" />
+                                <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
+                                <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />
                            </children>
                            <HBox.margin>
                               <Insets left="25.0" />

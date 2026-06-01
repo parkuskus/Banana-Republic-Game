@@ -190,7 +190,7 @@
 
 .bottom-panel {
     -fx-background-color: linear-gradient(to bottom, #e1e8ed, #d2dce6);
-    -fx-padding: 15px 20px;
+    -fx-padding: 10px 20px;
     -fx-spacing: 15px;
     -fx-border-color: #9aaebf;
     -fx-border-width: 2px 0 0 0;
@@ -218,9 +218,9 @@
     -fx-background-color: #ffd55e;
     -fx-text-fill: #1a1a1a;
     -fx-font-family: 'Russo One';
-    -fx-font-size: 1.2em;
+    -fx-font-size: 1.05em;
     -fx-font-weight: bold;
-    -fx-padding: 10px 20px;
+    -fx-padding: 6px 14px;
     -fx-background-radius: 5px;
     -fx-border-radius: 5px;
     -fx-border-color: #c9a74a;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -201,10 +202,7 @@ public class GameController implements Initializable {
     private void onRollDice() {
         if (game == null) return;
         try {
-            DiceResult result = game.rollDice();
-            showDiceResult(result);
-            updateLogbook();
-            updateResourceCards();
+            DiceResult result = rollDiceAndSyncProduction();
 
             if (result.isSeven()) {
                 game.processDiscardPhase();
@@ -257,11 +255,12 @@ public class GameController implements Initializable {
                 
                 game.getDice().setManualMode(true);
                 game.getDice().setManualValues(d1, d2);
-                DiceResult result = game.rollDice();
-                game.getDice().setManualMode(false);
-                showDiceResult(result);
-                updateLogbook();
-                updateResourceCards();
+                DiceResult result;
+                try {
+                    result = rollDiceAndSyncProduction();
+                } finally {
+                    game.getDice().setManualMode(false);
+                }
                 if (result.isSeven()) {
                     game.processDiscardPhase();
                     refreshAllUI();
@@ -288,6 +287,63 @@ public class GameController implements Initializable {
                 showError(e.getMessage());
             }
         });
+    }
+
+    private DiceResult rollDiceAndSyncProduction() {
+        Map<Player, Map<ResourceType, Integer>> beforeRoll = snapshotPlayerResources();
+        DiceResult result = game.rollDice();
+        showDiceResult(result);
+
+        if (!result.isSeven()) {
+            String productionSummary = buildProductionSummary(beforeRoll);
+            game.getGameLog().addEntry(
+                    LogEntry.EventType.RESOURCE_PRODUCTION,
+                    productionSummary
+            );
+        }
+
+        refreshAllUI();
+        return result;
+    }
+
+    private Map<Player, Map<ResourceType, Integer>> snapshotPlayerResources() {
+        Map<Player, Map<ResourceType, Integer>> snapshot = new HashMap<>();
+        if (game == null) return snapshot;
+
+        for (Player player : game.getPlayers()) {
+            Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+            for (ResourceType type : ResourceType.values()) {
+                counts.put(type, player.getResourceCount(type));
+            }
+            snapshot.put(player, counts);
+        }
+        return snapshot;
+    }
+
+    private String buildProductionSummary(Map<Player, Map<ResourceType, Integer>> beforeRoll) {
+        List<String> producedByPlayer = new ArrayList<>();
+        for (Player player : game.getPlayers()) {
+            Map<ResourceType, Integer> before = beforeRoll.get(player);
+            if (before == null) continue;
+
+            List<String> gainedResources = new ArrayList<>();
+            for (ResourceType type : ResourceType.values()) {
+                int beforeCount = before.getOrDefault(type, 0);
+                int gained = player.getResourceCount(type) - beforeCount;
+                if (gained > 0) {
+                    gainedResources.add(gained + " " + type.getDisplayName());
+                }
+            }
+
+            if (!gainedResources.isEmpty()) {
+                producedByPlayer.add(player.getName() + " mendapat " + String.join(", ", gainedResources));
+            }
+        }
+
+        if (producedByPlayer.isEmpty()) {
+            return "Tidak ada resource yang diproduksi dari hasil dadu ini.";
+        }
+        return "Produksi resource: " + String.join("; ", producedByPlayer) + ".";
     }
 
     // --- FITUR BUILD OVERLAY INTERACTIVE TER-ROBUST ---
@@ -449,7 +505,7 @@ public class GameController implements Initializable {
 
             if (inter.getOwner() == null) {
                 // Check distance rule and connection for settlement
-                if (game.getBoard().isDistanceRuleValid(inter)) {
+                if (game.getBoard().isDistanceRuleValid(inter) && isVisualDistanceRuleValid(inter)) {
                     if (game.getCurrentPhase().isSetupPhase()) {
                         canBuildSettlement = true;
                     } else if (inter.getAdjacentPaths().stream().anyMatch(p -> p.hasRoad() && game.getActivePlayer().equals(p.getOwner()))) {
@@ -781,9 +837,18 @@ public class GameController implements Initializable {
 
             if (intersection != null) {
                 if (game.getCurrentPhase().isSetupPhase()) {
+                    boolean shouldGrantInitialResources = game.getCurrentPhase() == GamePhase.SETUP_SECOND_ROUND;
+                    Map<ResourceType, Integer> beforeResources = snapshotPlayerResourceCounts(activePlayer);
+                    Map<ResourceType, Integer> expectedInitialResources = shouldGrantInitialResources
+                            ? getVisualAdjacentInitialResources(intersection)
+                            : Map.of();
                     game.placeInitialSettlement(activePlayer, intersection);
+                    if (shouldGrantInitialResources) {
+                        syncInitialResourcesWithVisualBoard(activePlayer, beforeResources, expectedInitialResources);
+                    }
                     lastSetupSettlement = intersection;
                     removeBuildOverlay();
+                    refreshAllUI();
                     toggleBuildOverlay(); // Buka otomatis untuk pilih jalan setelah taruh Pos!
                     return; // Berhenti di sini, biarkan UI jalan terbuka
                 } else {
@@ -805,6 +870,94 @@ public class GameController implements Initializable {
             updatePhaseUI();
         } catch (IllegalStateException | IllegalArgumentException ex) {
             showError("Gagal membangun: " + ex.getMessage());
+        }
+    }
+
+    private boolean isVisualDistanceRuleValid(banana.republic.board.Intersection candidate) {
+        double[] candidateCoords = globalIntersectionCoords.get(candidate);
+        if (candidateCoords == null) return true;
+
+        for (Map.Entry<banana.republic.board.Intersection, double[]> entry : globalIntersectionCoords.entrySet()) {
+            banana.republic.board.Intersection other = entry.getKey();
+            if (other == candidate || !other.hasBuilding()) continue;
+            double[] otherCoords = entry.getValue();
+            double distance = Math.hypot(candidateCoords[0] - otherCoords[0], candidateCoords[1] - otherCoords[1]);
+            if (distance < 60.0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Map<ResourceType, Integer> snapshotPlayerResourceCounts(Player player) {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        if (player == null) return counts;
+        for (ResourceType type : ResourceType.values()) {
+            counts.put(type, player.getResourceCount(type));
+        }
+        return counts;
+    }
+
+    private Map<ResourceType, Integer> getVisualAdjacentInitialResources(banana.republic.board.Intersection intersection) {
+        Map<ResourceType, Integer> resources = new EnumMap<>(ResourceType.class);
+        double[] coords = globalIntersectionCoords.get(intersection);
+        if (coords == null) return resources;
+
+        for (Map.Entry<StackPane, HexTile> entry : visualToModelTile.entrySet()) {
+            StackPane visualTile = entry.getKey();
+            HexTile modelTile = entry.getValue();
+            if (modelTile == null || !modelTile.canProduce()) continue;
+
+            double[][] corners = getHexCorners(visualTile);
+            for (double[] corner : corners) {
+                if (Math.hypot(corner[0] - coords[0], corner[1] - coords[1]) < 28.0) {
+                    ResourceType type = modelTile.getResourceType();
+                    if (type != null) {
+                        resources.merge(type, 1, Integer::sum);
+                    }
+                    break;
+                }
+            }
+        }
+        return resources;
+    }
+
+    private void syncInitialResourcesWithVisualBoard(Player player,
+                                                     Map<ResourceType, Integer> beforeResources,
+                                                     Map<ResourceType, Integer> expectedResources) {
+        if (player == null || expectedResources == null) return;
+
+        List<String> gainedText = new ArrayList<>();
+        for (ResourceType type : ResourceType.values()) {
+            int before = beforeResources.getOrDefault(type, 0);
+            int actualGain = player.getResourceCount(type) - before;
+            int expectedGain = expectedResources.getOrDefault(type, 0);
+
+            if (actualGain > expectedGain) {
+                int extra = actualGain - expectedGain;
+                player.removeResource(type, extra);
+                game.getBank().returnResource(type, extra);
+            } else if (expectedGain > actualGain) {
+                int missing = expectedGain - actualGain;
+                int available = Math.min(missing, game.getBank().getCount(type));
+                if (available > 0) {
+                    game.getBank().takeResource(type, available);
+                    player.addResource(type, available);
+                }
+            }
+
+            int finalGain = player.getResourceCount(type) - before;
+            if (finalGain > 0) {
+                gainedText.add(finalGain + " " + type.getDisplayName());
+            }
+        }
+
+        if (!gainedText.isEmpty()) {
+            game.getGameLog().addEntry(
+                    LogEntry.EventType.RESOURCE_PRODUCTION,
+                    player.getName(),
+                    "Resource awal dari Pos Pantau kedua: " + String.join(", ", gainedText) + "."
+            );
         }
     }
 
@@ -1269,14 +1422,33 @@ public class GameController implements Initializable {
             return Integer.compare(a.getColumn(), b.getColumn());
         });
 
-        // 4. Map them one-to-one based on position
-        int count = Math.min(mainHexesOnly.size(), modelTiles.size());
+        // 4. Match visual tiles to model tiles by terrain + token first.
         Map<HexTile, StackPane> modelToVisualTile = new HashMap<>();
-        for (int i = 0; i < count; i++) {
-            StackPane sp = mainHexesOnly.get(i);
-            HexTile tile = modelTiles.get(i);
+        Set<HexTile> usedTiles = new HashSet<>();
+        for (StackPane sp : mainHexesOnly) {
+            banana.republic.board.TerrainType terrain = sp.getStyleClass().stream()
+                    .filter(s -> s.startsWith("hex-tile-"))
+                    .map(this::parseTerrainFromStyle)
+                    .filter(t -> t != null)
+                    .findFirst()
+                    .orElse(null);
+            HexTile tile = findMatchingTile(board, terrain, parseTokenFromVisual(sp), usedTiles);
+            if (tile == null) continue;
             visualToModelTile.put(sp, tile);
             modelToVisualTile.put(tile, sp);
+            usedTiles.add(tile);
+        }
+
+        // Fallback for any unmatched tile; keeps older/custom maps from rendering blank.
+        int count = Math.min(mainHexesOnly.size(), modelTiles.size());
+        for (int i = 0; i < count && visualToModelTile.size() < count; i++) {
+            StackPane sp = mainHexesOnly.get(i);
+            if (visualToModelTile.containsKey(sp)) continue;
+            HexTile tile = modelTiles.get(i);
+            if (usedTiles.contains(tile)) continue;
+            visualToModelTile.put(sp, tile);
+            modelToVisualTile.put(tile, sp);
+            usedTiles.add(tile);
         }
 
         // 5. Calculate precise intersection coordinates using mathematical mapping
