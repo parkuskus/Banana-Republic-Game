@@ -33,13 +33,13 @@ public class BoardCoordinateMapper {
         return new Mapping(visualToModel, intersectionCoordinates, mainHexes);
     }
 
-    public HexTile findHexTileByVisualFallback(Board board, StackPane visual) {
+    public HexTile findHexTileByVisualFallback(Board board, StackPane visual, Set<HexTile> usedTiles) {
         TerrainType terrain = null;
         for (String style : visual.getStyleClass()) {
             terrain = parseTerrainFromStyle(style);
             if (terrain != null) break;
         }
-        return findMatchingTile(board, terrain, parseTokenFromVisual(visual), new HashSet<>());
+        return findMatchingTile(board, terrain, parseTokenFromVisual(visual), usedTiles);
     }
 
     public double[][] getHexCorners(StackPane sp) {
@@ -73,14 +73,15 @@ public class BoardCoordinateMapper {
     private Map<HexTile, StackPane> mapVisualTiles(Board board, List<StackPane> mainHexes,
                                                    Map<StackPane, HexTile> visualToModel) {
         Map<HexTile, StackPane> modelToVisual = new HashMap<>();
-        List<HexTile> modelTiles = board.getAllHexTiles();
-        int count = Math.min(mainHexes.size(), modelTiles.size());
-        for (int i = 0; i < count; i++) {
-            StackPane sp = mainHexes.get(i);
-            HexTile tile = modelTiles.get(i);
-            applyVisualTileModel(sp, tile);
-            visualToModel.put(sp, tile);
-            modelToVisual.put(tile, sp);
+        Set<HexTile> usedTiles = new HashSet<>();
+        for (StackPane sp : mainHexes) {
+            HexTile tile = findHexTileByVisualFallback(board, sp, usedTiles);
+            if (tile != null) {
+                applyVisualTileModel(sp, tile);
+                visualToModel.put(sp, tile);
+                modelToVisual.put(tile, sp);
+                usedTiles.add(tile);
+            }
         }
         return modelToVisual;
     }

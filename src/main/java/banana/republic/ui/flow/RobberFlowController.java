@@ -76,7 +76,7 @@ public class RobberFlowController {
     private HexTile findTile(StackPane visualTile) {
         HexTile target = visualToModelTile.get(visualTile);
         if (target == null && game != null) {
-            target = coordinateMapper.findHexTileByVisualFallback(game.getBoard(), visualTile);
+            target = coordinateMapper.findHexTileByVisualFallback(game.getBoard(), visualTile, new java.util.HashSet<>());
         }
         return target;
     }
