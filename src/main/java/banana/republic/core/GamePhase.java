@@ -14,9 +14,6 @@ public enum GamePhase {
     /** Lempar dadu dan distribusi resource (atau Nimon Ungu jika dadu 7). */
     RESOURCE_GATHERING,
 
-    // Pindahkan Nimon Ungu (setelah dadu 7)
-    ROBBER_PLACEMENT,
-
     /** Fase dagang dan bangun dengan timer aktif. */
     TRADE_BUILD,
 
