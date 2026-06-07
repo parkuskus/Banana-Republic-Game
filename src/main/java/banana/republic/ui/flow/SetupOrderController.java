@@ -172,8 +172,6 @@ public class SetupOrderController {
             Player winner = game.getPlayers().get(winnerIndex);
             game.getTurnManager().setActiveIndex(winnerIndex);
             game.getTurnManager().setOrder(TurnOrder.CLOCKWISE);
-            game.getGameLog().addEntry(LogEntry.EventType.SYSTEM,
-                    "Fase Setup dimulai. Pemain menentukan urutan dengan dadu.");
             game.getGameLog().addEntry(
                     LogEntry.EventType.TURN_CHANGE,
                     winner.getName(),

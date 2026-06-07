@@ -3,8 +3,8 @@ package banana.republic.card;
 import banana.republic.board.Board;
 import banana.republic.board.HexTile;
 import banana.republic.core.GameState;
+import banana.republic.core.LogEntry;
 import banana.republic.player.Player;
-import banana.republic.robber.Robber;
 
 /**
  * Kartu Penjaga (Knight Card).
@@ -63,19 +63,30 @@ public class KnightCard extends DevelopmentCard {
 
         HexTile chosenTile = state.chooseKnightTarget(player, java.util.Collections.unmodifiableList(candidates));
         if (chosenTile == null) {
+            if (state.getGameLog() != null) {
+                state.getGameLog().addEntry(LogEntry.EventType.SYSTEM, "Kartu Penjaga gagal: tidak ada tile tujuan");
+            }
             return;
         }
 
-        board.moveRobber(chosenTile);
-
-        Robber robber = new Robber(chosenTile);
-        var victims = robber.getEligibleVictims(player, board);
-        if (!victims.isEmpty()) {
-            Player chosenVictim = state.chooseKnightVictim(player, chosenTile, java.util.Collections.unmodifiableList(victims));
-            if (chosenVictim != null && victims.contains(chosenVictim)) {
-                robber.stealRandomResource(player, chosenVictim);
+        java.util.List<Player> victims = new java.util.ArrayList<>();
+        for (banana.republic.board.Intersection intersection : board.getAdjacentIntersections(chosenTile)) {
+            if (intersection.hasBuilding()) {
+                Player owner = intersection.getBuilding().getOwner();
+                if (owner != null && !owner.equals(player) && !victims.contains(owner)) {
+                    if (owner.getTotalResourceCount() > 0) {
+                        victims.add(owner);
+                    }
+                }
             }
         }
+
+        Player chosenVictim = null;
+        if (!victims.isEmpty()) {
+            chosenVictim = state.chooseKnightVictim(player, chosenTile, java.util.Collections.unmodifiableList(victims));
+        }
+
+        state.activateRobber(chosenTile, player, chosenVictim);
     }
 
     /**

@@ -32,6 +32,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Orkestrator utama permainan Banana Republic.
@@ -348,9 +349,32 @@ public class Game {
             player, intersection, board, currentPhase);
         if (!v.isValid()) throw new IllegalStateException(v.getReason());
 
+        // Snapshot resources for SETUP_SECOND_ROUND logging
+        Map<ResourceType, Integer> beforeResources = new EnumMap<>(ResourceType.class);
+        if (currentPhase == GamePhase.SETUP_SECOND_ROUND) {
+            for (ResourceType type : ResourceType.values()) {
+                beforeResources.put(type, player.getResourceCount(type));
+            }
+        }
+
         buildExecutor.executeInitialSettlement(
             player, intersection, supplies, currentPhase, productionService, bank, board);
         setupSettlementCount++;
+
+        // Log resource production during second setup round
+        if (currentPhase == GamePhase.SETUP_SECOND_ROUND) {
+            List<String> gainedText = new ArrayList<>();
+            for (ResourceType type : ResourceType.values()) {
+                int delta = player.getResourceCount(type) - beforeResources.getOrDefault(type, 0);
+                if (delta > 0) {
+                    gainedText.add(delta + " " + type.getDisplayName());
+                }
+            }
+            if (!gainedText.isEmpty()) {
+                gameLog.addEntry(LogEntry.EventType.RESOURCE_PRODUCTION, player.getName(),
+                    "Resource awal dari Pos Pantau kedua: " + String.join(", ", gainedText) + ".");
+            }
+        }
 
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
             player.getName() + " menempatkan Pos Pantau di intersection #" + intersection.getId());
@@ -396,7 +420,35 @@ public class Game {
             gameLog.addEntry(LogEntry.EventType.ROBBER, getActivePlayer().getName(),
                 "Dadu 7! Nimon Ungu aktif.");
         } else {
-            productionService.distributeForRoll(total, board, players, bank);
+            // Snapshot resource counts before production
+            Map<Player, Map<ResourceType, Integer>> before = new HashMap<>();
+            for (Player p : players) {
+                Map<ResourceType, Integer> playerResources = new EnumMap<>(ResourceType.class);
+                for (ResourceType rt : ResourceType.values()) {
+                    playerResources.put(rt, p.getResourceCount(rt));
+                }
+                before.put(p, playerResources);
+            }
+
+            String shortageMsg = productionService.distributeForRoll(total, board, players, bank);
+
+            if (shortageMsg != null) {
+                gameLog.addEntry(LogEntry.EventType.RESOURCE_PRODUCTION, shortageMsg);
+            }
+
+            // Log resource gains per player per resource type
+            for (Player p : players) {
+                for (ResourceType rt : ResourceType.values()) {
+                    int afterCount = p.getResourceCount(rt);
+                    int beforeCount = before.get(p).get(rt);
+                    int delta = afterCount - beforeCount;
+                    if (delta > 0) {
+                        gameLog.addEntry(LogEntry.EventType.RESOURCE_PRODUCTION, p.getName(),
+                            p.getName() + " menerima " + delta + " " + rt.getDisplayName()
+                                + " dari lemparan dadu " + total);
+                    }
+                }
+            }
         }
 
         currentPhase        = GamePhase.TRADE_BUILD;
@@ -455,7 +507,8 @@ public class Game {
 
         buildExecutor.executeRoad(player, path, bank, supplies);
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
-            player.getName() + " membangun Pipa Transportasi di path #" + path.getId());
+            player.getName() + " membangun Pipa Transportasi di path #" + path.getId()
+            + " (biaya: 1 Kayu, 1 Batu Bata)");
 
         updateLongestRoad();
     }
@@ -468,7 +521,8 @@ public class Game {
 
         buildExecutor.executeSettlement(player, intersection, bank, supplies);
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
-            player.getName() + " membangun Pos Pantau di intersection #" + intersection.getId());
+            player.getName() + " membangun Pos Pantau di intersection #" + intersection.getId()
+            + " (biaya: 1 Kayu, 1 Batu Bata, 1 Ladang, 1 Pisang)");
     }
 
     /** Mengupgrade Pos Pantau menjadi Laboratorium. */
@@ -480,7 +534,7 @@ public class Game {
         buildExecutor.executeCity(player, intersection, bank, supplies);
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
             player.getName() + " meng-upgrade Pos Pantau ke Laboratorium di intersection #"
-            + intersection.getId());
+            + intersection.getId() + " (biaya: 2 Ladang, 3 Bijih)");
     }
 
     /** Membeli Kartu Temuan dari deck. */
@@ -490,7 +544,8 @@ public class Game {
 
         cardBoughtThisTurn = buildExecutor.executeBuyCard(player, cardDeck, bank);
         gameLog.addEntry(LogEntry.EventType.CARD_BOUGHT, player.getName(),
-            player.getName() + " membeli Kartu Temuan (" + cardBoughtThisTurn.getCardName() + ")");
+            player.getName() + " membeli Kartu Temuan (" + cardBoughtThisTurn.getCardName()
+            + ") (biaya: 1 Bijih, 1 Ladang, 1 Pisang)");
     }
 
     // -------------------------------------------------------------------------
@@ -581,7 +636,7 @@ public class Game {
             if (player.isBot()) {
                 int actual = botDiscarded.getOrDefault(player, 0);
                 gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
-                    player.getName() + " (bot) membuang " + actual + " kartu resource.");
+                    player.getName() + " membuang " + actual + " kartu resource.");
             } else {
                 gameLog.addEntry(LogEntry.EventType.DISCARD, player.getName(),
                     player.getName() + " harus membuang " + toDiscard + " kartu resource.");
@@ -622,18 +677,26 @@ public class Game {
         if (result.isValid()) {
             String targetName = offer.getTarget() != null
                 ? offer.getTarget().getName() : "semua pemain";
+            String offered = formatTradeResources(offer.getOffer());
+            String requested = formatTradeResources(offer.getRequest());
             gameLog.addEntry(LogEntry.EventType.TRADE, offer.getOfferer().getName(),
-                offer.getOfferer().getName() + " menawarkan dagang ke " + targetName);
+                offer.getOfferer().getName() + " menawarkan " + offered
+                + " untuk " + requested + " ke " + targetName);
         }
         return result;
     }
 
     /** Pemain {@code acceptingPlayer} menerima offer aktif. Resource ditransfer otomatis. */
     public ValidationResult acceptTradeOffer(Player acceptingPlayer) {
+        // Capture the latest offer before acceptOffer() clears activeNegotiation
+        TradeOffer activeOffer = tradeManager.getActiveNegotiation().getLatestOffer();
+        String offered = formatTradeResources(activeOffer.getOffer());
+        String offererName = activeOffer.getOfferer().getName();
         ValidationResult result = tradeManager.acceptOffer(acceptingPlayer);
         if (result.isValid()) {
             gameLog.addEntry(LogEntry.EventType.TRADE, acceptingPlayer.getName(),
-                acceptingPlayer.getName() + " menerima penawaran dagang.");
+                acceptingPlayer.getName() + " menerima penawaran dagang: " + offered
+                + " dari " + offererName);
         }
         return result;
     }
@@ -652,8 +715,13 @@ public class Game {
     public ValidationResult counterTradeOffer(TradeOffer counter) {
         ValidationResult result = tradeManager.counterOffer(counter, currentPhase);
         if (result.isValid()) {
+            String targetName = counter.getTarget() != null
+                ? counter.getTarget().getName() : "semua pemain";
+            String offered = formatTradeResources(counter.getOffer());
+            String requested = formatTradeResources(counter.getRequest());
             gameLog.addEntry(LogEntry.EventType.TRADE, counter.getOfferer().getName(),
-                counter.getOfferer().getName() + " mengajukan counter-offer.");
+                counter.getOfferer().getName() + " menawarkan " + offered
+                + " untuk " + requested + " ke " + targetName + " (counter-offer)");
         }
         return result;
     }
@@ -683,6 +751,16 @@ public class Game {
                 + " → 1 " + buyType.getDisplayName() + " (bank)");
         }
         return result;
+    }
+
+    /**
+     * Memformat Map resource menjadi string ringkas untuk log trade.
+     * Contoh: "2 Kayu, 1 Batu Bata"
+     */
+    private static String formatTradeResources(Map<ResourceType, Integer> resources) {
+        return resources.entrySet().stream()
+            .map(e -> e.getValue() + " " + e.getKey().getDisplayName())
+            .collect(Collectors.joining(", "));
     }
 
     /** Mengembalikan rasio trade terbaik pemain untuk resource tertentu. */
