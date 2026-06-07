@@ -1,6 +1,7 @@
 package banana.republic.card;
 
 import banana.republic.core.GameState;
+import banana.republic.core.LogEntry;
 import banana.republic.player.Player;
 import banana.republic.resource.ResourceType;
 
@@ -78,14 +79,32 @@ public class MonopolyCard extends ProgressCard {
         assert state != null : "GameState harus tidak null saat mainkan MonopolyCard";
         assert targetResource != null : "Target resource harus diset sebelum applyEffect Monopoly";
 
+        boolean anyStolen = false;
         for (Player other : state.getAllPlayers()) {
             if (!other.equals(player)) {
                 int count = other.getResourceCount(targetResource);
                 if (count > 0) {
                     other.removeResource(targetResource, count);
                     player.addResource(targetResource, count);
+                    state.getGameLog().addEntry(
+                        LogEntry.EventType.CARD_PLAYED,
+                        player.getName(),
+                        player.getName() + " menggunakan Monopoli Nimon: mengambil "
+                            + count + " " + targetResource.getDisplayName()
+                            + " dari " + other.getName()
+                    );
+                    anyStolen = true;
                 }
             }
+        }
+
+        if (!anyStolen) {
+            state.getGameLog().addEntry(
+                LogEntry.EventType.CARD_PLAYED,
+                player.getName(),
+                player.getName() + " menggunakan Monopoli Nimon: tidak ada pemain memiliki "
+                    + targetResource.getDisplayName()
+            );
         }
 
         this.reveal();

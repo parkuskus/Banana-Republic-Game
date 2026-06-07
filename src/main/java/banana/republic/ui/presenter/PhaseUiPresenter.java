@@ -54,19 +54,18 @@ public class PhaseUiPresenter {
         GamePhase phase = game.getCurrentPhase();
         boolean isSetup = phase.isSetupPhase();
         boolean isGathering = phase == GamePhase.RESOURCE_GATHERING;
-        boolean isRobberPhase = phase == GamePhase.ROBBER_PLACEMENT;
         boolean isGameOver = phase == GamePhase.GAME_OVER;
 
-        setDisabled(rollDiceButton, setupOrderPending || isSetup || !isGathering || isGameOver || isRobberPhase);
-        setDisabled(setDiceButton, setupOrderPending || isSetup || isGameOver || isRobberPhase);
-        setDisabled(buildButton, setupOrderPending || isGathering || isGameOver || isRobberPhase);
-        setDisabled(tradeButton, setupOrderPending || isSetup || isGathering || isGameOver || isRobberPhase);
-        setDisabled(cardButton, setupOrderPending || isSetup || isGameOver || isRobberPhase);
-        setDisabled(declareVictoryButton, setupOrderPending || isSetup || isGameOver || isRobberPhase);
-        setDisabled(endTurnButton, setupOrderPending || isSetup || isGathering || isGameOver || isRobberPhase);
+        setDisabled(rollDiceButton, setupOrderPending || isSetup || !isGathering || isGameOver);
+        setDisabled(setDiceButton, setupOrderPending || isSetup || isGameOver);
+        setDisabled(buildButton, setupOrderPending || isGathering || isGameOver);
+        setDisabled(tradeButton, setupOrderPending || isSetup || isGathering || isGameOver);
+        setDisabled(cardButton, setupOrderPending || isSetup || isGameOver);
+        setDisabled(declareVictoryButton, setupOrderPending || isSetup || isGameOver);
+        setDisabled(endTurnButton, setupOrderPending || isSetup || isGathering || isGameOver);
         setDisabled(settingsButton, isGameOver);
         setDisabled(startSetupOrderButton, !setupOrderPending);
-        setDisabled(stealButton, !"ROBBER".equals(modeName) || isRobberPhase);
+        setDisabled(stealButton, !"ROBBER".equals(modeName));
         setDisabled(discardButton, !discardPending);
         setDisabled(endGameButton, isGameOver);
         renderCondition(game, setupOrderPending, modeName);
@@ -92,7 +91,6 @@ public class PhaseUiPresenter {
         if (phase == null) conditionLabel.setText("Menunggu...");
         else if (phase.isSetupPhase()) conditionLabel.setText("Fase: Setup Awal");
         else if (phase == GamePhase.RESOURCE_GATHERING) conditionLabel.setText("Fase: Roll Dadu");
-        else if (phase == GamePhase.ROBBER_PLACEMENT) conditionLabel.setText("Fase: Pindah Nimon");
         else if (phase == GamePhase.TRADE_BUILD) conditionLabel.setText("Fase: Trade & Build");
         else if (phase == GamePhase.GAME_OVER) conditionLabel.setText("Game Over!");
         else conditionLabel.setText("Menunggu Giliran");

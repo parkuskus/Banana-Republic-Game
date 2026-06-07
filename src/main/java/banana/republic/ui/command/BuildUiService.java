@@ -65,7 +65,6 @@ public class BuildUiService {
                                       Map<ResourceType, Integer> expectedResources) {
         if (expectedResources == null) return;
 
-        List<String> gainedText = new java.util.ArrayList<>();
         for (ResourceType type : ResourceType.values()) {
             int before = beforeResources.getOrDefault(type, 0);
             int actualGain = player.getResourceCount(type) - before;
@@ -83,19 +82,6 @@ public class BuildUiService {
                     player.addResource(type, available);
                 }
             }
-
-            int finalGain = player.getResourceCount(type) - before;
-            if (finalGain > 0) {
-                gainedText.add(finalGain + " " + type.getDisplayName());
-            }
-        }
-
-        if (!gainedText.isEmpty()) {
-            game.getGameLog().addEntry(
-                    LogEntry.EventType.RESOURCE_PRODUCTION,
-                    player.getName(),
-                    "Resource awal dari Pos Pantau kedua: " + String.join(", ", gainedText) + "."
-            );
         }
     }
 

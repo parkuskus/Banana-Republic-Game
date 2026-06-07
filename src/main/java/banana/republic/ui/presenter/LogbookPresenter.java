@@ -21,7 +21,7 @@ public class LogbookPresenter {
             Label label = logLabels.get(i);
             if (label == null) continue;
             if (i < entries.size()) {
-                label.setText("• " + entries.get(entries.size() - 1 - i).getMessage());
+                label.setText("• " + entries.get(entries.size() - 1 - i).toDisplayString());
             } else {
                 label.setText("");
             }

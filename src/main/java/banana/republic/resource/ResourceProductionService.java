@@ -14,23 +14,23 @@ import banana.republic.player.Player;
 public class ResourceProductionService {
 
 
-    public void distribute(HexTile tile, Board board, List<Player> players, Bank bank) {
+    public String distribute(HexTile tile, Board board, List<Player> players, Bank bank) {
         if (tile == null || board == null || players == null || bank == null) {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
         if (!tile.canProduce()) {
-            return;
+            return null;
         }
 
         ResourceType resourceType = tile.getResourceType();
         if (resourceType == null) {
-            return;
+            return null;
         }
 
         Map<Player, Integer> productionPerPlayer = calculateProduction(tile, board);
         if (productionPerPlayer.isEmpty()) {
-            return;
+            return null;
         }
 
         int totalNeeded = productionPerPlayer.values().stream().mapToInt(Integer::intValue).sum();
@@ -44,6 +44,7 @@ public class ResourceProductionService {
                     entry.getKey().addResource(resourceType, amount);
                 }
             }
+            return null;
         } else {
             int affectedPlayerCount = productionPerPlayer.size();
             if (affectedPlayerCount == 1) {
@@ -53,28 +54,41 @@ public class ResourceProductionService {
                     bank.takeResource(resourceType, amount);
                     entry.getKey().addResource(resourceType, amount);
                 }
+                return "Partial distribution for " + resourceType + " on tile " + tile.getId()
+                    + ". Needed: " + totalNeeded + ", Available: " + available
+                    + ". Player received partial amount.";
             } else {
-                System.out.println("Resource shortage for " + resourceType + " on tile " + tile.getId() +". Needed: " + totalNeeded + ", Available: " + available +". No resources distributed to any player.");
+                return "Resource shortage for " + resourceType + " on tile " + tile.getId()
+                    + ". Needed: " + totalNeeded + ", Available: " + available
+                    + ". No resources distributed to any player.";
             }
         }
     }
 
 
-    public void distributeForRoll(int roll, Board board, List<Player> players, Bank bank) {
+    public String distributeForRoll(int roll, Board board, List<Player> players, Bank bank) {
         assert roll >= 2 && roll <= 12 : "Dice roll must be between 2 and 12, was: " + roll;
         if (roll == 7) {
-            return;
+            return null;
         }
         if (board == null || players == null || bank == null) {
             throw new IllegalArgumentException("Board, players, and bank cannot be null");
         }
 
         List<HexTile> tiles = board.getTilesWithToken(roll);
+        StringBuilder shortages = new StringBuilder();
         for (HexTile tile : tiles) {
             if (tile.canProduce()) {
-                distribute(tile, board, players, bank);
+                String msg = distribute(tile, board, players, bank);
+                if (msg != null) {
+                    if (!shortages.isEmpty()) {
+                        shortages.append("\n");
+                    }
+                    shortages.append(msg);
+                }
             }
         }
+        return shortages.isEmpty() ? null : shortages.toString();
     }
 
 

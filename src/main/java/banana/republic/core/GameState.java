@@ -62,5 +62,9 @@ public interface GameState {
      */
     GameLog getGameLog();
 
+    default void activateRobber(banana.republic.board.HexTile target, banana.republic.player.Player activePlayer, banana.republic.player.Player victim) {
+        // Default: no-op for mock/plugin contexts
+    }
+
     int getTurnNumber();
 }
