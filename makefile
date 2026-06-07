@@ -1,4 +1,4 @@
-.PHONY: build run test clean all verify
+.PHONY: build run test clean all verify plugin
 
 # Project settings (must match pom.xml)
 JAR_NAME=if2010-oop2526-tubes2-1.0-SNAPSHOT.jar
@@ -32,6 +32,12 @@ verify:
 # Clean build artifacts
 clean:
 	mvn clean
+
+# Compile all plugin JARs (requires mvn compile first)
+plugin:
+	@echo "=== Compiling all plugins ==="
+	mvn compile
+	@cd plugins-src && ./build.sh
 
 # Build and run
 all: build run
