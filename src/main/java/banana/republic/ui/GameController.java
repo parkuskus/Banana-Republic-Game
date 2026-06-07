@@ -903,19 +903,17 @@ public class GameController implements Initializable {
         if (timerExpiryUiQueued) return;
         timerExpiryUiQueued = true;
         javafx.application.Platform.runLater(() -> {
-            javafx.application.Platform.runLater(() -> {
-                try {
-                    refreshAllUI();
-                    updatePhaseUI();
-                    if (game != null && game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
-                        handleBotTurn();
-                    } else {
-                        showTransitionScreen();
-                    }
-                } finally {
-                    timerExpiryUiQueued = false;
+            try {
+                refreshAllUI();
+                updatePhaseUI();
+                if (game != null && game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
+                    handleBotTurn();
+                } else {
+                    showTransitionScreen();
                 }
-            });
+            } finally {
+                timerExpiryUiQueued = false;
+            }
         });
     }
 
