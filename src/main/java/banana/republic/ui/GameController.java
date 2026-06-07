@@ -86,6 +86,7 @@ public class GameController implements Initializable {
 
     @FXML private Label lblWoodCount, lblBrickCount, lblWheatCount, lblOreCount, lblBananaCount;
     @FXML private Label longestRoadStatusLabel;
+    @FXML private Label largestArmyStatusLabel;
     @FXML private Label timerLabel;
     @FXML private ImageView diceImage1, diceImage2;
     @FXML private Label currentPlayerLabel;
@@ -207,7 +208,8 @@ public class GameController implements Initializable {
                 lblWheatCount,
                 lblOreCount,
                 lblBananaCount,
-                longestRoadStatusLabel
+                longestRoadStatusLabel,
+                largestArmyStatusLabel
         );
         phaseUiPresenter = new PhaseUiPresenter(
                 btnRollDice,

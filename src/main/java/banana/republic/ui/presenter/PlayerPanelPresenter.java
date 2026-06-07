@@ -25,6 +25,7 @@ public class PlayerPanelPresenter {
     private final Label oreCount;
     private final Label bananaCount;
     private final Label longestRoadStatusLabel;
+    private final Label largestArmyStatusLabel;
 
     public PlayerPanelPresenter(List<HBox> playerPanels,
                                 Label currentPlayerLabel,
@@ -33,7 +34,8 @@ public class PlayerPanelPresenter {
                                 Label wheatCount,
                                 Label oreCount,
                                 Label bananaCount,
-                                Label longestRoadStatusLabel) {
+                                Label longestRoadStatusLabel,
+                                Label largestArmyStatusLabel) {
         this.playerPanels = playerPanels;
         this.currentPlayerLabel = currentPlayerLabel;
         this.woodCount = woodCount;
@@ -42,6 +44,7 @@ public class PlayerPanelPresenter {
         this.oreCount = oreCount;
         this.bananaCount = bananaCount;
         this.longestRoadStatusLabel = longestRoadStatusLabel;
+        this.largestArmyStatusLabel = largestArmyStatusLabel;
     }
 
     public void renderPlayers(Game game) {
@@ -60,6 +63,36 @@ public class PlayerPanelPresenter {
             }
         }
         renderLongestRoadStatus(players);
+        renderLargestArmyStatus(players);
+    }
+
+    private void renderLargestArmyStatus(List<Player> players) {
+        if (largestArmyStatusLabel == null || players == null || players.isEmpty()) return;
+
+        Player holder = null;
+        Player candidate = null;
+        int bestKnights = 0;
+
+        for (Player player : players) {
+            int knights = player.getKnightsPlayed();
+            if (player.hasSpecialCard(SpecialCardType.LARGEST_ARMY)) {
+                holder = player;
+            }
+            if (knights > bestKnights) {
+                bestKnights = knights;
+                candidate = player;
+            }
+        }
+
+        if (holder != null) {
+            largestArmyStatusLabel.setText("LARGEST ARMY: " + holder.getName()
+                    + " (" + holder.getKnightsPlayed() + " knight)");
+        } else if (candidate != null && bestKnights > 0) {
+            largestArmyStatusLabel.setText("LARGEST ARMY: belum ada | terbanyak "
+                    + candidate.getName() + " (" + bestKnights + "/3)");
+        } else {
+            largestArmyStatusLabel.setText("LARGEST ARMY: belum ada");
+        }
     }
 
     public void renderResourceCards(Game game) {
