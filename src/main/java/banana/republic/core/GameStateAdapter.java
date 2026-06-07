@@ -84,6 +84,11 @@ public class GameStateAdapter implements GameState {
     }
 
     @Override
+    public void activateRobber(HexTile target, Player activePlayer, Player victim) {
+        game.activateRobber(target, victim);
+    }
+
+    @Override
     public int getTurnNumber() {
         return game.getTurnNumber();
     }
