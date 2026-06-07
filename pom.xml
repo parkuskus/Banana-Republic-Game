@@ -52,6 +52,11 @@
             <artifactId>javafx-base</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>javazoom</groupId>
+            <artifactId>jlayer</artifactId>
+            <version>1.0.1</version>
+        </dependency>
 
         <!-- JUnit 5 (BOM-style: api + engine + params) -->
         <dependency>

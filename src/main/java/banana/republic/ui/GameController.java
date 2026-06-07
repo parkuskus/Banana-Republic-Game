@@ -59,8 +59,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 
 
 public class GameController implements Initializable {
@@ -164,7 +162,7 @@ public class GameController implements Initializable {
     }
     private InteractionMode currentMode = InteractionMode.NONE;
 
-    private MediaPlayer bgMusicPlayer;
+    private static Thread bgMusicThread;
 
     private record VisualHarborSpec(StackPane hexTile, int firstCorner, int secondCorner, HarborType harborType) {
     }
@@ -319,18 +317,27 @@ public class GameController implements Initializable {
         }
 
         try {
-            if (bgMusicPlayer == null) {
-                java.net.URL musicUrl = getClass().getResource("/bg-music.mp3");
-                if (musicUrl != null) {
-                    Media media = new Media(musicUrl.toExternalForm());
-                    bgMusicPlayer = new MediaPlayer(media);
-                    bgMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-                    bgMusicPlayer.setVolume(0.3);
-                    bgMusicPlayer.play();
-                }
+            if (bgMusicThread == null || !bgMusicThread.isAlive()) {
+                bgMusicThread = new Thread(() -> {
+                    while (true) {
+                        try {
+                            java.io.InputStream is = getClass().getResourceAsStream("/bg-music.mp3");
+                            if (is != null) {
+                                javazoom.jl.player.Player player = new javazoom.jl.player.Player(is);
+                                player.play();
+                            } else {
+                                break;
+                            }
+                        } catch (Exception e) {
+                            break;
+                        }
+                    }
+                });
+                bgMusicThread.setDaemon(true);
+                bgMusicThread.start();
             }
         } catch (Exception e) {
-            System.err.println("Could not load background music: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
