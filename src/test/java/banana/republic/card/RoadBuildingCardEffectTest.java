@@ -11,7 +11,9 @@ import banana.republic.board.Board;
 import banana.republic.board.Intersection;
 import banana.republic.board.Path;
 import banana.republic.building.PosPantau;
+import banana.republic.core.GameLog;
 import banana.republic.core.GameState;
+import banana.republic.core.LogEntry;
 import banana.republic.player.HumanPlayer;
 import banana.republic.player.Player;
 import banana.republic.player.PlayerColor;
@@ -21,7 +23,7 @@ import banana.republic.resource.Bank;
 class RoadBuildingCardEffectTest {
 
     @Test
-    @DisplayName("Road building card should place up to two free roads")
+    @DisplayName("Road building card should place up to two free roads and log both builds")
     void roadBuildingCardPlacesTwoRoads() {
         HumanPlayer player = new HumanPlayer("Builder", PlayerColor.ORANGE);
 
@@ -37,7 +39,8 @@ class RoadBuildingCardEffectTest {
         a.placeBuilding(new PosPantau(player));
 
         Board board = new Board(List.of(), List.of(a, b, c), List.of(ab, ac), List.of());
-        GameState state = new MockGameState(board, List.of(player), List.of(ab, ac));
+        GameLog gameLog = new GameLog();
+        GameState state = new MockGameState(board, List.of(player), List.of(ab, ac), gameLog);
 
         RoadBuildingCard card = new RoadBuildingCard();
         card.applyEffect(state, player);
@@ -45,17 +48,23 @@ class RoadBuildingCardEffectTest {
         assertEquals(13, player.getSupply().getRoadsRemaining());
         assertSame(player, ab.getOwner());
         assertSame(player, ac.getOwner());
+
+        List<LogEntry> buildEntries = gameLog.getEntriesByType(LogEntry.EventType.BUILD);
+        assertEquals(2, buildEntries.size(), "Both roads should produce a BUILD log entry");
+        assertEquals("Builder", buildEntries.get(0).getPlayerName());
     }
 
     private static final class MockGameState implements GameState {
         private final Board board;
         private final List<Player> players;
         private final List<Path> selectedPaths;
+        private final GameLog gameLog;
 
-        private MockGameState(Board board, List<Player> players, List<Path> selectedPaths) {
+        private MockGameState(Board board, List<Player> players, List<Path> selectedPaths, GameLog gameLog) {
             this.board = board;
             this.players = players;
             this.selectedPaths = selectedPaths;
+            this.gameLog = gameLog;
         }
 
         @Override
@@ -85,7 +94,7 @@ class RoadBuildingCardEffectTest {
 
         @Override
         public banana.republic.core.GameLog getGameLog() {
-            return null;
+            return gameLog;
         }
 
         @Override

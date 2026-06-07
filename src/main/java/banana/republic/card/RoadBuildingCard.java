@@ -5,6 +5,7 @@ import banana.republic.board.Path;
 import banana.republic.building.PlayerSupply;
 import banana.republic.building.Road;
 import banana.republic.core.GameState;
+import banana.republic.core.LogEntry;
 import banana.republic.player.Player;
 
 /**
@@ -78,6 +79,12 @@ public class RoadBuildingCard extends ProgressCard {
 
             Road road = supply.takeRoad();
             path.placeRoad(road);
+            state.getGameLog().addEntry(
+                LogEntry.EventType.BUILD,
+                player.getName(),
+                player.getName() + " membangun Pipa Transportasi (Kartu Konstruksi Cepat) di path #"
+                    + path.getId()
+            );
             roadsPlaced++;
         }
 
