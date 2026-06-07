@@ -28,12 +28,36 @@ public class PlayerSupply {
         return posPantau;
     }
 
+    public int getMaxPosPantau() {
+        return MAX_POS_PANTAU;
+    }
+
+    public int getPosPantauUsed() {
+        return MAX_POS_PANTAU - posPantau;
+    }
+
     public int getLaboratoriumRemaining() {
         return laboratorium;
     }
 
+    public int getMaxLaboratorium() {
+        return MAX_LABORATORIUM;
+    }
+
+    public int getLaboratoriumUsed() {
+        return MAX_LABORATORIUM - laboratorium;
+    }
+
     public int getRoadsRemaining() {
         return roads;
+    }
+
+    public int getMaxRoads() {
+        return MAX_ROADS;
+    }
+
+    public int getRoadsUsed() {
+        return MAX_ROADS - roads;
     }
 
 

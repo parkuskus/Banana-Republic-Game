@@ -1,6 +1,5 @@
 package banana.republic.ui;
 
-import banana.republic.App;
 import banana.republic.core.Game;
 import banana.republic.core.VictoryPointBreakdown;
 import banana.republic.player.Player;
@@ -22,6 +21,7 @@ public class GameResultController {
     private VBox resultTableContainer;
 
     private Game game;
+    private final UiNavigator navigator = new AppUiNavigator();
 
     public void setGame(Game game) {
         this.game = game;
@@ -118,18 +118,12 @@ public class GameResultController {
     @FXML
     private void handleViewBoard() throws IOException {
         if (game != null) {
-            javafx.fxml.FXMLLoader loader = App.getLoader("game");
-            javafx.scene.Parent root = loader.load();
-            GameController controller = loader.getController();
-            controller.setGame(game);
-            App.setRootFromLoader(root);
-        } else {
-            App.setRoot("game");
+            navigator.showGame(game);
         }
     }
 
     @FXML
     private void handleMainMenu() throws IOException {
-        App.setRoot("main");
+        navigator.showMainMenu();
     }
 }

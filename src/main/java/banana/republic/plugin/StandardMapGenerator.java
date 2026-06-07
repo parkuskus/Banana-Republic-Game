@@ -24,7 +24,7 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
         // Row -2: top row in game.fxml
         TerrainType.FOREST,
         TerrainType.HILL,
-        TerrainType.FOREST,
+        TerrainType.BANANA_PLANTATION,
         // Row -1
         TerrainType.MOUNTAIN,
         TerrainType.BANANA_PLANTATION,
@@ -37,9 +37,9 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
         TerrainType.FIELD,
         TerrainType.MOUNTAIN,
         // Row 1
-        TerrainType.FOREST,
+        TerrainType.BANANA_PLANTATION,
         TerrainType.HILL,
-        TerrainType.FOREST,
+        TerrainType.FIELD,
         TerrainType.BANANA_PLANTATION,
         // Row 2
         TerrainType.FIELD,
@@ -78,10 +78,12 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
     }
 
     private List<HexTile> buildHexTiles() {
-        if (FIXED_HEX_LAYOUT.length != 19) {
+        TerrainType[] hexLayout = getHexLayout();
+        int[] tokenLayout = getTokenLayout();
+        if (hexLayout.length != 19) {
             throw new IllegalStateException("Fixed hex layout must contain 19 tiles");
         }
-        if (FIXED_TOKEN_LAYOUT.length != 18) {
+        if (tokenLayout.length != 18) {
             throw new IllegalStateException("Fixed token layout must contain 18 tokens");
         }
 
@@ -90,7 +92,7 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
         int tokenIndex = 0;
 
         for (int i = 0; i < coords.size(); i++) {
-            TerrainType terrainType = FIXED_HEX_LAYOUT[i];
+            TerrainType terrainType = hexLayout[i];
             AxialCoord coord = coords.get(i);
             NumberToken token = null;
             boolean hasRobber = false;
@@ -98,7 +100,7 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
             if (terrainType == TerrainType.DESERT) {
                 hasRobber = true;
             } else {
-                token = new NumberToken(FIXED_TOKEN_LAYOUT[tokenIndex]);
+                token = new NumberToken(tokenLayout[tokenIndex]);
                 tokenIndex++;
             }
 
@@ -107,6 +109,14 @@ public class StandardMapGenerator implements MapGeneratorPlugin {
         }
 
         return tiles;
+    }
+
+    protected TerrainType[] getHexLayout() {
+        return FIXED_HEX_LAYOUT.clone();
+    }
+
+    protected int[] getTokenLayout() {
+        return FIXED_TOKEN_LAYOUT.clone();
     }
 
     private Map<String, Intersection> buildIntersections(List<HexTile> hexTiles) {

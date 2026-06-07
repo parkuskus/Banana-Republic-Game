@@ -7,6 +7,7 @@ import banana.republic.board.Path;
 import banana.republic.board.TerrainType;
 import banana.republic.building.PlayerSupply;
 import banana.republic.card.CardDeck;
+import banana.republic.card.DevelopmentCard;
 import banana.republic.card.ExperimentCard;
 import banana.republic.dice.Dice;
 import banana.republic.dice.DiceResult;
@@ -27,6 +28,7 @@ import banana.republic.trade.ValidationResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,6 +146,7 @@ public class Game {
             ? mapPlugin
             : new banana.republic.plugin.StandardMapGenerator();
         this.board = generator.generateBoard();
+        validateGeneratedBoard(this.board);
 
         // Inisialisasi Robber setelah board tersedia (cari tile gurun)
         this.robber = new Robber(findDesertTile());
@@ -153,6 +156,46 @@ public class Game {
 
         gameLog.addEntry(LogEntry.EventType.SYSTEM,
             "Permainan Banana Republic dimulai dengan " + this.players.size() + " pemain.");
+        if (mapPlugin != null) {
+            gameLog.addEntry(LogEntry.EventType.SYSTEM,
+                "Map plugin aktif: " + generator.getClass().getName() + ".");
+        }
+    }
+
+    private void validateGeneratedBoard(Board generatedBoard) {
+        if (generatedBoard == null) {
+            throw new IllegalArgumentException("Map generator menghasilkan board null.");
+        }
+        List<HexTile> tiles = generatedBoard.getAllHexTiles();
+        if (tiles.size() != 19) {
+            throw new IllegalArgumentException("Peta harus terdiri dari 19 petak heksagonal, got: " + tiles.size());
+        }
+
+        Map<TerrainType, Integer> counts = new EnumMap<>(TerrainType.class);
+        for (HexTile tile : tiles) {
+            if (tile == null || tile.getTerrainType() == null) {
+                throw new IllegalArgumentException("Semua hex pada peta harus memiliki terrain.");
+            }
+            counts.merge(tile.getTerrainType(), 1, Integer::sum);
+        }
+
+        requireTerrainCount(counts, TerrainType.FOREST, 4, "Hutan");
+        requireTerrainCount(counts, TerrainType.HILL, 3, "Bukit");
+        requireTerrainCount(counts, TerrainType.FIELD, 4, "Ladang");
+        requireTerrainCount(counts, TerrainType.MOUNTAIN, 3, "Gunung");
+        requireTerrainCount(counts, TerrainType.BANANA_PLANTATION, 4, "Kebun Pisang");
+        requireTerrainCount(counts, TerrainType.DESERT, 1, "Gurun");
+    }
+
+    private void requireTerrainCount(Map<TerrainType, Integer> counts,
+                                     TerrainType terrain,
+                                     int expected,
+                                     String displayName) {
+        int actual = counts.getOrDefault(terrain, 0);
+        if (actual != expected) {
+            throw new IllegalArgumentException(
+                "Peta tidak valid: " + displayName + " harus " + expected + " petak, got: " + actual);
+        }
     }
 
     /**
@@ -371,6 +414,7 @@ public class Game {
         turnManager.stopTimer();
         tradeManager.reset();
         Player prev = getActivePlayer();
+        markDevelopmentCardsPlayable(prev);
         turnManager.advanceTurn();
         currentPhase = GamePhase.RESOURCE_GATHERING;
         turnNumber++;
@@ -378,6 +422,15 @@ public class Game {
         gameLog.addEntry(LogEntry.EventType.TURN_CHANGE, prev.getName(),
             prev.getName() + " mengakhiri giliran. Sekarang giliran "
             + getActivePlayer().getName() + ".");
+    }
+
+    private void markDevelopmentCardsPlayable(Player player) {
+        if (player == null) return;
+        for (ExperimentCard card : player.getHandCards()) {
+            if (card instanceof DevelopmentCard developmentCard) {
+                developmentCard.setNewlyDrawn(false);
+            }
+        }
     }
 
     /**
@@ -450,9 +503,10 @@ public class Game {
     public void playCard(Player player, ExperimentCard card) {
         // Phase check first so callers always get IllegalStateException for wrong phase,
         // even if player/card are null.
-        if (currentPhase != GamePhase.TRADE_BUILD) {
+        if (currentPhase != GamePhase.RESOURCE_GATHERING && currentPhase != GamePhase.TRADE_BUILD) {
             throw new IllegalStateException(
-                "Kartu hanya bisa dimainkan saat fase TRADE_BUILD (saat ini: " + currentPhase + ")");
+                "Kartu hanya bisa dimainkan saat giliran aktif (sebelum/sesudah lempar dadu). Fase saat ini: "
+                    + currentPhase);
         }
         ValidationResult v = cardPlayValidator.canPlay(
             player, card, cardBoughtThisTurn, cardPlayedThisTurn, currentPhase);
@@ -653,13 +707,62 @@ public class Game {
 
         Player candidate = vpCalculator.findWinner(players, board, VICTORY_POINTS_TO_WIN);
         if (candidate != null) {
-            winner       = candidate;
-            currentPhase = GamePhase.GAME_OVER;
-            turnManager.stopTimer();
-            int totalVP = vpCalculator.getTotalVP(winner, board);
-            gameLog.addEntry(LogEntry.EventType.VICTORY, winner.getName(),
-                winner.getName() + " MENANG dengan " + totalVP + " Poin Prestasi!");
+            declareWinner(candidate);
         }
+        return winner;
+    }
+
+    /**
+     * Deklarasi kemenangan oleh pemain tertentu.
+     *
+     * Return null jika pemain tersebut belum mencapai target VP. Method ini
+     * dipakai UI Declare Victory supaya hanya pemain aktif yang bisa
+     * mendeklarasikan kemenangan untuk dirinya sendiri.
+     */
+    public Player declareVictory(Player player) {
+        if (player == null) {
+            throw new IllegalArgumentException("Player tidak boleh null");
+        }
+        if (currentPhase == GamePhase.GAME_OVER && winner != null) return winner;
+
+        int totalVP = vpCalculator.getTotalVP(player, board);
+        if (totalVP < VICTORY_POINTS_TO_WIN) return null;
+
+        declareWinner(player);
+        return winner;
+    }
+
+    private void declareWinner(Player declaredWinner) {
+        winner = declaredWinner;
+        currentPhase = GamePhase.GAME_OVER;
+        turnManager.stopTimer();
+        int totalVP = vpCalculator.getTotalVP(winner, board);
+        gameLog.addEntry(LogEntry.EventType.VICTORY, winner.getName(),
+            winner.getName() + " MENANG dengan " + totalVP + " Poin Prestasi!");
+    }
+
+    /**
+     * Mengakhiri permainan secara manual dan memilih pemain dengan VP tertinggi.
+     *
+     * Dipakai tombol End Game di UI. Berbeda dari {@link #checkVictory()}, method
+     * ini tidak mensyaratkan pemain mencapai target 10 PP.
+     */
+    public Player endGameByHighestVictoryPoints() {
+        if (currentPhase == GamePhase.GAME_OVER && winner != null) return winner;
+
+        List<VictoryPointBreakdown> standings = vpCalculator.calculateAll(players, board);
+        if (standings.isEmpty()) {
+            throw new IllegalStateException("Tidak ada pemain untuk menentukan hasil akhir.");
+        }
+
+        winner = standings.get(0).getPlayer();
+        currentPhase = GamePhase.GAME_OVER;
+        turnManager.stopTimer();
+
+        gameLog.addEntry(LogEntry.EventType.VICTORY, winner.getName(),
+            "Permainan diakhiri. " + winner.getName()
+                + " unggul dengan " + standings.get(0).getTotal() + " Poin Prestasi.");
+
         return winner;
     }
 

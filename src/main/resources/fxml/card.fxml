@@ -59,7 +59,7 @@
                        <VBox alignment="TOP_CENTER" prefHeight="298.0" prefWidth="215.0" spacing="10.0" styleClass="dev-card-bottom">
                           <children>
                              <Label styleClass="dev-card-title" text="KARTU INOVASI" />
-                             <Label maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="Ambil 2 sumber daya apapun dari bank pusat segera" textAlignment="CENTER" wrapText="true" />
+                             <Label maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="Konstruksi Cepat: bangun 2 pipa gratis. Monopoli Nimon: ambil semua resource satu jenis dari pemain lain." textAlignment="CENTER" wrapText="true" />
                              <Region VBox.vgrow="ALWAYS" />
                              <Label styleClass="dev-card-status" text="DAPAT DIMAINKAN" />
                           </children>
@@ -84,7 +84,7 @@
                        <VBox alignment="TOP_CENTER" prefHeight="298.0" prefWidth="215.0" spacing="10.0" styleClass="dev-card-bottom">
                           <children>
                              <Label prefHeight="98.0" prefWidth="168.0" styleClass="dev-card-title" text="KARTU POIN PRESTASI RAHASIA" textAlignment="CENTER" wrapText="true" />
-                             <Label maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="1 poin prestasi. Otomatis diungkapkan di akhir permainan" textAlignment="CENTER" wrapText="true" />
+                             <Label maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="1 Poin Prestasi rahasia. Hanya diungkap saat memenangkan permainan atau di akhir game." textAlignment="CENTER" wrapText="true" />
                              <Region VBox.vgrow="ALWAYS" />
                              <Label styleClass="dev-card-status" text="PASIF" />
                           </children>
@@ -110,7 +110,7 @@
                        <VBox alignment="TOP_CENTER" prefHeight="298.0" prefWidth="215.0" spacing="10.0" styleClass="dev-card-bottom">
                           <children>
                              <Label styleClass="dev-card-title" text="KARTU TAMBAHAN" />
-                             <Label alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="belum ada deskripsi..." textAlignment="CENTER" wrapText="true" />
+                             <Label alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="146.0" prefWidth="210.0" styleClass="dev-card-desc" text="Kartu plugin eksternal yang dimuat ke deck lewat Settings." textAlignment="CENTER" wrapText="true" />
                              <Region VBox.vgrow="ALWAYS" />
                              <Label styleClass="dev-card-status" text="DAPAT DIMAINKAN" />
                           </children>
@@ -124,6 +124,8 @@
 
                 </HBox>
             </ScrollPane>
+
+            <VBox fx:id="handCardsBox" spacing="6" style="-fx-padding: 0 10 0 10;" />
 
             <HBox alignment="BOTTOM_RIGHT" spacing="20" style="-fx-padding: 20 0 0 0;">
                 <Button onAction="#closeDialog" styleClass="btn-text-only" text="TUTUP" />

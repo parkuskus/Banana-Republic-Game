@@ -150,6 +150,13 @@ public class Board {
         return Collections.unmodifiableList(harbors);
     }
 
+    public void replaceHarbors(List<Harbor> replacementHarbors) {
+        harbors.clear();
+        if (replacementHarbors != null) {
+            harbors.addAll(replacementHarbors);
+        }
+    }
+
     public java.util.Optional<HexTile> getRobberTile() {
         for (HexTile tile : hexTiles) {
             if (tile.hasRobber()) {

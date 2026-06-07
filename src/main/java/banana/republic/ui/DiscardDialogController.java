@@ -3,9 +3,9 @@ package banana.republic.ui;
 import banana.republic.core.Game;
 import banana.republic.player.Player;
 import banana.republic.resource.ResourceType;
+import banana.republic.ui.command.DiscardUiService;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
@@ -44,6 +44,8 @@ public class DiscardDialogController implements Initializable, DialogController,
     private Game game;
     private Player targetPlayer;
     private int requiredDiscard = 0;
+    private final UiDialogs dialogs = new UiDialogs();
+    private final DiscardUiService discardUiService = new DiscardUiService();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -102,7 +104,7 @@ public class DiscardDialogController implements Initializable, DialogController,
     @FXML
     private void closeDialog() {
         if (requiredDiscard > 0) {
-            showError("Kamu harus membuang tepat " + requiredDiscard + " kartu sebelum menutup.");
+            dialogs.showError("Kamu harus membuang tepat " + requiredDiscard + " kartu sebelum menutup.");
             return;
         }
         if (closeHandler != null) {
@@ -121,26 +123,10 @@ public class DiscardDialogController implements Initializable, DialogController,
         toDiscard.put(ResourceType.ORE, parseInt(lblGiveOreVal));
         toDiscard.put(ResourceType.BANANA, parseInt(lblGiveBananaVal));
 
-        int totalSelected = toDiscard.values().stream().mapToInt(Integer::intValue).sum();
-
-        if (totalSelected != requiredDiscard) {
-            showError("Kamu (" + targetPlayer.getName() + ") harus membuang tepat " + requiredDiscard + " kartu (sekarang: " + totalSelected + ").");
+        var result = discardUiService.discard(game, targetPlayer, toDiscard, requiredDiscard);
+        if (!result.isSuccess()) {
+            dialogs.showError(result.getMessage());
             return;
-        }
-
-        for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
-            if (entry.getValue() > 0) {
-                if (!targetPlayer.hasResource(entry.getKey(), entry.getValue())) {
-                    showError("Kamu tidak punya cukup " + entry.getKey().getDisplayName());
-                    return;
-                }
-            }
-        }
-
-        for (Map.Entry<ResourceType, Integer> entry : toDiscard.entrySet()) {
-            if (entry.getValue() > 0) {
-                game.discardResource(targetPlayer, entry.getKey(), entry.getValue());
-            }
         }
 
         requiredDiscard = 0;
@@ -170,13 +156,5 @@ public class DiscardDialogController implements Initializable, DialogController,
         } catch (NumberFormatException e) {
             return 0;
         }
-    }
-
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 }

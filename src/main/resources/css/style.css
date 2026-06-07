@@ -7,6 +7,10 @@
     -fx-background-color: #ffd55e;
 }
 
+.app-viewport {
+    -fx-background-color: #ffd55e;
+}
+
 .lobby-bg {
     -fx-background-color: #fffff0;
 }
@@ -377,11 +381,26 @@
 
 .player-card {
     -fx-cursor: hand;
-    -fx-padding: 2px;
+    -fx-padding: 4px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
 }
 
 .player-card:hover .avatar-icon {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
+}
+
+.player-card-selected {
+    -fx-background-color: rgba(49, 99, 220, 0.12);
+    -fx-border-color: #3163dc;
+    -fx-border-width: 2px;
+}
+
+.trade-response-btn {
+    -fx-background-radius: 6px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
 }
 
 .player-name {
@@ -535,6 +554,23 @@
 .status-passive {
     -fx-text-fill: #888888;
     -fx-background-color: #e8e8e8;
+}
+
+.card-hand-chip {
+    -fx-background-color: #f6f1e7;
+    -fx-border-color: #c9b27d;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 7px 10px;
+    -fx-font-family: 'Russo One';
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+}
+
+.card-hand-chip-selected {
+    -fx-background-color: #ffd55e;
+    -fx-border-color: #8f6b1f;
+    -fx-border-width: 2px;
 }
 
 .btn-text-only {

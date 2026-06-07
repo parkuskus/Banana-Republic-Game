@@ -13,6 +13,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
 
 <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" styleClass="main-menu-bg" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="banana.republic.ui.GameController">
    <children>
@@ -55,7 +56,7 @@
                                              </children>
                                           </StackPane>
 
-                                          <StackPane layoutX="235.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                          <StackPane layoutX="235.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wheat">
                                              <children>
                                                 <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
                                                 <Label styleClass="russo-text-small" text="4" />
@@ -160,7 +161,7 @@
                                              </children>
                                           </StackPane>
 
-                                          <StackPane layoutX="282.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                          <StackPane layoutX="282.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-banana">
                                              <children>
                                                 <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
                                                 <Label styleClass="russo-text-small" text="6" />
@@ -259,7 +260,7 @@
                                                 </ImageView>
                                              </children>
                                           </StackPane>
-                                          <StackPane fx:id="harborLV2" layoutX="47.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-wood">
+                                          <StackPane fx:id="harborLV2" layoutX="47.0" layoutY="243.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-banana">
                                              <children>
                                                 <Circle fill="WHITE" radius="15.0" stroke="BLACK" strokeType="INSIDE" />
                                                 <Label styleClass="russo-text-small" text="10" />
@@ -353,6 +354,7 @@
                            <children>
 
                               <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #888;" text="PLAYERS" />
+                              <Label fx:id="longestRoadStatusLabel" style="-fx-background-color: #fff8dc; -fx-background-radius: 6; -fx-border-color: #d6b85a; -fx-border-radius: 6; -fx-padding: 6 10; -fx-font-size: 1.0em; -fx-font-weight: bold; -fx-text-fill: #6f5612;" text="LONGEST ROAD: -" wrapText="true" />
 
                                 <HBox fx:id="playerPanel1" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
                                    <children>
@@ -553,12 +555,24 @@
                                              <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Ore" />
                                           </HBox>
                                           <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#b3c473" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                             <Circle fill="#d7cb99" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
                                              <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Banana" />
                                           </HBox>
                                           <HBox alignment="CENTER_LEFT" spacing="6.0">
                                              <Circle fill="#9e8468" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
                                              <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Desert" />
+                                          </HBox>
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="14.0">
+                                       <children>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Circle fill="#eeeeee" radius="8.0" stroke="BLACK" strokeWidth="2.0" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Pos Pantau" />
+                                          </HBox>
+                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
+                                             <Rectangle arcHeight="0.0" arcWidth="0.0" fill="#eeeeee" height="16.0" stroke="BLACK" strokeWidth="2.0" width="16.0" />
+                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Lab" />
                                           </HBox>
                                        </children>
                                     </HBox>
@@ -766,8 +780,6 @@
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="5.0">
                            <children>
-                                <Button fx:id="btnSteal" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSteal" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Steal" />
-                                <Button fx:id="btnDiscard" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toDiscard" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Discard" />
                                 <Button fx:id="btnEndGame" maxWidth="-Infinity" mnemonicParsing="false" onAction="#endGame" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End Game" />
                                 <Button fx:id="btnSettings" maxWidth="-Infinity" mnemonicParsing="false" onAction="#toSettings" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="Settings" />
                                 <Button fx:id="btnEndTurn" maxWidth="-Infinity" mnemonicParsing="false" onAction="#onEndTurn" prefHeight="34.0" prefWidth="200.0" styleClass="game-bottom-button" text="End turn" />

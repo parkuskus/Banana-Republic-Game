@@ -2,6 +2,7 @@ package banana.republic.ui;
 
 import banana.republic.core.Game;
 import banana.republic.player.Player;
+import banana.republic.ui.command.StealUiService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -13,6 +14,7 @@ public class StealDialogController implements DialogController, GameAwareControl
 
     private Runnable closeHandler;
     private Game game;
+    private final StealUiService stealUiService = new StealUiService();
 
     @FXML
     private VBox player1;
@@ -127,17 +129,7 @@ public class StealDialogController implements DialogController, GameAwareControl
         Player thief = game.getActivePlayer();
         if (victim.equals(thief)) return;
 
-        try {
-            if (victim.getTotalResourceCount() > 0) {
-                game.getRobber().stealRandomResource(thief, victim);
-                game.getGameLog().addEntry(
-                    banana.republic.core.LogEntry.EventType.STEAL,
-                    thief.getName(),
-                    thief.getName() + " mencuri resource dari " + victim.getName());
-            }
-        } catch (Exception e) {
-            // ignore
-        }
+        stealUiService.steal(game, thief, victim);
         closeDialog();
     }
 }

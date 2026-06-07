@@ -14,10 +14,9 @@ import banana.republic.player.PlayerColor;
 import banana.republic.player.PlayerStrategy;
 import banana.republic.plugin.MapGeneratorPlugin;
 import banana.republic.plugin.PluginLoader;
+import banana.republic.ui.dialog.FileDialogService;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
@@ -27,8 +26,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 
 /**
  * Main menu controller.
@@ -48,6 +45,9 @@ public class LobbyController {
 
     private Paint[] selectedColors = new Paint[4];
     private final PluginLoader pluginLoader = new PluginLoader();
+    private final UiDialogs dialogs = new UiDialogs();
+    private final UiNavigator navigator = new AppUiNavigator();
+    private final FileDialogService fileDialogService = new FileDialogService();
     private MapGeneratorPlugin loadedMapPlugin = null;
     private PlayerStrategy loadedBotStrategy = null;
 
@@ -168,18 +168,13 @@ public class LobbyController {
 
     @FXML
     private void handleLoadMap(MouseEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Load Map Plugin");
-        FileChooser.ExtensionFilter extFilterJAR = new FileChooser.ExtensionFilter("JAR files (*.jar)", "*.jar");
-        fileChooser.getExtensionFilters().addAll(extFilterJAR);
-
-        Window window = ((Node) event.getSource()).getScene().getWindow();
-        File fileYangDipilih = fileChooser.showOpenDialog(window);
-
-        if (fileYangDipilih != null) {
+        Node ownerNode = event != null && event.getSource() instanceof Node node ? node : null;
+        var fileYangDipilih = fileDialogService.chooseJarPlugin(ownerNode, "Load Map Plugin");
+        if (fileYangDipilih.isPresent()) {
             try {
-                loadedMapPlugin = pluginLoader.loadMapGenerator(fileYangDipilih.getAbsolutePath());
-                showInfo("Map plugin berhasil dimuat: " + fileYangDipilih.getName());
+                loadedMapPlugin = pluginLoader.loadMapGenerator(fileYangDipilih.get().getAbsolutePath());
+                showInfo("Map plugin berhasil dimuat: " + fileYangDipilih.get().getName()
+                    + "\nGenerator: " + loadedMapPlugin.getClass().getName());
             } catch (Exception e) {
                 showAlert("Gagal memuat map plugin", e.getMessage());
             }
@@ -188,18 +183,12 @@ public class LobbyController {
 
     @FXML
     private void handleLoadBot(MouseEvent event) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Load Bot Strategy Plugin");
-        FileChooser.ExtensionFilter extFilterJAR = new FileChooser.ExtensionFilter("JAR files (*.jar)", "*.jar");
-        fileChooser.getExtensionFilters().addAll(extFilterJAR);
-
-        Window window = ((Node) event.getSource()).getScene().getWindow();
-        File fileYangDipilih = fileChooser.showOpenDialog(window);
-
-        if (fileYangDipilih != null) {
+        Node ownerNode = event != null && event.getSource() instanceof Node node ? node : null;
+        var fileYangDipilih = fileDialogService.chooseJarPlugin(ownerNode, "Load Bot Strategy Plugin");
+        if (fileYangDipilih.isPresent()) {
             try {
-                loadedBotStrategy = pluginLoader.loadBotStrategy(fileYangDipilih.getAbsolutePath());
-                showInfo("Bot strategy plugin berhasil dimuat: " + fileYangDipilih.getName());
+                loadedBotStrategy = pluginLoader.loadBotStrategy(fileYangDipilih.get().getAbsolutePath());
+                showInfo("Bot strategy plugin berhasil dimuat: " + fileYangDipilih.get().getName());
             } catch (Exception e) {
                 showAlert("Gagal memuat bot plugin", e.getMessage());
             }
@@ -240,7 +229,13 @@ public class LobbyController {
             }
         }
 
-        Game game = new Game(players, loadedMapPlugin);
+        Game game;
+        try {
+            game = new Game(players, loadedMapPlugin);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            showAlert("Map Tidak Valid", e.getMessage());
+            return;
+        }
 
         // Initialize deck and inject any loaded card plugins
         game.getCardDeck().buildDefaultDeck();
@@ -250,28 +245,16 @@ public class LobbyController {
             game.getCardDeck().injectPluginCards(pluginCards);
         }
 
-        FXMLLoader loader = App.getLoader("game");
-        Parent root = loader.load();
-        GameController controller = loader.getController();
-        controller.initialize(game);
-        App.setRootFromLoader(root);
+        navigator.showGame(game);
     }
 
     // Helper method untuk memunculkan pop-up peringatan JavaFX
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        dialogs.showError(title + ": " + message);
     }
 
     private void showInfo(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        dialogs.showInfo(message);
     }
 
     private void showInfo(String message) {
@@ -307,6 +290,6 @@ public class LobbyController {
 
     @FXML
     private void exit() throws IOException {
-        App.setRoot("main");
+        navigator.showMainMenu();
     }
 }

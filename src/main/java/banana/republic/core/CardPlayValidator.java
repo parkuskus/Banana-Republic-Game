@@ -37,9 +37,10 @@ public class CardPlayValidator {
         if (player == null || card == null) {
             throw new IllegalArgumentException("Player dan kartu tidak boleh null");
         }
-        if (phase != GamePhase.TRADE_BUILD) {
+        if (phase != GamePhase.RESOURCE_GATHERING && phase != GamePhase.TRADE_BUILD) {
             return ValidationResult.fail(
-                "Kartu hanya bisa dimainkan saat fase TRADE_BUILD (saat ini: " + phase + ")");
+                "Kartu hanya bisa dimainkan saat giliran aktif (sebelum/sesudah lempar dadu). Fase saat ini: "
+                    + phase);
         }
         if (!player.getHandCards().contains(card)) {
             return ValidationResult.fail(

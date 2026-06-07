@@ -1,21 +1,33 @@
 package banana.republic.ui;
 
+import banana.republic.card.DevelopmentCard;
 import banana.republic.card.ExperimentCard;
 import banana.republic.card.KnightCard;
 import banana.republic.card.ProgressCard;
 import banana.republic.card.VictoryPointCard;
 import banana.republic.core.Game;
+import banana.republic.player.Player;
+import banana.republic.ui.command.CardUiService;
+import banana.republic.ui.command.GameActionUiService;
+import banana.republic.ui.dialog.ChoiceDialogService;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class CardDialogController implements DialogController, GameAwareController {
 
     private Runnable closeHandler;
     private Game game;
+    private final UiDialogs dialogs = new UiDialogs();
+    private final UiNavigator navigator = new AppUiNavigator();
+    private final CardUiService cardUiService = new CardUiService();
+    private final GameActionUiService gameActionUiService = new GameActionUiService();
+    private final ChoiceDialogService choiceDialogService = new ChoiceDialogService();
 
     @FXML
     private VBox cardPurple;
@@ -25,6 +37,10 @@ public class CardDialogController implements DialogController, GameAwareControll
     private VBox cardOrange;
     @FXML
     private VBox cardGray;
+    @FXML
+    private VBox handCardsBox;
+
+    private ExperimentCard selectedCard;
 
     @Override
     public void setGame(Game game) {
@@ -45,7 +61,8 @@ public class CardDialogController implements DialogController, GameAwareControll
         setCardStatus(cardPurple, countType(hand, KnightCard.class));
         setCardStatus(cardGreen, countType(hand, ProgressCard.class));
         setCardStatus(cardOrange, countType(hand, VictoryPointCard.class));
-        setCardStatus(cardGray, hand.size());
+        setCardStatus(cardGray, countOtherCards(hand));
+        renderHandCards(hand);
     }
 
     private int countType(List<ExperimentCard> hand, Class<? extends ExperimentCard> type) {
@@ -67,6 +84,66 @@ public class CardDialogController implements DialogController, GameAwareControll
         }
     }
 
+    private int countOtherCards(List<ExperimentCard> hand) {
+        int count = 0;
+        for (ExperimentCard card : hand) {
+            if (!(card instanceof KnightCard)
+                    && !(card instanceof ProgressCard)
+                    && !(card instanceof VictoryPointCard)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void renderHandCards(List<ExperimentCard> hand) {
+        if (handCardsBox == null) return;
+        handCardsBox.getChildren().clear();
+
+        Label title = new Label("KARTU DI TANGAN");
+        title.getStyleClass().add("section-subtitle");
+        handCardsBox.getChildren().add(title);
+
+        if (hand.isEmpty()) {
+            Label empty = new Label("Tidak ada kartu.");
+            empty.getStyleClass().add("dev-card-status");
+            handCardsBox.getChildren().add(empty);
+            return;
+        }
+
+        HBox row = new HBox(8);
+        row.setAlignment(Pos.CENTER_LEFT);
+        for (ExperimentCard card : hand) {
+            Label chip = new Label(cardLabel(card));
+            chip.getStyleClass().add("card-hand-chip");
+            if (card == selectedCard) chip.getStyleClass().add("card-hand-chip-selected");
+            chip.setOnMouseClicked(event -> {
+                clearSelection();
+                selectedCard = card;
+                renderHandCards(hand);
+            });
+            row.getChildren().add(chip);
+        }
+        handCardsBox.getChildren().add(row);
+    }
+
+    private String cardLabel(ExperimentCard card) {
+        StringBuilder label = new StringBuilder(card.getCardName());
+        if (card instanceof DevelopmentCard developmentCard && developmentCard.isNewlyDrawn()) {
+            label.append(" [baru]");
+        }
+        if (card.isSecret()) {
+            label.append(" [rahasia]");
+        }
+        if (card.isPluginCard()) {
+            label.append(" [plugin]");
+        }
+        if (!card.isPlayable() && !(card instanceof VictoryPointCard)) {
+            label.append(" (belum bisa)");
+        }
+        return label.toString();
+    }
+
     @Override
     public void setCloseHandler(Runnable closeHandler) {
         this.closeHandler = closeHandler;
@@ -82,19 +159,19 @@ public class CardDialogController implements DialogController, GameAwareControll
     @FXML
     private void playSelectedCard() {
         if (game == null) {
-            showError("Game tidak tersedia.");
+            dialogs.showError("Game tidak tersedia.");
             return;
         }
         var player = game.getActivePlayer();
         if (player == null) {
-            showError("Tidak ada pemain aktif.");
+            dialogs.showError("Tidak ada pemain aktif.");
             return;
         }
 
-        ExperimentCard cardToPlay = null;
-        if (isSelected(cardPurple)) {
+        ExperimentCard cardToPlay = selectedCard;
+        if (cardToPlay == null && isSelected(cardPurple)) {
             cardToPlay = findFirstInHand(player.getHandCards(), KnightCard.class);
-        } else if (isSelected(cardGreen)) {
+        } else if (cardToPlay == null && isSelected(cardGreen)) {
             // Cek ada ProgressCard apa saja
             List<ExperimentCard> progressCards = player.getHandCards().stream()
                 .filter(c -> c instanceof ProgressCard)
@@ -108,11 +185,11 @@ public class CardDialogController implements DialogController, GameAwareControll
                 // Ada lebih dari 1, tanya user mana yang mau dipakai (cek tipe unik)
                 List<String> types = progressCards.stream().map(c -> c.getClass().getSimpleName()).distinct().toList();
                 if (types.size() > 1) {
-                    javafx.scene.control.ChoiceDialog<String> dialog = new javafx.scene.control.ChoiceDialog<>(types.get(0), types);
-                    dialog.setTitle("Pilih Progress Card");
-                    dialog.setHeaderText("Kamu punya lebih dari satu jenis Progress Card.");
-                    dialog.setContentText("Pilih yang ingin digunakan:");
-                    var res = dialog.showAndWait();
+                    var res = choiceDialogService.choose(
+                            "Pilih Progress Card",
+                            "Kamu punya lebih dari satu jenis Progress Card.",
+                            "Pilih yang ingin digunakan:",
+                            types);
                     if (res.isPresent()) {
                         String chosenType = res.get();
                         cardToPlay = progressCards.stream().filter(c -> c.getClass().getSimpleName().equals(chosenType)).findFirst().orElse(null);
@@ -123,20 +200,28 @@ public class CardDialogController implements DialogController, GameAwareControll
                     cardToPlay = progressCards.get(0);
                 }
             }
-        } else if (isSelected(cardOrange)) {
+        } else if (cardToPlay == null && isSelected(cardOrange)) {
             cardToPlay = findFirstInHand(player.getHandCards(), VictoryPointCard.class);
+        } else if (cardToPlay == null && isSelected(cardGray)) {
+            cardToPlay = findFirstOtherCard(player.getHandCards());
         }
 
         if (cardToPlay == null) {
-            showError("Pilih kartu yang valid untuk dimainkan.");
+            dialogs.showError("Pilih kartu yang valid untuk dimainkan.");
+            return;
+        }
+
+        if (cardToPlay instanceof VictoryPointCard) {
+            handleVictoryPointReveal(player);
             return;
         }
 
         if (cardToPlay instanceof banana.republic.card.MonopolyCard mc) {
-            javafx.scene.control.ChoiceDialog<banana.republic.resource.ResourceType> dialog = new javafx.scene.control.ChoiceDialog<>(banana.republic.resource.ResourceType.WOOD, banana.republic.resource.ResourceType.values());
-            dialog.setTitle("Pilih Resource");
-            dialog.setHeaderText("Monopoly Nimon: Pilih satu resource untuk diambil dari semua pemain.");
-            var res = dialog.showAndWait();
+            var res = choiceDialogService.choose(
+                    "Pilih Resource",
+                    "Monopoly Nimon: Pilih satu resource untuk diambil dari semua pemain.",
+                    "Resource:",
+                    Arrays.asList(banana.republic.resource.ResourceType.values()));
             if (res.isPresent()) {
                 mc.setTargetResource(res.get());
             } else {
@@ -144,20 +229,31 @@ public class CardDialogController implements DialogController, GameAwareControll
             }
         }
 
-        try {
-            game.playCard(player, cardToPlay);
-            
-            // For Victory Point card, auto-check victory
-            if (cardToPlay instanceof VictoryPointCard) {
-                if (game.checkVictory() != null) {
-                    closeDialog();
-                    // Let GameController detect victory automatically, or do nothing as btnDeclareVictory is used
-                }
-            }
-            
+        var result = cardUiService.playSelectedCard(game, player, cardToPlay);
+        if (result.isSuccess()) {
             closeDialog();
-        } catch (IllegalStateException | IllegalArgumentException e) {
-            showError(e.getMessage());
+        } else {
+            dialogs.showError(result.getMessage());
+        }
+    }
+
+    private void handleVictoryPointReveal(Player player) {
+        if (game.getVPTotal(player) < Game.VICTORY_POINTS_TO_WIN) {
+            dialogs.showError("Kartu Poin Prestasi Rahasia tetap tersembunyi sampai kamu mencapai 10 Poin Prestasi.");
+            return;
+        }
+
+        Player winner = gameActionUiService.checkVictory(game);
+        if (winner == null) {
+            dialogs.showError("Kamu belum mencapai 10 Poin Prestasi.");
+            return;
+        }
+
+        closeDialog();
+        try {
+            navigator.showResult(game);
+        } catch (Exception e) {
+            dialogs.showError("Gagal membuka layar hasil: " + e.getMessage());
         }
     }
 
@@ -204,6 +300,10 @@ public class CardDialogController implements DialogController, GameAwareControll
         removeSelection(cardOrange);
         removeSelection(cardGreen);
         removeSelection(cardGray);
+        selectedCard = null;
+        if (game != null && game.getActivePlayer() != null) {
+            renderHandCards(game.getActivePlayer().getHandCards());
+        }
     }
 
     private void removeSelection(VBox card) {
@@ -219,11 +319,15 @@ public class CardDialogController implements DialogController, GameAwareControll
         }
     }
 
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private ExperimentCard findFirstOtherCard(List<ExperimentCard> hand) {
+        for (ExperimentCard card : hand) {
+            if (!(card instanceof KnightCard)
+                    && !(card instanceof ProgressCard)
+                    && !(card instanceof VictoryPointCard)) {
+                return card;
+            }
+        }
+        return null;
     }
+
 }

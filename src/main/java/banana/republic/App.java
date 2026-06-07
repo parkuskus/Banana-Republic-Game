@@ -4,9 +4,12 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
+import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -22,6 +25,9 @@ public class App extends Application {
 
     private static Scene scene;
     private static Stage stage;
+    private static StackPane viewport;
+    private static Group scaledContent;
+    private static Parent currentRoot;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -30,13 +36,18 @@ public class App extends Application {
         Font.loadFont(getClass().getResourceAsStream("/fonts/Marcellus-Regular.ttf"), 14);
         Font.loadFont(getClass().getResourceAsStream("/fonts/RussoOne-Regular.ttf"), 14);
 
-        Parent root = loadFXML("main");
+        viewport = new StackPane();
+        viewport.setAlignment(Pos.CENTER);
+        viewport.getStyleClass().add("app-viewport");
 
-        // Scene dibuat sebesar resolusi referensi desain
-        scene = new Scene(root, DESIGN_WIDTH, DESIGN_HEIGHT);
+        // Scene boleh mengikuti ukuran window/fullscreen aktual; konten FXML
+        // referensi tetap dipasang di viewport yang melakukan uniform scaling.
+        scene = new Scene(viewport, DESIGN_WIDTH, DESIGN_HEIGHT);
         scene.getStylesheets().add(
             Objects.requireNonNull(getClass().getResource("/css/style.css")).toExternalForm()
         );
+        scene.widthProperty().addListener((obs, oldValue, newValue) -> applyScaling(currentRoot));
+        scene.heightProperty().addListener((obs, oldValue, newValue) -> applyScaling(currentRoot));
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("Banana Republic");
@@ -52,8 +63,7 @@ public class App extends Application {
 
         primaryStage.show();
 
-        // Terapkan scaling ke root awal setelah stage ditampilkan
-        Platform.runLater(() -> applyScaling(root));
+        installRoot(loadFXML("main"));
     }
 
     /**
@@ -63,20 +73,10 @@ public class App extends Application {
      */
     public static void applyScaling(Parent root) {
         try {
-            double screenW;
-            double screenH;
+            if (root == null || scaledContent == null) return;
 
-            if (stage != null && stage.isFullScreen()) {
-                // Gunakan ukuran layar fisik penuh saat fullscreen
-                Rectangle2D fullBounds = Screen.getPrimary().getBounds();
-                screenW = fullBounds.getWidth();
-                screenH = fullBounds.getHeight();
-            } else {
-                // Gunakan area visual (tidak termasuk taskbar) saat windowed
-                Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-                screenW = bounds.getWidth();
-                screenH = bounds.getHeight();
-            }
+            double screenW = scene != null && scene.getWidth() > 0 ? scene.getWidth() : fallbackScreenWidth();
+            double screenH = scene != null && scene.getHeight() > 0 ? scene.getHeight() : fallbackScreenHeight();
 
             double scaleX = screenW / DESIGN_WIDTH;
             double scaleY = screenH / DESIGN_HEIGHT;
@@ -84,12 +84,14 @@ public class App extends Application {
             // Pilih scale terkecil agar tidak ada yang terpotong (uniform scaling)
             double scale = Math.min(scaleX, scaleY);
 
-            root.setScaleX(scale);
-            root.setScaleY(scale);
+            scaledContent.setScaleX(scale);
+            scaledContent.setScaleY(scale);
 
             // Paksa root menggunakan ukuran desain referensi sebagai layout size
             if (root instanceof Region) {
                 Region region = (Region) root;
+                region.setMinWidth(DESIGN_WIDTH);
+                region.setMinHeight(DESIGN_HEIGHT);
                 region.setPrefWidth(DESIGN_WIDTH);
                 region.setPrefHeight(DESIGN_HEIGHT);
                 region.setMaxWidth(DESIGN_WIDTH);
@@ -105,8 +107,7 @@ public class App extends Application {
      */
     public static void setRoot(String fxml) throws IOException {
         Parent newRoot = loadFXML(fxml);
-        scene.setRoot(newRoot);
-        Platform.runLater(() -> applyScaling(newRoot));
+        installRoot(newRoot);
     }
 
     public static FXMLLoader getLoader(String fxml) throws IOException {
@@ -117,8 +118,39 @@ public class App extends Application {
      * Ganti root scene dari FXMLLoader eksternal, lalu terapkan scaling secara otomatis.
      */
     public static void setRootFromLoader(Parent root) {
-        scene.setRoot(root);
+        installRoot(root);
+    }
+
+    private static void installRoot(Parent root) {
+        currentRoot = root;
+        configureDesignRegion(root);
+        scaledContent = new Group(root);
+        if (viewport != null) {
+            viewport.getChildren().setAll(scaledContent);
+        }
         Platform.runLater(() -> applyScaling(root));
+    }
+
+    private static void configureDesignRegion(Parent root) {
+        if (root instanceof Region region) {
+            region.setMinSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+            region.setPrefSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+            region.setMaxSize(DESIGN_WIDTH, DESIGN_HEIGHT);
+        }
+    }
+
+    private static double fallbackScreenWidth() {
+        Rectangle2D bounds = stage != null && stage.isFullScreen()
+            ? Screen.getPrimary().getBounds()
+            : Screen.getPrimary().getVisualBounds();
+        return bounds.getWidth();
+    }
+
+    private static double fallbackScreenHeight() {
+        Rectangle2D bounds = stage != null && stage.isFullScreen()
+            ? Screen.getPrimary().getBounds()
+            : Screen.getPrimary().getVisualBounds();
+        return bounds.getHeight();
     }
 
     private static Parent loadFXML(String fxml) throws IOException {
