@@ -157,7 +157,7 @@ public class GameController implements Initializable {
     private boolean setupOrderPending = false;
 
     private enum InteractionMode {
-        NONE, SETTLEMENT, ROAD, CITY, ROBBER, BUILD_OVERLAY
+        NONE, SETTLEMENT, ROAD, CITY, ROBBER, BUILD_OVERLAY, ROAD_BUILDING_CARD
     }
     private InteractionMode currentMode = InteractionMode.NONE;
 
@@ -214,6 +214,7 @@ public class GameController implements Initializable {
                 btnSetDice,
                 btnBuild,
                 btnTrade,
+                btnBuyCard,
                 btnCard,
                 btnDeclareVictory,
                 btnSettings,
@@ -272,6 +273,7 @@ public class GameController implements Initializable {
                 discardDialogOverlay,
                 this::refreshAllUI,
                 this::enterRobberMode,
+                this::enterRoadBuildingCardMode,
                 this::handleTradeBuildTimerTick,
                 this::showError);
         robberFlowController = new RobberFlowController(
@@ -511,6 +513,12 @@ public class GameController implements Initializable {
         currentMode = InteractionMode.NONE;
     }
 
+    private void enterRoadBuildingCardMode() {
+        removeBuildOverlay();
+        currentMode = InteractionMode.ROAD_BUILDING_CARD;
+        toggleBuildOverlay();
+    }
+
     private void showRobberOverlay() {
         if (hexdesert == null) return;
         Group parentMap = (Group) hexdesert.getParent();
@@ -565,6 +573,9 @@ public class GameController implements Initializable {
             removeBuildOverlay();
             return;
         }
+        boolean roadBuildingCardMode = currentMode == InteractionMode.ROAD_BUILDING_CARD
+                && game != null
+                && game.isRoadBuildingCardPlacementActive(game.getActivePlayer());
 
         Group parentMap = (Group) hexdesert.getParent();
         if (parentMap == null) return;
@@ -584,7 +595,7 @@ public class GameController implements Initializable {
         buildOverlayPane = new Pane();
         buildOverlayPane.setPickOnBounds(false);
         parentMap.getChildren().add(buildOverlayPane);
-        currentMode = InteractionMode.BUILD_OVERLAY;
+        currentMode = roadBuildingCardMode ? InteractionMode.ROAD_BUILDING_CARD : InteractionMode.BUILD_OVERLAY;
 
         // --- 1. AMBIL WARNA PLAYER AKTIF ---
         Color activePlayerColor = Color.BLACK;
@@ -622,8 +633,8 @@ public class GameController implements Initializable {
             return;
         }
 
-        // --- 3. ROAD BUILDING OVERLAY (TRADE_BUILD) ---
-        if (game != null && game.getCurrentPhase() == GamePhase.TRADE_BUILD) {
+        // --- 3. ROAD BUILDING OVERLAY (TRADE_BUILD / Konstruksi Cepat) ---
+        if (game != null && (game.getCurrentPhase() == GamePhase.TRADE_BUILD || roadBuildingCardMode)) {
             for (banana.republic.board.Path path : game.getBoard().getAllPaths()) {
                 if (!path.isEmpty()) continue;
                 if (!game.getBoard().isPathConnectedToPlayer(path, game.getActivePlayer())) continue;
@@ -641,6 +652,11 @@ public class GameController implements Initializable {
                         () -> eksekusiBangunDariOverlay(null, targetPath, false));
 
                 buildOverlayPane.getChildren().add(roadOverlay);
+            }
+            if (roadBuildingCardMode) {
+                buildOverlayPane.toFront();
+                updateConditionLabel();
+                return;
             }
         }
 
@@ -699,6 +715,16 @@ public class GameController implements Initializable {
     private void eksekusiBangunDariOverlay(banana.republic.board.Intersection intersection, banana.republic.board.Path path, boolean isUpgrade) {
         try {
             Player activePlayer = game.getActivePlayer();
+            if (currentMode == InteractionMode.ROAD_BUILDING_CARD && path != null) {
+                game.buildRoadFromRoadBuildingCard(activePlayer, path);
+                removeBuildOverlay();
+                refreshAllUI();
+                if (game.isRoadBuildingCardPlacementActive(activePlayer)) {
+                    currentMode = InteractionMode.ROAD_BUILDING_CARD;
+                    toggleBuildOverlay();
+                }
+                return;
+            }
             Map<ResourceType, Integer> expectedInitialResources = intersection != null
                     && game.getCurrentPhase() == GamePhase.SETUP_SECOND_ROUND
                     ? buildInteractionController.visualAdjacentInitialResources(
@@ -845,6 +871,7 @@ public class GameController implements Initializable {
     private void toTrade() { if (gameDialogFlowController != null) gameDialogFlowController.openTrade(); }
 
     private void refreshAllUI() {
+        if (game != null) game.refreshLongestRoadStatus();
         updatePlayerPanel();
         updateResourceCards();
         updateLogbook();
@@ -853,6 +880,7 @@ public class GameController implements Initializable {
         updateTimer(game.getTurnManager().getRemainingTimerSeconds());
         renderExistingBuildings();
         if (robberOverlayPane != null) robberOverlayPane.toFront();
+        updatePhaseUI();
     }
 
     private void updateSetupOrderOverlay() {

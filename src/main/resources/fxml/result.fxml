@@ -22,7 +22,7 @@
 
                     <VBox spacing="10" styleClass="go-playtime-box">
                         <Label styleClass="go-playtime-label" text="TOTAL PLAYTIME" />
-                        <Label styleClass="go-playtime-value" text="01 : 23 : 15" />
+                        <Label fx:id="totalPlaytimeLabel" styleClass="go-playtime-value" text="00 : 00 : 00" />
                     </VBox>
 
                     <VBox spacing="5.0">

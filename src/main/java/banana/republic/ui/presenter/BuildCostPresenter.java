@@ -29,23 +29,23 @@ public class BuildCostPresenter {
 
         Player active = game.getActivePlayer();
         leftLabel.setText(
-                costLine("Pos Pantau", active, Map.of(
+                costBlock("Pos Pantau", active, Map.of(
                         ResourceType.WOOD, 1,
                         ResourceType.BRICK, 1,
                         ResourceType.WHEAT, 1,
                         ResourceType.BANANA, 1
                 )) + "\n" +
-                costLine("Pipa", active, Map.of(
+                costBlock("Pipa", active, Map.of(
                         ResourceType.WOOD, 1,
                         ResourceType.BRICK, 1
                 ))
         );
         rightLabel.setText(
-                costLine("Laboratorium", active, Map.of(
+                costBlock("Laboratorium", active, Map.of(
                         ResourceType.WHEAT, 2,
                         ResourceType.ORE, 3
                 )) + "\n" +
-                costLine("Kartu Temuan", active, Map.of(
+                costBlock("Kartu Temuan", active, Map.of(
                         ResourceType.ORE, 1,
                         ResourceType.WHEAT, 1,
                         ResourceType.BANANA, 1
@@ -53,8 +53,8 @@ public class BuildCostPresenter {
         );
     }
 
-    private String costLine(String label, Player player, Map<ResourceType, Integer> cost) {
-        return label + ": " + formatResourceCost(cost) + " (" + (canPay(player, cost) ? "Bisa" : "Kurang") + ")";
+    private String costBlock(String label, Player player, Map<ResourceType, Integer> cost) {
+        return label + ":\n" + formatResourceCost(cost) + " (" + (canPay(player, cost) ? "Bisa" : "Kurang") + ")";
     }
 
     private String formatResourceCost(Map<ResourceType, Integer> cost) {

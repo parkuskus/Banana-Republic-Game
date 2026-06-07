@@ -40,6 +40,15 @@
                                           <Image url="@../icons/ocean.png" />
                                        </image>
                                     </ImageView>
+                                    <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="78.0" prefWidth="172.0" spacing="1.0" style="-fx-background-color: #ffca60; -fx-border-color: #493a18; -fx-background-radius: 14; -fx-border-radius: 14; -fx-border-width: 2; -fx-padding: 6;" StackPane.alignment="BOTTOM_LEFT">
+                                       <children>
+                                          <Label style="-fx-font-family: 'Marcellus'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #42200b;" text="Time remaining" />
+                                          <Label fx:id="timerLabel" style="-fx-font-family: 'Marcellus'; -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #333333;" text="00:00" />
+                                       </children>
+                                       <StackPane.margin>
+                                          <Insets bottom="18.0" left="22.0" />
+                                       </StackPane.margin>
+                                    </VBox>
                                     <Group scaleX="1.5" scaleY="1.5" styleClass="coastline-border">
                                        <children>
                                           <StackPane fx:id="hexdesert" layoutX="188.0" layoutY="162.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="108.0" prefWidth="94.0" styleClass="hex-tile-desert">
@@ -353,8 +362,13 @@
                          <VBox fx:id="sidePanel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="800.0" prefWidth="431.0" spacing="12.0" style="-fx-background-color: #f3f1eb; -fx-padding: 16;" styleClass="side-panel" HBox.hgrow="ALWAYS">
                            <children>
 
-                              <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #888;" text="PLAYERS" />
-                              <Label fx:id="longestRoadStatusLabel" style="-fx-background-color: #fff8dc; -fx-background-radius: 6; -fx-border-color: #d6b85a; -fx-border-radius: 6; -fx-padding: 6 10; -fx-font-size: 1.0em; -fx-font-weight: bold; -fx-text-fill: #6f5612;" text="LONGEST ROAD: -" wrapText="true" />
+                              <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                 <children>
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #888;" text="PLAYERS" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="longestRoadStatusLabel" alignment="CENTER_RIGHT" maxWidth="260.0" style="-fx-background-color: #fff8dc; -fx-background-radius: 6; -fx-border-color: #d6b85a; -fx-border-radius: 6; -fx-padding: 5 9; -fx-font-size: 0.92em; -fx-font-weight: bold; -fx-text-fill: #6f5612;" text="LONGEST ROAD: -" wrapText="true" />
+                                 </children>
+                              </HBox>
 
                                 <HBox fx:id="playerPanel1" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
                                    <children>
@@ -533,59 +547,13 @@
                                   </children>
                                </VBox>
 
-                              <VBox spacing="10.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
+                              <VBox minHeight="105.0" spacing="6.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
                                  <children>
-                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="MAP LEGEND" />
-                                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.1em; -fx-text-fill: #444;" text="BUILD COST" />
+                                    <HBox spacing="12.0" VBox.vgrow="ALWAYS">
                                        <children>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#758b5a" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Wood" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#6d2a33" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Brick" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#e3c596" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Wheat" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#697e8b" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Ore" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#d7cb99" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Banana" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#9e8468" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Desert" />
-                                          </HBox>
-                                       </children>
-                                    </HBox>
-                                    <HBox alignment="CENTER_LEFT" spacing="14.0">
-                                       <children>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Circle fill="#eeeeee" radius="8.0" stroke="BLACK" strokeWidth="2.0" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Pos Pantau" />
-                                          </HBox>
-                                          <HBox alignment="CENTER_LEFT" spacing="6.0">
-                                             <Rectangle arcHeight="0.0" arcWidth="0.0" fill="#eeeeee" height="16.0" stroke="BLACK" strokeWidth="2.0" width="16.0" />
-                                             <Label style="-fx-text-fill: #555; -fx-font-size: 1.0em;" text="Lab" />
-                                          </HBox>
-                                       </children>
-                                    </HBox>
-                                 </children>
-                              </VBox>
-
-                              <VBox spacing="8.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 8, 0, 0, 3);">
-                                 <children>
-                                    <Label style="-fx-font-weight: bold; -fx-font-size: 1.2em; -fx-text-fill: #444;" text="BUILD COST" />
-                                    <HBox spacing="12.0">
-                                       <children>
-                                          <Label fx:id="buildCostLeftLabel" maxWidth="1.7976931348623157E308" style="-fx-text-fill: #555; -fx-font-size: 0.9em; -fx-line-spacing: 2;" text="Pos Pantau&#10;Pipa" wrapText="true" HBox.hgrow="ALWAYS" />
-                                          <Label fx:id="buildCostRightLabel" maxWidth="1.7976931348623157E308" style="-fx-text-fill: #555; -fx-font-size: 0.9em; -fx-line-spacing: 2;" text="Laboratorium&#10;Kartu Temuan" wrapText="true" HBox.hgrow="ALWAYS" />
+                                          <Label fx:id="buildCostLeftLabel" maxWidth="1.7976931348623157E308" minHeight="72.0" style="-fx-text-fill: #555; -fx-font-size: 0.78em; -fx-line-spacing: 1;" text="Pos Pantau&#10;Pipa" wrapText="true" HBox.hgrow="ALWAYS" />
+                                          <Label fx:id="buildCostRightLabel" maxWidth="1.7976931348623157E308" minHeight="72.0" style="-fx-text-fill: #555; -fx-font-size: 0.78em; -fx-line-spacing: 1;" text="Laboratorium&#10;Kartu Temuan" wrapText="true" HBox.hgrow="ALWAYS" />
                                        </children>
                                     </HBox>
                                  </children>
@@ -748,13 +716,56 @@
                            </HBox.margin>
                         </StackPane>
 
-                         <VBox alignment="CENTER" maxHeight="-Infinity" prefHeight="180.0" prefWidth="174.0" spacing="6.0" styleClass="rounded-card-wood" HBox.hgrow="ALWAYS">
-                            <children>
-                               <Label styleClass="marcellus-timer-title" text="Time remaining" />
-                               <Label fx:id="timerLabel" styleClass="marcellus-timer-value" text="02:57" />
-                            </children>
+                         <VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="380.0" minWidth="380.0" prefHeight="168.0" prefWidth="380.0" spacing="8.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 14 16 14 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 3);">
+                           <children>
+                              <Label style="-fx-font-weight: bold; -fx-font-size: 1.15em; -fx-text-fill: #444;" text="MAP LEGEND" />
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#758b5a" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Wood" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#6d2a33" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Brick" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#e3c596" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Wheat" />
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#697e8b" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Ore" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#d7cb99" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Banana" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#9e8468" radius="8.0" stroke="BLACK" strokeWidth="0.5" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Desert" />
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER_LEFT" spacing="14.0">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Circle fill="#eeeeee" radius="8.0" stroke="BLACK" strokeWidth="2.0" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Pos Pantau" />
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                       <Rectangle fill="#eeeeee" height="16.0" stroke="BLACK" strokeWidth="2.0" width="16.0" />
+                                       <Label style="-fx-text-fill: #555; -fx-font-size: 0.95em;" text="Lab" />
+                                    </HBox>
+                                 </children>
+                              </HBox>
+                           </children>
                            <HBox.margin>
-                              <Insets left="100.0" right="50.0" />
+                              <Insets left="50.0" right="50.0" />
                            </HBox.margin>
                         </VBox>
                         <VBox alignment="CENTER" minWidth="180.0" prefHeight="215.0" prefWidth="180.0" spacing="8.0">

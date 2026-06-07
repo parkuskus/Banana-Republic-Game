@@ -22,18 +22,18 @@ public class BuildOverlayView {
                            Color normalColor,
                            Color hoverColor,
                            Runnable action) {
-        Line line = boardView.roadLine(start, end, 10.0, normalColor);
+        Line line = boardView.roadLine(start, end, 18.0, normalColor);
         line.setStyle("-fx-cursor: hand;");
         DropShadow glow = new DropShadow(12, hoverColor);
         line.setOnMouseEntered(event -> {
             line.setEffect(glow);
             line.setStroke(hoverColor);
-            line.setStrokeWidth(14.0);
+            line.setStrokeWidth(22.0);
         });
         line.setOnMouseExited(event -> {
             line.setEffect(null);
             line.setStroke(normalColor);
-            line.setStrokeWidth(10.0);
+            line.setStrokeWidth(18.0);
         });
         line.setOnMouseClicked(event -> {
             action.run();

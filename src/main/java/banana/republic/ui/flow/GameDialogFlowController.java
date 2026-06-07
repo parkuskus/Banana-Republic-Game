@@ -11,6 +11,7 @@ import java.util.function.IntConsumer;
 import banana.republic.core.Game;
 import banana.republic.player.Player;
 import banana.republic.ui.DiscardDialogController;
+import banana.republic.ui.CardDialogController;
 import banana.republic.ui.StealDialogController;
 import banana.republic.ui.dialog.DialogHostService;
 import javafx.scene.layout.StackPane;
@@ -27,6 +28,7 @@ public class GameDialogFlowController {
     private final StackPane discardOverlay;
     private final Runnable refreshUi;
     private final Runnable enterRobberMode;
+    private final Runnable enterRoadBuildingMode;
     private final IntConsumer timerTick;
     private final Consumer<String> errorReporter;
     private final Queue<Player> humanDiscardQueue = new LinkedList<>();
@@ -41,6 +43,7 @@ public class GameDialogFlowController {
                                     StackPane discardOverlay,
                                     Runnable refreshUi,
                                     Runnable enterRobberMode,
+                                    Runnable enterRoadBuildingMode,
                                     IntConsumer timerTick,
                                     Consumer<String> errorReporter) {
         this.dialogHostService = dialogHostService;
@@ -53,12 +56,22 @@ public class GameDialogFlowController {
         this.discardOverlay = discardOverlay;
         this.refreshUi = refreshUi;
         this.enterRobberMode = enterRobberMode;
+        this.enterRoadBuildingMode = enterRoadBuildingMode;
         this.timerTick = timerTick;
         this.errorReporter = errorReporter;
     }
 
     public void openCard() {
-        open("card", cardOverlay);
+        if (cardOverlay == null) return;
+        try {
+            Object controller = dialogHostService.open("card", cardOverlay, game, null, refreshUi);
+            if (controller instanceof CardDialogController cardController) {
+                cardController.setKnightRobberModeHandler(enterRobberMode);
+                cardController.setRoadBuildingModeHandler(enterRoadBuildingMode);
+            }
+        } catch (IOException e) {
+            errorReporter.accept("Gagal membuka dialog card.");
+        }
     }
 
     public void openTrade() {
@@ -74,7 +87,11 @@ public class GameDialogFlowController {
     }
 
     public void openSteal() {
-        open("steal", stealOverlay);
+        if (game == null || game.getRobber() == null || game.getActivePlayer() == null) {
+            open("steal", stealOverlay);
+            return;
+        }
+        openSteal(game.getRobber().getEligibleVictims(game.getActivePlayer(), game.getBoard()));
     }
 
     public void openDiscard() {
@@ -86,7 +103,9 @@ public class GameDialogFlowController {
         try {
             Object controller = dialogHostService.open("steal", stealOverlay, game, null, () -> {
                 refreshUi.run();
-                game.startTradeBuildTimer(timerTick::accept);
+                if (game.getCurrentPhase() == banana.republic.core.GamePhase.TRADE_BUILD) {
+                    game.startTradeBuildTimer(timerTick::accept);
+                }
             });
             if (controller instanceof StealDialogController stealController) {
                 stealController.setEligibleVictims(eligibleVictims);

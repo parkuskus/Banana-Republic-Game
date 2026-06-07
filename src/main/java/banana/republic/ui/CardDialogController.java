@@ -4,6 +4,7 @@ import banana.republic.card.DevelopmentCard;
 import banana.republic.card.ExperimentCard;
 import banana.republic.card.KnightCard;
 import banana.republic.card.ProgressCard;
+import banana.republic.card.RoadBuildingCard;
 import banana.republic.card.VictoryPointCard;
 import banana.republic.core.Game;
 import banana.republic.player.Player;
@@ -28,6 +29,8 @@ public class CardDialogController implements DialogController, GameAwareControll
     private final CardUiService cardUiService = new CardUiService();
     private final GameActionUiService gameActionUiService = new GameActionUiService();
     private final ChoiceDialogService choiceDialogService = new ChoiceDialogService();
+    private Runnable knightRobberModeHandler;
+    private Runnable roadBuildingModeHandler;
 
     @FXML
     private VBox cardPurple;
@@ -149,6 +152,14 @@ public class CardDialogController implements DialogController, GameAwareControll
         this.closeHandler = closeHandler;
     }
 
+    public void setKnightRobberModeHandler(Runnable knightRobberModeHandler) {
+        this.knightRobberModeHandler = knightRobberModeHandler;
+    }
+
+    public void setRoadBuildingModeHandler(Runnable roadBuildingModeHandler) {
+        this.roadBuildingModeHandler = roadBuildingModeHandler;
+    }
+
     @FXML
     private void closeDialog() {
         if (closeHandler != null) {
@@ -213,6 +224,28 @@ public class CardDialogController implements DialogController, GameAwareControll
 
         if (cardToPlay instanceof VictoryPointCard) {
             handleVictoryPointReveal(player);
+            return;
+        }
+
+        if (cardToPlay instanceof KnightCard knightCard) {
+            var result = cardUiService.playKnightForManualRobber(game, player, knightCard);
+            if (result.isSuccess()) {
+                closeDialog();
+                if (knightRobberModeHandler != null) knightRobberModeHandler.run();
+            } else {
+                dialogs.showError(result.getMessage());
+            }
+            return;
+        }
+
+        if (cardToPlay instanceof RoadBuildingCard roadBuildingCard) {
+            var result = cardUiService.playRoadBuildingForManualPlacement(game, player, roadBuildingCard);
+            if (result.isSuccess()) {
+                closeDialog();
+                if (roadBuildingModeHandler != null) roadBuildingModeHandler.run();
+            } else {
+                dialogs.showError(result.getMessage());
+            }
             return;
         }
 

@@ -102,10 +102,10 @@ public class PlayerPanelPresenter {
         numberLabel.setText(String.valueOf(rank));
 
         Label nameLabel = (Label) nameRow.getChildren().get(1);
-        nameLabel.setText(player.getName() + specialCardSuffix(player));
+        nameLabel.setText(player.getName());
 
         Label vpLabel = (Label) nameRow.getChildren().get(3);
-        int vp = game.getVPTotal(player);
+        int vp = game.getVPBreakdown(player).getPublicTotal();
         vpLabel.setText(vp + " VP");
 
         String colorHex = playerColorHex(player.getColor());
@@ -133,21 +133,9 @@ public class PlayerPanelPresenter {
         Label resLabel = (Label) resourceRow.getChildren().get(0);
         Label cardLabel = (Label) resourceRow.getChildren().get(1);
         resLabel.setText("Resources: " + player.getTotalResourceCount());
-        cardLabel.setText("Dev Cards: " + player.getHandCards().size() + longestRoadText(player));
-    }
-
-    private String specialCardSuffix(Player player) {
-        if (player != null && player.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) {
-            return " [LONGEST ROAD]";
-        }
-        return "";
-    }
-
-    private String longestRoadText(Player player) {
-        if (player != null && player.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) {
-            return " | Road: " + player.getLongestRoadLength();
-        }
-        return "";
+        cardLabel.setText("Dev Cards: " + player.getHandCards().size()
+                + "   Road: " + player.getLongestRoadLength()
+                + "   Army: " + player.getKnightsPlayed());
     }
 
     private void renderLongestRoadStatus(List<Player> players) {

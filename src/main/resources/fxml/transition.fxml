@@ -39,9 +39,9 @@
 
                 <Button onAction="#handleStartTurn" styleClass="btn-ready" text="I AM READY, START MY TURN! ❯" />
 
-                <VBox alignment="CENTER" maxWidth="350.0" spacing="20.0">
+                <VBox alignment="CENTER" maxWidth="620.0" prefWidth="620.0" spacing="20.0">
                     <Region styleClass="turn-divider" />
-                     <Label styleClass="turn-footer" text="PASS THE DEVICE TO THE NEXT PLAYER" />
+                     <Label alignment="CENTER" maxWidth="1.7976931348623157E308" styleClass="turn-footer" text="PASS THE DEVICE TO THE NEXT PLAYER" textAlignment="CENTER" />
                 </VBox>
 
             </VBox>

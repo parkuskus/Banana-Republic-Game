@@ -2,6 +2,7 @@ package banana.republic.ui;
 
 import banana.republic.core.Game;
 import banana.republic.player.Player;
+import banana.republic.player.PlayerColor;
 import banana.republic.ui.command.StealUiService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -33,6 +34,15 @@ public class StealDialogController implements DialogController, GameAwareControl
     private Label player3Name;
     @FXML
     private Label player4Name;
+
+    @FXML
+    private Label player1Avatar;
+    @FXML
+    private Label player2Avatar;
+    @FXML
+    private Label player3Avatar;
+    @FXML
+    private Label player4Avatar;
 
     @FXML
     private Label resCount1;
@@ -68,11 +78,13 @@ public class StealDialogController implements DialogController, GameAwareControl
         VBox[] boxes = {player1, player2, player3, player4};
         Label[] nameLabels = {player1Name, player2Name, player3Name, player4Name};
         Label[] resLabels = {resCount1, resCount2, resCount3, resCount4};
+        Label[] avatarLabels = {player1Avatar, player2Avatar, player3Avatar, player4Avatar};
 
         for (VBox box : boxes) {
             if (box != null) {
                 box.setVisible(false);
                 box.setManaged(false);
+                box.getStyleClass().removeAll("side-card-red", "side-card-blue", "side-card-green", "side-card-orange");
             }
         }
 
@@ -87,6 +99,12 @@ public class StealDialogController implements DialogController, GameAwareControl
             }
             if (resLabels[i] != null) {
                 resLabels[i].setText("Resources: " + p.getTotalResourceCount());
+            }
+            boxes[i].getStyleClass().add(sideCardStyleClass(p.getColor()));
+            if (avatarLabels[i] != null) {
+                avatarLabels[i].setText(initial(p));
+                avatarLabels[i].getStyleClass().removeAll("avatar-red", "avatar-blue", "avatar-green", "avatar-orange");
+                avatarLabels[i].getStyleClass().add(avatarStyleClass(p.getColor()));
             }
         }
 
@@ -131,5 +149,32 @@ public class StealDialogController implements DialogController, GameAwareControl
 
         stealUiService.steal(game, thief, victim);
         closeDialog();
+    }
+
+    private String initial(Player player) {
+        if (player == null || player.getName() == null || player.getName().isBlank()) return "P";
+        return player.getName().trim().substring(0, 1).toUpperCase();
+    }
+
+    private String sideCardStyleClass(PlayerColor color) {
+        if (color == null) return "side-card-blue";
+        return switch (color) {
+            case RED -> "side-card-red";
+            case BLUE -> "side-card-blue";
+            case GREEN -> "side-card-green";
+            case ORANGE -> "side-card-orange";
+            default -> "side-card-blue";
+        };
+    }
+
+    private String avatarStyleClass(PlayerColor color) {
+        if (color == null) return "avatar-blue";
+        return switch (color) {
+            case RED -> "avatar-red";
+            case BLUE -> "avatar-blue";
+            case GREEN -> "avatar-green";
+            case ORANGE -> "avatar-orange";
+            default -> "avatar-blue";
+        };
     }
 }

@@ -31,13 +31,13 @@
                         <children>
                             <VBox fx:id="player1" alignment="CENTER" onMouseClicked="#selectPlayer1" prefHeight="200.0" prefWidth="150.0" styleClass="side-card-blue" visible="false">
                                 <children>
-                             <Label text="P">
+                             <Label fx:id="player1Avatar" text="P">
                                 <styleClass>
                                    <String fx:value="avatar-icon" />
                                    <String fx:value="avatar-blue" />
                                 </styleClass>
                              </Label>
-                                    <Label styleClass="player-name" text="Player 1">
+                                    <Label fx:id="player1Name" styleClass="player-name" text="Player 1">
                                 <VBox.margin>
                                    <Insets bottom="20.0" />
                                 </VBox.margin></Label>
@@ -49,13 +49,13 @@
 
                             <VBox fx:id="player2" alignment="CENTER" onMouseClicked="#selectPlayer2" prefHeight="200.0" prefWidth="150.0" styleClass="side-card-green">
                                 <children>
-                             <Label text="P">
+                             <Label fx:id="player2Avatar" text="P">
                                 <styleClass>
                                    <String fx:value="avatar-icon" />
                                    <String fx:value="avatar-green" />
                                 </styleClass>
                              </Label>
-                                    <Label styleClass="player-name" text="Player 2">
+                                    <Label fx:id="player2Name" styleClass="player-name" text="Player 2">
                                 <VBox.margin>
                                    <Insets bottom="20.0" />
                                 </VBox.margin></Label>
@@ -67,13 +67,13 @@
 
                             <VBox fx:id="player3" alignment="CENTER" onMouseClicked="#selectPlayer3" prefHeight="200.0" prefWidth="150.0" styleClass="side-card-orange">
                                 <children>
-                             <Label text="P">
+                             <Label fx:id="player3Avatar" text="P">
                                 <styleClass>
                                    <String fx:value="avatar-icon" />
                                    <String fx:value="avatar-orange" />
                                 </styleClass>
                              </Label>
-                                    <Label styleClass="player-name" text="Player 3">
+                                    <Label fx:id="player3Name" styleClass="player-name" text="Player 3">
                                 <VBox.margin>
                                    <Insets bottom="20.0" />
                                 </VBox.margin></Label>
@@ -84,13 +84,13 @@
                             </VBox>
                        <VBox fx:id="player4" alignment="CENTER" onMouseClicked="#selectPlayer4" prefHeight="200.0" prefWidth="150.0" styleClass="side-card-red">
                           <children>
-                             <Label text="P">
+                             <Label fx:id="player4Avatar" text="P">
                                 <styleClass>
                                    <String fx:value="avatar-icon" />
                                    <String fx:value="avatar-red" />
                                 </styleClass>
                              </Label>
-                             <Label styleClass="player-name" text="Player 4">
+                             <Label fx:id="player4Name" styleClass="player-name" text="Player 4">
                                 <VBox.margin>
                                    <Insets bottom="20.0" />
                                 </VBox.margin>

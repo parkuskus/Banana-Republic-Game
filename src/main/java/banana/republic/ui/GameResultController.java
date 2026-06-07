@@ -1,6 +1,7 @@
 package banana.republic.ui;
 
 import banana.republic.core.Game;
+import banana.republic.core.LogEntry;
 import banana.republic.core.VictoryPointBreakdown;
 import banana.republic.player.Player;
 import javafx.fxml.FXML;
@@ -11,12 +12,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class GameResultController {
 
     @FXML
     private Label titleLabel;
+    @FXML
+    private Label totalPlaytimeLabel;
     @FXML
     private VBox resultTableContainer;
 
@@ -35,6 +40,9 @@ public class GameResultController {
 
         if (winner != null) {
             titleLabel.setText(winner.getName() + " has founded the Banana Republic!");
+        }
+        if (totalPlaytimeLabel != null) {
+            totalPlaytimeLabel.setText(formatPlaytime(calculatePlaytimeSeconds()));
         }
 
         resultTableContainer.getChildren().clear();
@@ -113,6 +121,26 @@ public class GameResultController {
         if (isWinner) label.setStyle(textColor);
         label.setAlignment(javafx.geometry.Pos.CENTER);
         return label;
+    }
+
+    private long calculatePlaytimeSeconds() {
+        List<LogEntry> entries = game.getGameLog().getEntries();
+        if (entries.isEmpty()) return 0;
+
+        LocalDateTime start = entries.get(0).getTimestamp();
+        LocalDateTime end = entries.stream()
+                .filter(entry -> entry.getEventType() == LogEntry.EventType.VICTORY)
+                .map(LogEntry::getTimestamp)
+                .reduce((first, second) -> second)
+                .orElse(LocalDateTime.now());
+        return Math.max(0, Duration.between(start, end).getSeconds());
+    }
+
+    private String formatPlaytime(long totalSeconds) {
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("%02d : %02d : %02d", hours, minutes, seconds);
     }
 
     @FXML

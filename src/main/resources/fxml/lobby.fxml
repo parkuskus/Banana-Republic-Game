@@ -121,25 +121,10 @@
                               </ImageView>
                            </children>
                         </HBox>
-                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-text" text="Automaton Intelligence" />
-                         <HBox alignment="CENTER" onMouseClicked="#handleLoadBot" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="85.0" prefWidth="244.0" styleClass="marcellus-text" text="Coming soon" />
+                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="600.0" styleClass="dropzone-box">
                             <children>
-                               <ImageView fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
-                                  <image>
-                                     <Image url="@../icons/bot.png" />
-                                  </image>
-                               </ImageView>
-                              <Region prefHeight="47.0" prefWidth="46.0" />
-                              <Label maxWidth="1.7976931348623157E308" prefHeight="62.0" prefWidth="170.0" styleClass="marcellus-text13" text="Load Bot Plugin (.jar)" />
-                              <Region maxHeight="-Infinity" prefHeight="52.0" prefWidth="38.0" HBox.hgrow="ALWAYS" />
-                              <ImageView fitHeight="32.0" fitWidth="28.0" pickOnBounds="true" preserveRatio="true">
-                                 <image>
-                                    <Image url="@../icons/file_upload.png" />
-                                 </image>
-                                 <HBox.margin>
-                                    <Insets right="30.0" />
-                                 </HBox.margin>
-                              </ImageView>
+                              <Label alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="62.0" prefWidth="220.0" styleClass="marcellus-text13" text="Coming soon" textAlignment="CENTER" />
                            </children>
                         </HBox>
                         <HBox alignment="TOP_CENTER" prefHeight="60.0" prefWidth="200.0" spacing="24.0" />

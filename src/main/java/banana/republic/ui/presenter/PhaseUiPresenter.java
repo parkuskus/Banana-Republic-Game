@@ -11,6 +11,7 @@ public class PhaseUiPresenter {
     private final Button setDiceButton;
     private final Button buildButton;
     private final Button tradeButton;
+    private final Button buyCardButton;
     private final Button cardButton;
     private final Button declareVictoryButton;
     private final Button settingsButton;
@@ -25,6 +26,7 @@ public class PhaseUiPresenter {
                             Button setDiceButton,
                             Button buildButton,
                             Button tradeButton,
+                            Button buyCardButton,
                             Button cardButton,
                             Button declareVictoryButton,
                             Button settingsButton,
@@ -38,6 +40,7 @@ public class PhaseUiPresenter {
         this.setDiceButton = setDiceButton;
         this.buildButton = buildButton;
         this.tradeButton = tradeButton;
+        this.buyCardButton = buyCardButton;
         this.cardButton = cardButton;
         this.declareVictoryButton = declareVictoryButton;
         this.settingsButton = settingsButton;
@@ -60,6 +63,7 @@ public class PhaseUiPresenter {
         setDisabled(setDiceButton, setupOrderPending || isSetup || isGameOver);
         setDisabled(buildButton, setupOrderPending || isGathering || isGameOver);
         setDisabled(tradeButton, setupOrderPending || isSetup || isGathering || isGameOver);
+        setDisabled(buyCardButton, setupOrderPending || isSetup || isGathering || isGameOver);
         setDisabled(cardButton, setupOrderPending || isSetup || isGameOver);
         setDisabled(declareVictoryButton, setupOrderPending || isSetup || isGameOver);
         setDisabled(endTurnButton, setupOrderPending || isSetup || isGathering || isGameOver);
@@ -67,7 +71,7 @@ public class PhaseUiPresenter {
         setDisabled(startSetupOrderButton, !setupOrderPending);
         setDisabled(stealButton, !"ROBBER".equals(modeName));
         setDisabled(discardButton, !discardPending);
-        setDisabled(endGameButton, isGameOver);
+        setDisabled(endGameButton, false);
         renderCondition(game, setupOrderPending, modeName);
     }
 
@@ -80,6 +84,7 @@ public class PhaseUiPresenter {
         switch (modeName) {
             case "SETTLEMENT" -> conditionLabel.setText("Mode: Build Pos Pantau");
             case "BUILD_OVERLAY" -> conditionLabel.setText("Mode: Build (Pos Pantau / Pipa)");
+            case "ROAD_BUILDING_CARD" -> conditionLabel.setText("Mode: Konstruksi Cepat");
             case "ROAD" -> conditionLabel.setText("Mode: Build Pipa");
             case "CITY" -> conditionLabel.setText("Mode: Build Lab");
             case "ROBBER" -> conditionLabel.setText("Mode: Pindah Nimon");

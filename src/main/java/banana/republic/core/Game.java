@@ -6,9 +6,12 @@ import banana.republic.board.Intersection;
 import banana.republic.board.Path;
 import banana.republic.board.TerrainType;
 import banana.republic.building.PlayerSupply;
+import banana.republic.building.Road;
 import banana.republic.card.CardDeck;
 import banana.republic.card.DevelopmentCard;
 import banana.republic.card.ExperimentCard;
+import banana.republic.card.KnightCard;
+import banana.republic.card.RoadBuildingCard;
 import banana.republic.dice.Dice;
 import banana.republic.dice.DiceResult;
 import banana.republic.player.Player;
@@ -80,6 +83,9 @@ public class Game {
     private int             setupSettlementCount;
     private ExperimentCard  cardPlayedThisTurn;
     private ExperimentCard  cardBoughtThisTurn;
+    private GamePhase       robberReturnPhaseOverride;
+    private Player          roadBuildingCardPlayer;
+    private int             roadBuildingCardRoadsRemaining;
 
     // -------------------------------------------------------------------------
     // Service fields (injected / created here)
@@ -135,6 +141,9 @@ public class Game {
         this.setupSettlementCount = 0;
         this.cardPlayedThisTurn   = null;
         this.cardBoughtThisTurn   = null;
+        this.robberReturnPhaseOverride = null;
+        this.roadBuildingCardPlayer = null;
+        this.roadBuildingCardRoadsRemaining = 0;
 
         // Supply bangunan per pemain
         this.supplies = new HashMap<>();
@@ -238,6 +247,9 @@ public class Game {
         this.setupSettlementCount = setupSettlementCount;
         this.cardPlayedThisTurn   = null;
         this.cardBoughtThisTurn   = null;
+        this.robberReturnPhaseOverride = null;
+        this.roadBuildingCardPlayer = null;
+        this.roadBuildingCardRoadsRemaining = 0;
 
         // Supply bangunan per pemain (restore dari player)
         this.supplies = new HashMap<>();
@@ -392,6 +404,7 @@ public class Game {
         gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
             player.getName() + " menempatkan Pipa di path #" + path.getId());
 
+        updateLongestRoad();
         advanceSetupTurn();
     }
 
@@ -567,7 +580,13 @@ public class Game {
             player, card, cardBoughtThisTurn, cardPlayedThisTurn, currentPhase);
         if (!v.isValid()) throw new IllegalStateException(v.getReason());
 
+        GamePhase phaseBeforeCard = currentPhase;
         card.applyEffect(getState(), player);
+        if (phaseBeforeCard == GamePhase.RESOURCE_GATHERING
+                && currentPhase == GamePhase.TRADE_BUILD
+                && card instanceof KnightCard) {
+            currentPhase = GamePhase.RESOURCE_GATHERING;
+        }
         cardPlayedThisTurn = card;
 
         player.removeCard(card);
@@ -577,6 +596,110 @@ public class Game {
             player.getName() + " memainkan " + card.getCardName());
 
         updateLargestArmy();
+    }
+
+    /**
+     * Memainkan Kartu Penjaga dengan target Nimon dipilih manual oleh UI.
+     * Kartu dianggap sudah dimainkan, tetapi perpindahan Nimon dilakukan lewat
+     * {@link #activateRobber(HexTile, Player)} setelah pemain memilih petak.
+     */
+    public void playKnightCardForManualRobber(Player player, KnightCard card) {
+        if (currentPhase != GamePhase.RESOURCE_GATHERING && currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "Kartu hanya bisa dimainkan saat giliran aktif (sebelum/sesudah lempar dadu). Fase saat ini: "
+                    + currentPhase);
+        }
+        ValidationResult v = cardPlayValidator.canPlay(
+            player, card, cardBoughtThisTurn, cardPlayedThisTurn, currentPhase);
+        if (!v.isValid()) throw new IllegalStateException(v.getReason());
+
+        robberReturnPhaseOverride = currentPhase;
+        player.incrementKnightsPlayed();
+        card.reveal();
+        cardPlayedThisTurn = card;
+        player.removeCard(card);
+        cardDeck.addToDiscardPile(card);
+
+        gameLog.addEntry(LogEntry.EventType.CARD_PLAYED, player.getName(),
+            player.getName() + " memainkan " + card.getCardName()
+                + ". Pilih petak baru untuk Nimon Ungu.");
+
+        updateLargestArmy();
+    }
+
+    /**
+     * Memainkan Kartu Konstruksi Cepat dengan lokasi pipa dipilih manual oleh UI.
+     */
+    public void playRoadBuildingCardForManualPlacement(Player player, RoadBuildingCard card) {
+        if (currentPhase != GamePhase.RESOURCE_GATHERING && currentPhase != GamePhase.TRADE_BUILD) {
+            throw new IllegalStateException(
+                "Kartu hanya bisa dimainkan saat giliran aktif (sebelum/sesudah lempar dadu). Fase saat ini: "
+                    + currentPhase);
+        }
+        ValidationResult v = cardPlayValidator.canPlay(
+            player, card, cardBoughtThisTurn, cardPlayedThisTurn, currentPhase);
+        if (!v.isValid()) throw new IllegalStateException(v.getReason());
+
+        PlayerSupply supply = supplies.get(player);
+        if (supply == null || !supply.canBuildRoad()) {
+            throw new IllegalStateException(player.getName() + " sudah kehabisan stok Pipa Transportasi");
+        }
+
+        card.reveal();
+        card.consume();
+        cardPlayedThisTurn = card;
+        roadBuildingCardPlayer = player;
+        roadBuildingCardRoadsRemaining = Math.min(2, supply.getRoadsRemaining());
+        player.removeCard(card);
+        cardDeck.addToDiscardPile(card);
+
+        gameLog.addEntry(LogEntry.EventType.CARD_PLAYED, player.getName(),
+            player.getName() + " memainkan " + card.getCardName()
+                + ". Pilih " + roadBuildingCardRoadsRemaining + " Pipa gratis.");
+    }
+
+    public int getRoadBuildingCardRoadsRemaining() {
+        return roadBuildingCardRoadsRemaining;
+    }
+
+    public boolean isRoadBuildingCardPlacementActive(Player player) {
+        return roadBuildingCardRoadsRemaining > 0
+                && roadBuildingCardPlayer != null
+                && roadBuildingCardPlayer.equals(player);
+    }
+
+    public void buildRoadFromRoadBuildingCard(Player player, Path path) {
+        if (!isRoadBuildingCardPlacementActive(player)) {
+            throw new IllegalStateException("Tidak ada Kartu Konstruksi Cepat yang sedang aktif.");
+        }
+        if (path == null) {
+            throw new IllegalArgumentException("Path tidak boleh null");
+        }
+        if (path.hasRoad()) {
+            throw new IllegalStateException("Path #" + path.getId() + " sudah ada road");
+        }
+        if (!board.isPathConnectedToPlayer(path, player)) {
+            throw new IllegalStateException("Pipa gratis harus terhubung ke jaringan " + player.getName());
+        }
+        PlayerSupply supply = supplies.get(player);
+        if (supply == null || !supply.canBuildRoad()) {
+            throw new IllegalStateException(player.getName() + " sudah kehabisan stok Pipa Transportasi");
+        }
+
+        Road road = supply.takeRoad();
+        path.placeRoad(road);
+        roadBuildingCardRoadsRemaining--;
+        gameLog.addEntry(LogEntry.EventType.BUILD, player.getName(),
+            player.getName() + " membangun Pipa Transportasi gratis dari Konstruksi Cepat di path #"
+                + path.getId());
+
+        updateLongestRoad();
+        if (roadBuildingCardRoadsRemaining <= 0 || !supply.canBuildRoad()) {
+            roadBuildingCardRoadsRemaining = 0;
+            roadBuildingCardPlayer = null;
+            gameLog.addEntry(LogEntry.EventType.SYSTEM, player.getName(),
+                "Efek Konstruksi Cepat selesai.");
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -615,7 +738,10 @@ public class Game {
             }
         }
 
-        currentPhase = GamePhase.TRADE_BUILD;
+        currentPhase = robberReturnPhaseOverride != null
+                ? robberReturnPhaseOverride
+                : GamePhase.TRADE_BUILD;
+        robberReturnPhaseOverride = null;
     }
 
     /**
@@ -859,6 +985,11 @@ public class Game {
         return vpCalculator.getTotalVP(player, board);
     }
 
+    /** Sinkronkan panjang Jalan Terpanjang dari kondisi board terkini. */
+    public void refreshLongestRoadStatus() {
+        updateLongestRoad();
+    }
+
     // -------------------------------------------------------------------------
     // Save / Load
     // -------------------------------------------------------------------------
@@ -921,6 +1052,9 @@ public class Game {
             if (p.hasSpecialCard(SpecialCardType.LONGEST_ROAD)) { prev = p; break; }
         }
 
+        for (Player p : players) {
+            p.setLongestRoadLength(calculateLongestRoadLength(p));
+        }
         Player newHolder = vpCalculator.updateLongestRoad(players);
         if (newHolder != null && !newHolder.equals(prev)) {
             if (prev != null) {
@@ -931,6 +1065,44 @@ public class Game {
                 newHolder.getName() + " mendapat Jalan Terpanjang ("
                 + newHolder.getLongestRoadLength() + " road)! (+2 PP)");
         }
+    }
+
+    private int calculateLongestRoadLength(Player player) {
+        if (player == null) return 0;
+        int best = 0;
+        for (Path path : board.getConnectedRoads(player)) {
+            best = Math.max(best, longestRoadFrom(player, path.getIntersectionA(), path, new java.util.HashSet<>()));
+            best = Math.max(best, longestRoadFrom(player, path.getIntersectionB(), path, new java.util.HashSet<>()));
+        }
+        return best;
+    }
+
+    private int longestRoadFrom(Player player,
+                                Intersection current,
+                                Path incoming,
+                                java.util.Set<Path> usedPaths) {
+        if (incoming == null || usedPaths.contains(incoming)) return 0;
+
+        usedPaths.add(incoming);
+        int bestTail = 0;
+
+        boolean blockedByOpponentBuilding = current != null
+                && current.hasBuilding()
+                && !player.equals(current.getOwner());
+        if (!blockedByOpponentBuilding && current != null) {
+            for (Path next : current.getAdjacentPaths()) {
+                if (next == incoming || usedPaths.contains(next)) continue;
+                if (!next.hasRoad() || !player.equals(next.getOwner())) continue;
+
+                Intersection nextIntersection = next.getIntersectionA().equals(current)
+                        ? next.getIntersectionB()
+                        : next.getIntersectionA();
+                bestTail = Math.max(bestTail,
+                        longestRoadFrom(player, nextIntersection, next, new java.util.HashSet<>(usedPaths)));
+            }
+        }
+
+        return 1 + bestTail;
     }
 
     /**
