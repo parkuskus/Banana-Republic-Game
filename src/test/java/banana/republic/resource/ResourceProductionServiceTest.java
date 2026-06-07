@@ -69,12 +69,14 @@ class ResourceProductionServiceTest {
 
         bank.takeResource(ResourceType.WOOD, 18); // leave only 1 in bank
 
-        service.distribute(woodTile, board, players, bank);
+        String result = service.distribute(woodTile, board, players, bank);
 
         // Both need 1, total 2, but only 1 available -> nobody gets anything
         assertEquals(0, player1.getResourceCount(ResourceType.WOOD));
         assertEquals(0, player2.getResourceCount(ResourceType.WOOD));
         assertEquals(1, bank.getCount(ResourceType.WOOD));
+        assertNotNull(result, "distribute harus mengembalikan pesan shortage");
+        assertTrue(result.contains("Resource shortage"), "Pesan harus mengandung 'Resource shortage'");
     }
 
     @Test
@@ -88,11 +90,13 @@ class ResourceProductionServiceTest {
 
         bank.takeResource(ResourceType.WOOD, 18); // leave only 1 in bank
 
-        service.distribute(woodTile, board, players, bank);
+        String result = service.distribute(woodTile, board, players, bank);
 
         // Single player affected, gets partial
         assertEquals(1, player1.getResourceCount(ResourceType.WOOD));
         assertEquals(0, bank.getCount(ResourceType.WOOD));
+        assertNotNull(result, "distribute harus mengembalikan pesan partial distribution");
+        assertTrue(result.contains("Partial distribution"), "Pesan harus mengandung 'Partial distribution'");
     }
 
     @Test
