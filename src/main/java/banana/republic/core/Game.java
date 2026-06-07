@@ -557,8 +557,7 @@ public class Game {
 
         cardBoughtThisTurn = buildExecutor.executeBuyCard(player, cardDeck, bank);
         gameLog.addEntry(LogEntry.EventType.CARD_BOUGHT, player.getName(),
-            player.getName() + " membeli Kartu Temuan (" + cardBoughtThisTurn.getCardName()
-            + ") (biaya: 1 Bijih, 1 Ladang, 1 Pisang)");
+            player.getName() + " membeli Kartu Temuan (biaya: 1 Bijih, 1 Ladang, 1 Pisang)");
     }
 
     // -------------------------------------------------------------------------

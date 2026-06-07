@@ -59,6 +59,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 
 public class GameController implements Initializable {
@@ -161,6 +163,8 @@ public class GameController implements Initializable {
         NONE, SETTLEMENT, ROAD, CITY, ROBBER, BUILD_OVERLAY, ROAD_BUILDING_CARD
     }
     private InteractionMode currentMode = InteractionMode.NONE;
+
+    private MediaPlayer bgMusicPlayer;
 
     private record VisualHarborSpec(StackPane hexTile, int firstCorner, int secondCorner, HarborType harborType) {
     }
@@ -312,6 +316,21 @@ public class GameController implements Initializable {
 
         if (!setupOrderPending && game.getActivePlayer() != null && game.getActivePlayer().isBot()) {
             handleBotTurn();
+        }
+
+        try {
+            if (bgMusicPlayer == null) {
+                java.net.URL musicUrl = getClass().getResource("/bg-music.mp3");
+                if (musicUrl != null) {
+                    Media media = new Media(musicUrl.toExternalForm());
+                    bgMusicPlayer = new MediaPlayer(media);
+                    bgMusicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+                    bgMusicPlayer.setVolume(0.3);
+                    bgMusicPlayer.play();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Could not load background music: " + e.getMessage());
         }
     }
 
