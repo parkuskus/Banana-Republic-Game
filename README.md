@@ -1,25 +1,30 @@
 # Banana Republic - Tugas Besar 2 IF2010 OOP 2526
+![Application Interface](cover.png)
 
-Banana Republic adalah permainan strategi berbasis papan yang diimplementasikan sebagai aplikasi desktop menggunakan Java dan JavaFX. Permainan ini mengadaptasi mekanisme klasik settlers dengan setting eksperimental di sebuah republik pisang, di mana para pemain berkompetisi membangun Pos Pantau dan Laboratorium untuk mengumpulkan poin prestasi. Setiap pemain mengumpulkan lima jenis sumber daya (Kayu, Batu Bata, Gandum, Bijih, dan Pisang) yang diproduksi oleh petak-petak heksagonal sesuai hasil lemparan dua dadu. 
+## Overview
 
-Aplikasi ini mendukung permainan oleh tiga hingga empat pemain, baik manusia maupun bot, dengan sistem giliran yang dilengkapi timer 90 detik per fase. Fitur permainan mencakup: perdagangan sumber daya domestik dan maritim, pembangunan jalan, penggunaan kartu temuan, sistem save/load berbasis JSON, dan arsitektur plugin yang memungkinkan penggantian generator peta serta penambahan strategi bot secara dinamis.
+Banana Republic is a board-based strategy game implemented as a desktop application using Java and JavaFX. The game adapts classic settlers mechanics into an experimental setting (a banana republic) where players compete to build Watchtowers and Laboratories to accumulate victory points. Each player collects five types of resources (Wood, Brick, Wheat, Ore, and Banana) produced by hexagonal tiles according to the result of two dice rolls.
 
-## Tim Pengembang (Kelompok NUL - nullptr)
+The application supports three to four players, both human and bot, with a turn system featuring a 90-second timer per phase. Game features include: domestic and maritime resource trading, road construction, discovery card usage, JSON-based save/load system, and a plugin architecture that allows dynamic map generator replacement and bot strategy injection.
 
-- 13524031 / Vincent Rionarlie
-- 13524033 / Ray Owen Martin
-- 13524037 / Nicholas Wise Saragih Sumbayak
-- 13524061 / Muhammad Aufar Rizqi Kusuma
-- 13524065 / Kurt Mikhael Purba
+## Development Team (Group NUL - nullptr)
+
+| NIM | Name |
+|-----|------|
+| 13524031 | Vincent Rionarlie |
+| 13524033 | Ray Owen Martin |
+| 13524037 | Nicholas Wise Saragih Sumbayak |
+| 13524061 | Muhammad Aufar Rizqi Kusuma |
+| 13524065 | Kurt Mikhael Purba |
 
 ## Dependencies & Prerequisites
 
 - **Java Development Kit (JDK) 21** (LTS)
 - **Apache Maven 3.9+**
-- **JavaFX 21.0.2** (Managed via Maven: controls, fxml, graphics, base)
+- **JavaFX 21.0.2** (managed via Maven: controls, fxml, graphics, base)
 - **Google Gson 2.11.0** (JSON save/load, managed via Maven)
-- **JLayer 1.0.1** (Pure Java MP3 playback, managed via Maven)
-- **JUnit 5, AssertJ, TestFX** (for headless GUI testing, managed via Maven)
+- **JLayer 1.0.1** (pure Java MP3 playback, managed via Maven)
+- **JUnit 5, AssertJ, TestFX** (headless GUI testing, managed via Maven)
 
 > No manual SDK or library downloads are required — everything is managed via Maven dependencies.
 
@@ -45,12 +50,14 @@ mvn javafx:run
 ```bash
 mvn clean package
 ```
+
 This creates:
 - `target/if2010-oop2526-tubes2-1.0-SNAPSHOT.jar` — standard JAR (manifest set)
 - `target/if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar` — uber JAR with all dependencies
 - `target/lib/` — individual dependency JARs
 
 ### Run Packaged JAR
+
 **Recommended (using module path, no warnings):**
 ```bash
 java --module-path target/lib --add-modules javafx.controls,javafx.fxml,javafx.graphics \
@@ -63,6 +70,7 @@ java -jar target/if2010-oop2526-tubes2-1.0-SNAPSHOT-shaded.jar
 ```
 
 ### Makefile Targets
+
 ```bash
 make build    # mvn clean package
 make test     # mvn test
